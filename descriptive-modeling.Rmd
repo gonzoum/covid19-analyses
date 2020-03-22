@@ -1,0 +1,12 @@
+# Descriptive Modeling
+
+The previous chapter presnted several descriptive plots of raw data.  What I'd like to do in this chapter is show some simple modeling using methods we learned this year along with some extensions. 
+By no means is any of the modeling presented here considered breakthrough modeling. I call this descriptive modeling because all I do is describe the patterns. In the next chapter I'll give some examples of models that attempt to capture mechanism. Another way of explaining the difference between descriptive models and explanatory models is that the former are good summeries of the data and can be used to forcast, but they do not provide  understanding of the underling mechanisms so they do not give any insight into what would happen if a change was imposed on the system.  These models don't tell us the effect of social distancing. 
+
+## Polynomial Regression
+
+## Exponential Regression 
+
+## Basic Machine Learning Examples
+
+Pending

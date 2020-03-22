@@ -1,0 +1,8 @@
+book_filename: "bookdown-demo"
+language:
+  ui:
+    chapter_name: "Chapter "
+delete_merged_file: yes
+rmd_files:  ["index.Rmd", "preliminary.Rmd", "read-data.Rmd", "descript-plots.Rmd", "descriptive-modeling.Rmd", "process-models.Rmd", "conclusion.Rmd"]
+#yes below does khit and merge
+#new_session:  yes

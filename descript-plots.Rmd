@@ -1,0 +1,208 @@
+# Descriptive Plots
+
+This chapter  presents some descriptive plots of the raw data. No analyses, no standard errors, no parameters to estimate, no hypotheses to test. Just raw data presented in different forms to gain insight into the patterns.  I'll create a few plots at the world level, and then switch to the state level for US data.  You are free to take my code and edit it to produce additional plots for other countries and their states or provinces (up to the degree of resolution provided by the data sets we downloaded).
+
+## World Map
+
+
+Here is an example I lifted from [here](https://datascienceplus.com/map-visualization-of-covid19-across-world/)
+
+I make use of the datacov file I read in from the Johns Hopkins git repository.
+
+
+
+```{r warning=F, message=F}
+# cutoffs and labels to use in the plot based on the number of cases
+mybreaks <- c(1, 20, 100, 1000, 50000)
+mylabels <- c("1-19", "20-99", "100-999", "1,000-49,999", "50,000+")
+
+world <- map_data("world")
+
+ggplot() +
+ geom_polygon(data = world, aes(x=long, y = lat, group = group), fill="grey", alpha=0.3) +
+ geom_point(data=datacov, aes(x=Long, y=Lat, size=datacov[[ncol(datacov)]], color=datacov[[ncol(datacov)]]),stroke=F, alpha=0.7) +
+ scale_size_continuous(name="Cases", trans="log", range=c(1,7),  breaks=mybreaks, labels = mylabels) +
+    scale_color_viridis_c(option="inferno",name="Cases", trans="log",breaks=mybreaks, labels = mylabels) +
+    theme_void() + 
+    guides( colour = guide_legend()) +
+    labs(caption = "Data Repository provided by Johns Hopkins CSSE. Visualization by DataScience+ ") +
+    theme(
+      legend.position = "bottom",
+      text = element_text(color = "#22211d"),
+      plot.background = element_rect(fill = "#ffffff", color = NA), 
+      panel.background = element_rect(fill = "#ffffff", color = NA), 
+      legend.background = element_rect(fill = "#ffffff", color = NA)
+    )
+
+```
+
+I'll expand this example to make an animation so we can see the world map animated with total cases changing by day.  We need to reformat the data file datacov into long format in order to be used by the animation function in the package gganimate.  That is, rather than using the datacov data.frame that is in wide format, I need to reformat the data.frame into long format and create a day column and a count column.  The gather() function in dplyr does this very efficiently.  To help in later analyses I also create a day.numeric variable that is 0 on 3/08/20 and increments by one each day after.  I'll explain later why I set 3/08/20 as day 0.
+
+```{r}
+datacov.long <- gather(datacov, day, count, `1/22/20`:(names(datacov)[ncol(datacov)]))
+datacov.long$day <- as.Date(datacov.long$day, "%m/%d/%y")
+datacov.long$day.numeric <- as.numeric(datacov.long$day)-18283
+```
+
+Now the animated plot by day. I rewrote the original parts of the plotting program to make it more efficient for the animation (e.g., I use the ggthemes in the maps package). This animation uses the package gganimate to reproduce the plot for each day and then overlays the plots one on top of the other to produce the animation.
+
+```{r cache=T, warning=FALSE, message=FALSE}
+ggplot(datacov.long) +  borders("world", colour = "gray90", fill = "gray85") +
+  theme_map() + 
+  geom_point(aes(x=Long, y=Lat, size=count, color=count),stroke=F, alpha=0.7) +
+ scale_size_continuous(name="Cases", trans="log", range=c(1,7),  breaks=mybreaks, labels = mylabels) +
+    scale_color_viridis_c(option="inferno",name="Cases", trans="log",breaks=mybreaks, labels = mylabels) +
+    theme_void() + 
+    guides( colour = guide_legend()) +
+    theme(
+      legend.position = "bottom",
+      text = element_text(color = "#22211d"),
+      plot.background = element_rect(fill = "#ffffff", color = NA), 
+      panel.background = element_rect(fill = "#ffffff", color = NA), 
+      legend.background = element_rect(fill = "#ffffff", color = NA)) + 
+  labs(title="Date: {frame_time}", caption = "Data Repository provided by Johns Hopkins CSSE") +
+  transition_time(day) + ease_aes('linear')
+```
+
+## Compare World Counts to US
+
+It would be helpful to see the pattern over time of the world counts of confirmed covid-19 cases relative to the US counts.  Here I create a subset of the datacov data.frame that includes just the 50 states (I dropped DC and the US territories for this analysis).
+
+```{r}
+#create subset of 50 states
+allstates <- subset(datacov, `Province/State`%in% states)
+
+#prettyval is an extra column appended at the end; it has population size and state abbreviation like "19.5 NY"
+#need to be sure the row orders of state.population that we downloaded from the census website
+#match the order of states in the allstates subset of the datacov data.frame
+allstates$prettyval <- state.population$prettyval[order(match(state.population$NAME,allstates$`Province/State`))]
+
+#likewise, save state populations from the census file to the allstates data.frame
+allstates$population <- state.population$value[order(match(state.population$NAME,allstates$`Province/State`))]
+     
+#number of variables added (prettyval and population) to the allstates data.frame
+cadded <- 2
+#counts by dates are in columns starting with `1/22/20` and ending in ncol(allstates)-2 because
+#we appended two columns at the end
+allstates.long <- gather(allstates, day, count, `1/22/20`:(names(allstates)[ncol(allstates)-cadded]))
+
+#reformat the day column to be Dates that R can understand
+allstates.long$day <- as.Date(allstates.long$day, "%m/%d/%y")
+
+#in some analyses it may be helpful to look at first order differences in counts (day (t+1) - day (t))
+#so far I don't need this but I leave it here
+#allstates.long$count.diff <- c(0,diff(allstates.long$count))
+```
+
+More data manipulation needed.  Turns out that the Johns Hopkins data did not report state-level data prior to 3/08/2020 (just US totals apparently).  So for state-level analyses it may be helpful to only keep dates after 03/08/2020.  Also, in the comments I explain how R handles dates with a reference date of 01/01/1970. 
+
+```{r}
+allstates.long <- subset(allstates.long, day > "2020-03-08")
+
+#in case we need the last dates for each state
+# data_set_ends <- allstates.long %>% group_by(`Province/State`) %>% top_n(1,day) %>% pull(prettyval)
+
+#create day.numeric starting with 3/09/20 as day 1.  in R, Dates have 01/01/1970 and 03/08/20 is 18330 days
+#from the origin so need to subtract 18330 from all the days. Essentially, I'm centering
+#at 03/08/20
+allstates.long$day.numeric <- as.numeric(allstates.long$day)-18330
+
+#make the variable with the state abbreviations a factor in R
+allstates.long$state.abb <- factor(allstates.long$`Province/State`)
+```
+
+Now that we have allstates.long created we can compare cumulative counts in the World to the US cumulative counts.  For a definition of the multiplot() function see the Preliminaries chapter.
+
+```{r}
+#compute sums for the entire world by day and store plot in object p1
+sum.world <- data.frame(count=apply(datacov[,5:ncol(datacov)],2,sum,na.rm=T))
+sum.world$day <- as.Date(rownames(sum.world), "%m/%d/%y")
+p1 <- ggplot(sum.world, aes(x=day,y=count))  + geom_bar(stat="identity",fill="steel blue") + ggtitle("World Wide Counts") + theme_minimal()
+#can print plot p1 by itself by uncommenting next line
+#p1
+
+#using weight option rather than y so that bar stat_count can do the sum (saves having to compute sum and then do what I did for sum.world)
+comparesums <- allstates.long %>% group_by(day) %>% summarize_at("count", sum,na.rm=T)
+comparesums
+#seems coding was by US then by state at about 3/10
+#here is a command to produce total US counts for all days in the data set starting with 1/22/20 but it has lots of 0s
+#data.frame(count=apply(allstates[,5:(ncol(allstates)-cadded)],2,sum,na.rm=T))
+
+#I want to draw a horizontal line in the cumulative plot that corresponds to the 
+#US fraction of the world population
+uspopfrac <- 330/7800
+cv10frac <- uspopfrac*sum.world[nrow(sum.world),1]
+
+#had to add +1 to max date in scale_x_date
+p2 <- ggplot(allstates.long, aes(x=day,weight=count))  + geom_bar(na.rm=T,fill="steel blue") + ggtitle("US Counts") + scale_x_date(limits=c(sum.world$day[1], sum.world$day[nrow(sum.world)]+1))  + theme_minimal() + geom_hline(yintercept=cv10frac,col="red")
+#+ scale_y_continuous(limits=c(0,max(sum.world$count)))
+#can print plot p2 by itself by uncommenting next line
+#p2
+
+#produce a single plot that has the world cumulative count at top and the US cumulative count at the botton, along with a
+#red line indicating the count that corresponds to the fraction of the world population that represents the US
+#if US counts are above the red line it means the counts of covid=19 are greater than what would be expected by a random 
+#process of covid-19 just appearing randomly based merely on population size alone
+
+#the plot multiplot is defined in chapter preliminaries
+multiplot(p1,p2,cols=1)
+```
+
+## US State-Level Plots
+
+I decided to plot percentage relative to population (i.e., counts/population * 100).  The numbers are small. I've seen people report this as cases per 100,000, but I decided to stick with cases per 100 to maintain the percentage interpretation.  This is just a scale issue and doesn't affect the plots or the analyses.   The labels in the plots, like "7.5 WA" means Washington state with a population of 7.5 million. These labels are the prettyval labels I created earlier.
+
+```{r}
+allstates.long%>%mutate(label = if_else(day == max(day), as.character(prettyval), NA_character_)) %>%
+ggplot( aes(x=day, y=count/population*100,group=prettyval, color=prettyval)) + geom_line() +
+ geom_label_repel(aes(label= label), nudge_x=2, na.rm=T,segment.color = 'grey50', label.size=.01, size=2.5, show.legend=F) +
+coord_cartesian(clip = 'off') + scale_x_date(limits=as.Date(c("2020-03-08", "2020-03-25"))) + 
+    theme(legend.position="none", plot.margin = margin(0.1, 1, 0.1, 0.1, "cm"))
+```
+
+Same plot but now putting the vertical axis on the log (base 10) scale.  An exponential process becomes linear when taking logs so we would expect to clost to straight lines if the count of confirmed cases follows an exponential form.  Each state can have a different growth rate, which will show up as different slopes.  The top two states (NY and WA) are close to a straight line but with different growth rates.  Too much overlap to see much for the other states.  West Virginia (WV) didn't show its first case until 3/17/20 so that is why the green curve (lowest) looks different than the rest.
+
+```{r warning=F, message=F}
+subset(allstates.long, day.numeric!=0) %>%mutate(label = if_else(day == max(day), as.character(prettyval), NA_character_)) %>%
+ggplot( aes(x=day, y=count/population*100,group=prettyval, color=prettyval)) + geom_line() +
+ geom_label_repel(aes(label= label), nudge_x=2, na.rm=T,segment.color = 'grey50', label.size=.01, size=2.5, show.legend=F) +
+coord_cartesian(clip = 'off') + scale_x_date(limits=as.Date(c("2020-03-08", "2020-03-25"))) + 
+    theme(legend.position="none", plot.margin = margin(0.1, 1, 0.1, 0.1, "cm")) + scale_y_continuous(trans='log10')
+
+```
+
+To help see the state by state structure in these curves (e.g., whether or not they are linear in the log scale), I partitioned the 50 states by population (sample sizes in each panel are 12 or 13 states). The states with larger populations (two lower panels) show relatively linear patterns.  The smaller in population states (two upper panels) show some curvature but that could be due to several states not showing cases until a few days later.  
+
+```{r warning=F, message=F}
+library(Hmisc)
+subset(allstates.long, day.numeric!=0) %>%mutate(label = if_else(day == max(day), as.character(prettyval), NA_character_)) %>%
+ggplot( aes(x=day, y=count/population*100,group=prettyval, color=prettyval)) + geom_line() +
+ geom_label_repel(aes(label= label), nudge_x=2, na.rm=T,segment.color = 'grey50', label.size=.01, size=2.5, show.legend=F) +
+coord_cartesian(clip = 'off') + scale_x_date(limits=as.Date(c("2020-03-08", "2020-03-25"))) + 
+    theme(legend.position="none", plot.margin = margin(0.1, 1, 0.1, 0.1, "cm")) + scale_y_continuous(trans='log10') + facet_wrap(~cut2(population, g=4,m=8))
+
+```
+
+Here is another version of the plot where I set 0 to missing value (NA) so that the curves begin where there are nonzero points. The only difference is the 2nd line with the mutate() and na_if() command. This modification to the plot makes it easier to detect linearity as we don't have the artificial jump in the curve from 0. But, while it makes the plots a little easier to understand, it drops the important of information of _liftoff_, the point at which the count moves from zero to nonzero.  This is something that could be modeled with a parameter in the structural model and so, in principle, one could see what factors affect the liftoff.
+
+```{r warning=F, message=F}
+subset(allstates.long, day.numeric!=0) %>%mutate(label = if_else(day == max(day), as.character(prettyval), NA_character_)) %>%
+  mutate(count = na_if(count, "0")) %>%
+ggplot( aes(x=day, y=count/population*100,group=prettyval, color=prettyval)) + geom_line() +
+ geom_label_repel(aes(label= label), nudge_x=2, na.rm=T,segment.color = 'grey50', label.size=.01, size=2.5, show.legend=F) +
+coord_cartesian(clip = 'off') + scale_x_date(limits=as.Date(c("2020-03-08", "2020-03-25"))) + 
+    theme(legend.position="none", plot.margin = margin(0.1, 1, 0.1, 0.1, "cm")) + scale_y_continuous(trans='log10') + facet_wrap(~cut2(population, g=4,m=8))
+
+```
+
+
+## Map of US
+
+Pending:  Redo the plot and animation above for the world but focusing on the US.
+
+Similarly need to reformat the data into long format.  Also, the Johns Hopkins data set appears to have started coding counts at the state level starting on 3/08/20 I drop earlier days from the allstates data set.
+
+
+
+
+

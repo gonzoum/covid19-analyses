@@ -1,0 +1,61 @@
+p.caption {
+  color: #777;
+  margin-top: 10px;
+}
+p code {
+  white-space: inherit;
+}
+pre {
+  word-break: normal;
+  word-wrap: normal;
+}
+pre code {
+  white-space: inherit;
+}
+
+/* RICH ADDED */
+
+h1 {
+  color: dodgerblue;
+}
+h2 {
+  color: dodgerblue;
+}
+h3 {
+  color: dodgerblue;
+}
+h4 {
+  color: dodgerblue;
+}
+
+/* custom blocks */
+.infobox {
+  padding: 1em 1em 1em 4em;
+  margin-bottom: 10px;
+  border: 2px solid orange;
+  border-radius: 10px;
+  background: #f5f5f5 5px center/3em no-repeat;
+}
+
+
+.caution {
+  background-image: url("images/caution.png");
+}
+
+.warning {
+  background-image: url("images/warning.png");
+}
+
+.tip {
+  background-image: url("images/tip.png");
+}
+
+.note {
+  background-image: url("images/note.png");
+}
+
+.important {
+  background-image: url("images/important.png");
+}
+
+

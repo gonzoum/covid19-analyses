@@ -1,0 +1,94 @@
+# Preliminaries
+
+I organize in one place all the R packages that are used in these notes so they can be easily installed.
+
+## Libraries
+
+```{r message=F,warning=F,results='hide'}
+library(readr)
+library(tidyverse)
+library(rvest)
+library(magrittr)
+library(stringr)
+library(tidycensus)
+library(ggplot2)
+library(gganimate)
+library(maps)
+library(ggthemes)
+library(viridis)
+library(ggrepel)
+```
+
+For ease of use it would be better to use the pacman package because it also checks if the libraries are installed on your computer (if not, it automatically downloads them along with all their dependencies).  Finally, pacman initiates the library() call for each library in the list leaving you ready to proceed with the analyses. For illustration, here is the pacman code you would use. This facilitates reproducibility.  
+
+```{r eval=F}
+#if pacman isn't installed, then install it and issue library(pacman)
+if(!("pacman" %in% installed.packages()[,"Package"])) install.packages("pacman")
+library(pacman)
+p_load("readr","tidyverse","rvest","magrittr","stringr","tidycensus","ggplot2","gganimate","maps","ggthemes","viridis","ggrepel")
+```
+
+## Utility functions
+
+Here are some functions I wrote that I will use later. I put them here to improve flow and readability of the key content.
+
+### Multiple Plots
+
+This function puts multiple ggplots on the same page.
+
+```{r}
+#Multiple plot function
+#
+# ggplot objects can be passed in ..., or to plotlist (as a list of ggplot objects)
+# - cols:   Number of columns in layout
+# - layout: A matrix specifying the layout. If present, 'cols' is ignored.
+#
+# If the layout is something like matrix(c(1,2,3,3), nrow=2, byrow=TRUE),
+# then plot 1 will go in the upper left, 2 will go in the upper right, and
+# 3 will go all the way across the bottom.
+#
+multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
+  library(grid)
+
+  # Make a list from the ... arguments and plotlist
+  plots <- c(list(...), plotlist)
+
+  numPlots = length(plots)
+
+  # If layout is NULL, then use 'cols' to determine layout
+  if (is.null(layout)) {
+    # Make the panel
+    # ncol: Number of columns of plots
+    # nrow: Number of rows needed, calculated from # of cols
+    layout <- matrix(seq(1, cols * ceiling(numPlots/cols)),
+                    ncol = cols, nrow = ceiling(numPlots/cols))
+  }
+
+ if (numPlots==1) {
+    print(plots[[1]])
+
+  } else {
+    # Set up the page
+    grid.newpage()
+    pushViewport(viewport(layout = grid.layout(nrow(layout), ncol(layout))))
+
+    # Make each plot, in the correct location
+    for (i in 1:numPlots) {
+      # Get the i,j matrix positions of the regions that contain this subplot
+      matchidx <- as.data.frame(which(layout == i, arr.ind = TRUE))
+
+      print(plots[[i]], vp = viewport(layout.pos.row = matchidx$row,
+                                      layout.pos.col = matchidx$col))
+    }
+  }
+}
+
+```
+
+::: {.infobox .caution data-latex="{caution}"}
+
+**R Notes**
+
+For better reproducibility it is good to use a package like renv that saves the current versions of all your packages used in your run. This way if tomorrow a package is updata, and it breaks your code, you at least have the earlier version of the package available on your drive.
+
+:::

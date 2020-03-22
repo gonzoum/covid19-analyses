@@ -1,0 +1,73 @@
+--- 
+title: "Data Analysis Examples Around Covid-19"
+author: "Richard Gonzalez"
+date: "`r Sys.Date()`"
+site: bookdown::bookdown_site
+#output:
+#    bookdown::html_book:
+#        theme: yeti
+#        highlight: espresso
+#        toc: true
+#        toc_float: true
+output: bookdown::gitbook 
+documentclass: book
+bibliography: [book.bib, packages.bib]
+biblio-style: apalike
+link-citations: yes
+github-repo: rstudio/bookdown-demo
+description: ""
+---
+
+# Preface {-}
+
+These are some notes to illustrate 
+1. some advanced features for R (e.g., web scraping, git repositories, animated plots), 
+2. a way of creating a reproducible workflow for analyses and report writing and 
+3. using data from the covid-19 pandemic to illustrate some of the material we have been learning this year. 
+
+
+
+In these notes I won't be able to address issues of specificity and sensitivity of the covid-19 tests because I don't have access to information about the tests' false positive and false negative rates.   Further, there appear to be different tests in use, tests from different vendors, new tests coming on line, etc., which increases the complexity in understanding the counts of "confirmed" covid-19 cases. Also, it is too early to develop population models of the baseline proportions of who has the disease.  Without knowing the baserates of the disease and the specificity/sensitivity of the available tests, we are at a major disadvantage for using the usual tools we have (e.g., Bayesian statistics) to evaluate such matters.  These notes illustrate what we can do given the available information.
+
+We can still learn useful information from studying counts of confirmed cases of disease.  The most famous example of examining the patterns of counts comes from the cholera outbreak in London in the mid 1800s, before the germ theory of disease was developed. London had a cholera epidemic. Cholera produces severe diarrhea, it is caused by a bacteria and can lead to death.  London had a severe outbreak leading to about 500 deaths in 10 days.  Now we know that clean drinking water (free from sewage) and noncontaminated foods are the best way to control cholera, but back then they didn't understand much about the cause or spread of this disease. John Snow's contribution was to collect data on where the cholera deaths occurred.  He noticed that they tended to be clustered in houses near particular water pumps. In those days, you would walk to the nearest water pump to get the daily supply of water for your household. People tend to go to the same water pump every day, so households would drink water from the same water pump. Snow started keeping track of which households developed cholera, where there were deaths and he found clustering near particular water pumps.  His observations led to the handle from one water pump being removed, the Broad Street Pump, and cholera cases began to decrease as people would get water from other pumps. Later it was discovered that this particular pump was contaminated by the sanitation waste from a nearby home. We do not have additional information, such as the number of residents around each water pump, making it difficult to evaluate the clustering of deaths around specific locations (i.e.,  those may be the locations where more people live).
+
+![Snow's Cholera Map of London](figures/snow-cholera.jpg)
+
+::: {.infobox .caution data-latex="{caution}"}
+
+**Caution**
+
+Throughout these notes I adapted existing code and examples. Where I borrowed from other people I provide appropriate citation.  I wrote these notes relatively quickly and have not double checked all the code nor have edited the text carefully.
+
+:::
+
+```{r include=FALSE}
+#in case I switch to pdf and need latex/bibtex
+# automatically create a bib database for R packages
+knitr::write_bib(c(
+  .packages(), 'bookdown', 'knitr', 'rmarkdown'
+), 'packages.bib')
+```
+
+<!-- Various R notes -->
+<!-- You can label chapter and section titles using `{#label}` after them, e.g., we can reference Chapter \@ref(intro). If you do not manually label them, there will be automatic labels anyway, e.g., Chapter \@ref(methods). -->
+
+<!-- Figures and tables with captions will be placed in `figure` and `table` environments, respectively. -->
+
+<!-- ```{r nice-fig, fig.cap='Here is a nice figure!', out.width='80%', fig.asp=.75, fig.align='center'} -->
+<!-- par(mar = c(4, 4, .1, .1)) -->
+<!-- plot(pressure, type = 'b', pch = 19) -->
+<!-- ``` -->
+
+<!-- Reference a figure by its code chunk label with the `fig:` prefix, e.g., see Figure \@ref(fig:nice-fig). Similarly, you can reference tables generated from `knitr::kable()`, e.g., see Table \@ref(tab:nice-tab). -->
+
+<!-- ```{r nice-tab, tidy=FALSE} -->
+<!-- knitr::kable( -->
+<!--   head(iris, 20), caption = 'Here is a nice table!', -->
+<!--   booktabs = TRUE -->
+<!-- ) -->
+<!-- ``` -->
+
+
+<!-- You can write citations, too. For example, we are using the **bookdown** package [@R-bookdown] in this sample book, which was built on top of R Markdown and **knitr** [@xie2015]. -->
+
