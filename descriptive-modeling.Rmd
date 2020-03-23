@@ -71,7 +71,7 @@ actual.counts.recent.pull <- allstates[order(match(allstates$`Province/State`,st
 table.prediction <- data.frame(actual.counts.recent.pull, plus.one.day = day.plus.1$prediction, plus.days.ahead = day.plus.days.ahead$prediction)
 table.prediction[,5:7] <- round(table.prediction[,5:7],0)
 
-knitr::kable(table.prediction[,c(1,5:7)], col.names=c("State","Current","Prediction +1 Day",paste0("Prediction +",days.ahead,"s")))
+knitr::kable(table.prediction[,c(1,5:7)], col.names=c("State","Current","Prediction +1 Day",paste0("Prediction +",days.ahead,"days")))
 ```
 
 This type of model where we transform the dependent variable by converting to logs, creates an additive error term in the log scale (i.e., log(counts) + $\epsilon$). But maybe that isn't the right error structure. We can study the residuals to see if there are nonlinearities. It may be that the error is added to the counts rather than the log of the counts (i.e., counts + $\epsilon$).  

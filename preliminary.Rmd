@@ -41,7 +41,7 @@ Here are some functions I wrote that I will use later. I put them here to improv
 
 ### Multiple Plots
 
-This function puts multiple ggplots on the same page.  There are now packages that can do this as well, like ![patchwork]{https://patchwork.data-imaginist.com/}, but I've been using this simple function for years even before such packages existed. I offer this function, which I got off someone's website years ago, as an example of how relatively simple some R functions can be, even when performing complex tasks like arranging multiple plots on a page.
+This function puts multiple ggplots on the same page.  There are now packages that can do this as well, like [patchwork](https://patchwork.data-imaginist.com/), but I've been using this simple function for years even before such packages existed. I offer this function, which I got off someone's website years ago, as an example of how relatively simple some R functions can be, even when performing complex tasks like arranging multiple plots on a page.
 
 ```{r}
 #Multiple plot function

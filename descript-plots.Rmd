@@ -154,10 +154,17 @@ multiplot(p1,p2,cols=1)
 I decided to plot percentage relative to population (i.e., counts/population * 100).  The numbers are small. I've seen people report this as cases per 100,000, but I decided to stick with cases per 100 to maintain the percentage interpretation.  This is just a scale issue and doesn't affect the plots or the analyses.   The labels in the plots, like "7.5 WA" means Washington state with a population of 7.5 million. These labels are the prettyval labels I created earlier.
 
 ```{r}
+#most recent date in file
+max.day.numeric <- max(allstates.long$day.numeric)
+max.day <- max(allstates.long$day)
+
+#extend plot region to allow room for state labels
+extend.days <- 4
+
 allstates.long%>%mutate(label = if_else(day == max(day), as.character(prettyval), NA_character_)) %>%
 ggplot( aes(x=day, y=count/population*100,group=prettyval, color=prettyval)) + geom_line() +
  geom_label_repel(aes(label= label), nudge_x=2, na.rm=T,segment.color = 'grey50', label.size=.01, size=2.5, show.legend=F) +
-coord_cartesian(clip = 'off') + scale_x_date(limits=as.Date(c("2020-03-08", "2020-03-25"))) + 
+coord_cartesian(clip = 'off') + scale_x_date(limits=as.Date(c("2020-03-09", as.character(max.day+extend.days)))) + 
     theme(legend.position="none", plot.margin = margin(0.1, 1, 0.1, 0.1, "cm"))
 ```
 
@@ -167,7 +174,7 @@ Same plot but now putting the vertical axis on the log (base 10) scale.  An expo
 subset(allstates.long, day.numeric!=0) %>%mutate(label = if_else(day == max(day), as.character(prettyval), NA_character_)) %>%
 ggplot( aes(x=day, y=count/population*100,group=prettyval, color=prettyval)) + geom_line() +
  geom_label_repel(aes(label= label), nudge_x=2, na.rm=T,segment.color = 'grey50', label.size=.01, size=2.5, show.legend=F) +
-coord_cartesian(clip = 'off') + scale_x_date(limits=as.Date(c("2020-03-08", "2020-03-25"))) + 
+coord_cartesian(clip = 'off') + scale_x_date(limits=as.Date(c("2020-03-09", as.character(max.day+extend.days)))) + 
     theme(legend.position="none", plot.margin = margin(0.1, 1, 0.1, 0.1, "cm")) + scale_y_continuous(trans='log10')
 
 ```
@@ -178,7 +185,7 @@ To help see the state by state structure in these curves (e.g., whether or not t
 subset(allstates.long, day.numeric!=0) %>%mutate(label = if_else(day == max(day), as.character(prettyval), NA_character_)) %>%
 ggplot( aes(x=day, y=count/population*100,group=prettyval, color=prettyval)) + geom_line() +
  geom_label_repel(aes(label= label), nudge_x=2, na.rm=T,segment.color = 'grey50', label.size=.01, size=2.5, show.legend=F) +
-coord_cartesian(clip = 'off') + scale_x_date(limits=as.Date(c("2020-03-08", "2020-03-25"))) + 
+coord_cartesian(clip = 'off') + scale_x_date(limits=as.Date(c("2020-03-09", as.character(max.day+extend.days)))) + 
     theme(legend.position="none", plot.margin = margin(0.1, 1, 0.1, 0.1, "cm")) + scale_y_continuous(trans='log10') + facet_wrap(~cut2(population, g=4,m=8))
 
 ```
@@ -190,7 +197,7 @@ subset(allstates.long, day.numeric!=0) %>%mutate(label = if_else(day == max(day)
   mutate(count = na_if(count, "0")) %>%
 ggplot( aes(x=day, y=count/population*100,group=prettyval, color=prettyval)) + geom_line() +
  geom_label_repel(aes(label= label), nudge_x=2, na.rm=T,segment.color = 'grey50', label.size=.01, size=2.5, show.legend=F) +
-coord_cartesian(clip = 'off') + scale_x_date(limits=as.Date(c("2020-03-08", "2020-03-25"))) + 
+coord_cartesian(clip = 'off') + scale_x_date(limits=as.Date(c("2020-03-09", as.character(max.day+extend.days)))) + 
     theme(legend.position="none", plot.margin = margin(0.1, 1, 0.1, 0.1, "cm")) + scale_y_continuous(trans='log10') + facet_wrap(~cut2(population, g=4,m=8))
 
 ```
