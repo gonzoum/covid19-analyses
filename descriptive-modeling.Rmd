@@ -3,14 +3,16 @@
 The previous chapter presnted several descriptive plots of raw data.  What I'd like to do in this chapter is show some simple modeling using methods we learned this year along with some extensions. 
 By no means is any of the modeling presented here considered breakthrough modeling. I call this descriptive modeling because all I do is describe the patterns using statistical models. In the next chapter I'll give some examples of models that attempt to capture mechanism. Another way of explaining the difference between descriptive models and explanatory models is that the former are good summeries of the data and can be used to forcast, but they do not provide  understanding of the underling mechanisms so they do not give any insight into what would happen if a change was imposed on the system.  These models don't tell us the effect of social distancing, for example. 
 
-## Polynomial Regression on US State Percentages
+##  Regression on US State Percentages
 
 In the Chapter Descriptive Plots I showed that in the log scale the curves look quite linear by state for the count/population variable.
 
-This is a natural candidate for a random effects linear regression.  Each state should have its own intercept and slope.  We could create a complicated interaction between day and state, so that we have a state factor with 50 levels (so 49 effect or contrast codes), giving us 49 intercepts and slopes but that seems overkill. The random effects approach we learned last semester for repeated measures makes more sense.  Each state is modeled as a random draw from a multivariate normal distribution such that we draw 50 pairs of slopes and intercepts from that multivariate distribution. Once we have those 50 slope and intercept pairs, then we compute the predicted scores for each state. The algorithm finds the mean and covariance matrix of that multivaraite distribution to minimize the discrepancy (i.e., squared residuals) between the observed counts and the predicted counts.  
+These data are a natural candidate for a random effects linear regression.  Each state should have its own intercept and slope.  We could create a complicated interaction between day and state, so that we have a state factor with 50 levels (so 49 effect or contrast codes), giving us 49 intercepts and slopes but that seems overkill. The random effects approach we learned last semester for repeated measures makes more sense.  Each state is modeled as a random draw from a multivariate normal distribution such that we draw 50 pairs of slopes and intercepts from that multivariate distribution. Once we have those 50 slope and intercept pairs, then we compute the predicted scores for each state. The algorithm finds the mean and covariance matrix of that multivaraite distribution to minimize the discrepancy (i.e., squared residuals) between the observed counts and the predicted counts.  As shown in the previous chapter, if logs are taken of the percentages, then the state-level data appear to follow straight lines.
+
+
 
 ```{r}
-#officially drop all 0 counts from the allstates.long data base. be careful, this no longer has 0s
+#officially drop all 0 counts from the allstates.long data base. be careful, this data.frame no longer has 0s
 allstates.long <- allstates.long %>% mutate(count = na_if(count, "0"))
 
 #save percent variable and log10 version
@@ -74,11 +76,64 @@ table.prediction[,5:7] <- round(table.prediction[,5:7],0)
 knitr::kable(table.prediction[,c(1,5:7)], col.names=c("State","Current","Prediction +1 Day",paste0("Prediction +",days.ahead,"days")))
 ```
 
+On March 23 this table showed that NY has 15793 cases. The model predicts that the next day there will be 19888 cases and in 5 days there will be 92344 cases. This seems like a very high number. I suspect that local governments are faced with such predictions from their public health officials (predictions based on more sophisticated models than the one I'm using here), and this is one way to understand the urgency and action that government has taken to slow down the spread of the virus.  More locally, for Michigan, on March 23 there were 1037 reported cases, the model predicts the next day will see 2232 cases and in five days there will be 20675 cases.
+
+### Comparison with polynomial regression
+
+In the previous model I showed that the linear mixed model (allowing for each state to have their own slope and intercept) on the log of the state-level percentages did a reasonable job of fitting the data.  Here I want to do a little tangent and illustrate how well a polynomial can mimic the exponential pattern we see in the data.  
+
+Let's take the case that in a particular locale the rate of covid-19 follows this general curve. I made up the data so I know the curve does follow exponential growth with an additive error term (the plus $\epsilon$) because I added random normally distributed noise with mean 0 and standard deviation .25.
+
+I'll run several regressions in order and produce one plot at the end.  The points on the graph are the observed data points, the colored curves emerge from different regression models.    The first regression is  a linear regression with just x (days 1-25) as a linear predictor. I added a violet straight line to indicate the best fitting straight line--not a good fit.  The second regression adds a quadratic term and will appear as a red curve. This is an improvement, but it is nonmonotonic and shows a decrease in the first few days (which is not a pattern displayed in the raw data).  The third regression adds a cubic term and fits the points very well.
+
+Next, I estimate the exponential directly using nonlinear regression. Instead of the parameter being a multiplier of the predictor (like in linear regression), the parameter serves as the growth factor. The green curve follows the data very closely. Here only one parameter was estimated and it was .1502, very close to the actual .15 I used to estimate the data.  The polynomial did quite well but needed 4 parameters (intercept and three slopes); those parameters are not easy to interpret. The single parameter of the exponential yields a very good fit with only one _interpretable_ parameter.  Note that here I am using the nls() command, which estimates a nonlinear regression.
+
+Finally, just for comparison, I run a linear regression through these data after transforming the Y variable into the log, then rexpressing the predicted scores back to the original scale like I did in the predictions using the linear mixed model with the lmer() command above.  I'll draw that curve in black---very similar result to the nonlinear regression with the exponential and the third order polynomial.
+
+
+```{r origplot}
+#set random seed to results appear the same each run
+set.seed(0101202019)
+x <- 1:25
+y <- exp(.15*x) + rnorm(length(x),0,.25)
+plot(x,y)
+
+#linear regression with one predictor, draw violet curve
+out <- lm(y~x)
+summary(out)
+lines(x,predict(out), col="violet")
+
+#add quadratic term, draw red curve
+out <- lm(y~x + I(x^2))
+summary(out)
+lines(x,predict(out), col="red")
+
+#add cubic term, draw blue curve
+out <- lm(y~x + I(x^2) + I(x^3))
+summary(out)
+lines(x,predict(out), col="blue")
+
+
+#nonlinear exponential directly estimated, draw green curve
+out <- nls(y~exp(beta*x), start=list(beta=.5))
+summary(out)
+lines(x,predict(out), col="green")
+
+#log transform followed by linear regression, draw black curve
+out <- lm(log(y)~x)
+summary(out)
+lines(x,exp(predict(out)), col="black")
+```
+
+### Thoughts on the log transformation
+
 This type of model where we transform the dependent variable by converting to logs, creates an additive error term in the log scale (i.e., log(counts) + $\epsilon$). But maybe that isn't the right error structure. We can study the residuals to see if there are nonlinearities. It may be that the error is added to the counts rather than the log of the counts (i.e., counts + $\epsilon$).  
 
-We now turn to modeing the curvature directly, in a form that permits the counts + $\epsilon$ model.
+We now turn to modeling the curvature directly, in a form that permits the counts + $\epsilon$ model.
 
 ## Exponential (Nonlinear) Regression 
+
+In the previous section I illustrated how to run a nonlinear regression using the nls() command to estimate the growth factor of an exponential.
 
 Pending
 

@@ -202,6 +202,9 @@ coord_cartesian(clip = 'off') + scale_x_date(limits=as.Date(c("2020-03-09", as.c
 
 ```
 
+This pattern is quite remarkable. The states appear to have similar slopes on this log plot. They vary in intercept, but that reflects when the state started reporting positive cases.  It seems states are on a similar growth trajectory, but some states are further along (higher intercepts) than other states.  That that log transformation of the Y axis converted these curves into lines is consistent with the underlying pattern of these data following an exponential model. In the next chapter I'll cover the exponential more directly, both in its log linear form as in these graphs as well as through nonlinear regression.
+
+
 
 ## Map of US
 
