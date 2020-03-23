@@ -14,5 +14,6 @@ bookdown::pdf_book:
   latex_engine: xelatex
   citation_package: natbib
   keep_tex: yes
+  pandoc_args: [--wrap=none]
 #commented epub_book because messing up index.html
 #bookdown::epub_book: default

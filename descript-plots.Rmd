@@ -117,7 +117,8 @@ Now that we have allstates.long created we can compare cumulative counts in the 
 #compute sums for the entire world by day and store plot in object p1
 sum.world <- data.frame(count=apply(datacov[,5:ncol(datacov)],2,sum,na.rm=T))
 sum.world$day <- as.Date(rownames(sum.world), "%m/%d/%y")
-p1 <- ggplot(sum.world, aes(x=day,y=count))  + geom_bar(stat="identity",fill="steel blue") + ggtitle("World Wide Counts") + theme_minimal()
+p1 <- ggplot(sum.world, aes(x=day,y=count))  + geom_bar(stat="identity",fill="steel blue") + ggtitle("World Wide Counts") + theme_minimal() + scale_y_continuous(labels=comma)
+#above line: labels=comma prints y axis labels as numbers rather than scientific notation
 #can print plot p1 by itself by uncommenting next line
 #p1
 
@@ -134,7 +135,7 @@ uspopfrac <- 330/7800
 cv10frac <- uspopfrac*sum.world[nrow(sum.world),1]
 
 #had to add +1 to max date in scale_x_date
-p2 <- ggplot(allstates.long, aes(x=day,weight=count))  + geom_bar(na.rm=T,fill="steel blue") + ggtitle("US Counts") + scale_x_date(limits=c(sum.world$day[1], sum.world$day[nrow(sum.world)]+1))  + theme_minimal() + geom_hline(yintercept=cv10frac,col="red")
+p2 <- ggplot(allstates.long, aes(x=day,weight=count))  + geom_bar(na.rm=T,fill="steel blue") + ggtitle("US Counts") + scale_x_date(limits=c(sum.world$day[1], sum.world$day[nrow(sum.world)]+1))  + theme_minimal() + geom_hline(yintercept=cv10frac,col="red") + scale_y_continuous(labels=comma)
 #+ scale_y_continuous(limits=c(0,max(sum.world$count)))
 #can print plot p2 by itself by uncommenting next line
 #p2
@@ -174,7 +175,6 @@ coord_cartesian(clip = 'off') + scale_x_date(limits=as.Date(c("2020-03-08", "202
 To help see the state by state structure in these curves (e.g., whether or not they are linear in the log scale), I partitioned the 50 states by population (sample sizes in each panel are 12 or 13 states). The states with larger populations (two lower panels) show relatively linear patterns.  The smaller in population states (two upper panels) show some curvature but that could be due to several states not showing cases until a few days later.  
 
 ```{r warning=F, message=F}
-library(Hmisc)
 subset(allstates.long, day.numeric!=0) %>%mutate(label = if_else(day == max(day), as.character(prettyval), NA_character_)) %>%
 ggplot( aes(x=day, y=count/population*100,group=prettyval, color=prettyval)) + geom_line() +
  geom_label_repel(aes(label= label), nudge_x=2, na.rm=T,segment.color = 'grey50', label.size=.01, size=2.5, show.legend=F) +
@@ -183,7 +183,7 @@ coord_cartesian(clip = 'off') + scale_x_date(limits=as.Date(c("2020-03-08", "202
 
 ```
 
-Here is another version of the plot where I set 0 to missing value (NA) so that the curves begin where there are nonzero points. The only difference is the 2nd line with the mutate() and na_if() command. This modification to the plot makes it easier to detect linearity as we don't have the artificial jump in the curve from 0. But, while it makes the plots a little easier to understand, it drops the important of information of _liftoff_, the point at which the count moves from zero to nonzero.  This is something that could be modeled with a parameter in the structural model and so, in principle, one could see what factors affect the liftoff.
+Here is another version of the plot where I set 0 to missing value (NA) so that the curves begin where there are nonzero points. The only difference is the 2nd line with the mutate() and na_if() command. This modification to the plot makes it easier to detect linearity as we don't have the artificial jump in the curve from 0. But, while it makes the plots a little easier to understand, it drops the important information about _liftoff_, the point at which the count moves from zero to nonzero.  This is something that could be modeled with a parameter in the structural model and so, in principle, one could see what factors affect the liftoff.
 
 ```{r warning=F, message=F}
 subset(allstates.long, day.numeric!=0) %>%mutate(label = if_else(day == max(day), as.character(prettyval), NA_character_)) %>%
@@ -200,7 +200,6 @@ coord_cartesian(clip = 'off') + scale_x_date(limits=as.Date(c("2020-03-08", "202
 
 Pending:  Redo the plot and animation above for the world but focusing on the US.
 
-Similarly need to reformat the data into long format.  Also, the Johns Hopkins data set appears to have started coding counts at the state level starting on 3/08/20 I drop earlier days from the allstates data set.
 
 
 

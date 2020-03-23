@@ -13,10 +13,16 @@ library(stringr)
 library(tidycensus)
 library(ggplot2)
 library(gganimate)
+library(ggeffects)
+library(scales)
 library(maps)
 library(ggthemes)
 library(viridis)
 library(ggrepel)
+library(lme4)
+library(nlme)
+library(merTools)
+library(Hmisc)
 ```
 
 For ease of use it would be better to use the pacman package because it also checks if the libraries are installed on your computer (if not, it automatically downloads them along with all their dependencies).  Finally, pacman initiates the library() call for each library in the list leaving you ready to proceed with the analyses. For illustration, here is the pacman code you would use. This facilitates reproducibility.  
@@ -25,7 +31,8 @@ For ease of use it would be better to use the pacman package because it also che
 #if pacman isn't installed, then install it and issue library(pacman)
 if(!("pacman" %in% installed.packages()[,"Package"])) install.packages("pacman")
 library(pacman)
-p_load("readr","tidyverse","rvest","magrittr","stringr","tidycensus","ggplot2","gganimate","maps","ggthemes","viridis","ggrepel")
+#double check all the libraries listed above are listed here too
+p_load("readr","tidyverse","rvest","magrittr","stringr","tidycensus","ggplot2","gganimate","ggeffects", scales", "maps","ggthemes","viridis","ggrepel","lme4","nlme","merTools","Hmisc")
 ```
 
 ## Utility functions
@@ -34,7 +41,7 @@ Here are some functions I wrote that I will use later. I put them here to improv
 
 ### Multiple Plots
 
-This function puts multiple ggplots on the same page.
+This function puts multiple ggplots on the same page.  There are now packages that can do this as well, like ![patchwork]{https://patchwork.data-imaginist.com/}, but I've been using this simple function for years even before such packages existed. I offer this function, which I got off someone's website years ago, as an example of how relatively simple some R functions can be, even when performing complex tasks like arranging multiple plots on a page.
 
 ```{r}
 #Multiple plot function
@@ -81,6 +88,51 @@ multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
                                       layout.pos.col = matchidx$col))
     }
   }
+}
+
+```
+
+### Caterpillar Plot
+
+Useful plot from this [link](https://stackoverflow.com/questions/13847936/plot-random-effects-from-lmer-lme4-package-using-qqmath-or-dotplot-how-to-mak)
+
+```{r}
+## re = object of class ranef.mer
+ggCaterpillar <- function(re, QQ=TRUE, likeDotplot=TRUE) {
+    require(ggplot2)
+    f <- function(x) {
+        pv   <- attr(x, "postVar")
+        cols <- 1:(dim(pv)[1])
+        se   <- unlist(lapply(cols, function(i) sqrt(pv[i, i, ])))
+        ord  <- unlist(lapply(x, order)) + rep((0:(ncol(x) - 1)) * nrow(x), each=nrow(x))
+        pDf  <- data.frame(y=unlist(x)[ord],
+                           ci=1.96*se[ord],
+                           nQQ=rep(qnorm(ppoints(nrow(x))), ncol(x)),
+                           ID=factor(rep(rownames(x), ncol(x))[ord], levels=rownames(x)[ord]),
+                           ind=gl(ncol(x), nrow(x), labels=names(x)))
+
+        if(QQ) {  ## normal QQ-plot
+            p <- ggplot(pDf, aes(nQQ, y))
+            p <- p + facet_wrap(~ ind, scales="free")
+            p <- p + xlab("Standard normal quantiles") + ylab("Random effect quantiles")
+        } else {  ## caterpillar dotplot
+            p <- ggplot(pDf, aes(ID, y)) + coord_flip()
+            if(likeDotplot) {  ## imitate dotplot() -> same scales for random effects
+                p <- p + facet_wrap(~ ind)
+            } else {           ## different scales for random effects
+                p <- p + facet_grid(ind ~ ., scales="free_y")
+            }
+            p <- p + xlab("Levels") + ylab("Random effects")
+        }
+
+        p <- p + theme(legend.position="none")
+        p <- p + geom_hline(yintercept=0)
+        p <- p + geom_errorbar(aes(ymin=y-ci, ymax=y+ci), width=0, colour="black")
+        p <- p + geom_point(aes(size=1.2), colour="blue") 
+        return(p)
+    }
+
+    lapply(re, f)
 }
 
 ```

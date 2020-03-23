@@ -1,11 +1,86 @@
 # Descriptive Modeling
 
 The previous chapter presnted several descriptive plots of raw data.  What I'd like to do in this chapter is show some simple modeling using methods we learned this year along with some extensions. 
-By no means is any of the modeling presented here considered breakthrough modeling. I call this descriptive modeling because all I do is describe the patterns. In the next chapter I'll give some examples of models that attempt to capture mechanism. Another way of explaining the difference between descriptive models and explanatory models is that the former are good summeries of the data and can be used to forcast, but they do not provide  understanding of the underling mechanisms so they do not give any insight into what would happen if a change was imposed on the system.  These models don't tell us the effect of social distancing. 
+By no means is any of the modeling presented here considered breakthrough modeling. I call this descriptive modeling because all I do is describe the patterns using statistical models. In the next chapter I'll give some examples of models that attempt to capture mechanism. Another way of explaining the difference between descriptive models and explanatory models is that the former are good summeries of the data and can be used to forcast, but they do not provide  understanding of the underling mechanisms so they do not give any insight into what would happen if a change was imposed on the system.  These models don't tell us the effect of social distancing, for example. 
 
-## Polynomial Regression
+## Polynomial Regression on US State Percentages
 
-## Exponential Regression 
+In the Chapter Descriptive Plots I showed that in the log scale the curves look quite linear by state for the count/population variable.
+
+This is a natural candidate for a random effects linear regression.  Each state should have its own intercept and slope.  We could create a complicated interaction between day and state, so that we have a state factor with 50 levels (so 49 effect or contrast codes), giving us 49 intercepts and slopes but that seems overkill. The random effects approach we learned last semester for repeated measures makes more sense.  Each state is modeled as a random draw from a multivariate normal distribution such that we draw 50 pairs of slopes and intercepts from that multivariate distribution. Once we have those 50 slope and intercept pairs, then we compute the predicted scores for each state. The algorithm finds the mean and covariance matrix of that multivaraite distribution to minimize the discrepancy (i.e., squared residuals) between the observed counts and the predicted counts.  
+
+```{r}
+#officially drop all 0 counts from the allstates.long data base. be careful, this no longer has 0s
+allstates.long <- allstates.long %>% mutate(count = na_if(count, "0"))
+
+#save percent variable and log10 version
+allstates.long$percent <- allstates.long$count/allstates.long$population * 100
+allstates.long$percent.log10 <- log10(allstates.long$percent)
+
+
+out.lmer <- lmer(percent.log10 ~ day.numeric + (day.numeric|state.abb), allstates.long)
+summary(out.lmer)
+
+#list of the set of 50 intercept/slope pairs
+coef(out.lmer)$state.abb
+
+#quantile plot of the estimates
+#ggCaterpillar(ranef(out.lmer, condVar=T),QQ=T, likeDotplot = T)
+
+#include 95% CI, could do instead +/- 1 standard error, which is roughly .68 CIs
+#light grey points are not statistically different from 0
+raeff <- REsim(out.lmer)
+plotREsim(raeff,labs=T, stat="mean",level=.95)
+```
+
+Now that we understand the slopes and intercepts, let's make some predictions.
+
+```{r}
+max.day.numeric <- max(allstates.long$day.numeric)
+max.day <- max(allstates.long$day)
+
+#predict day.ahead number of days
+days.ahead <- 5
+
+#be sure order of states is the same across all parts of this command
+predmat <- data.frame(day.numeric=rep(c(0:(max.day.numeric+days.ahead)),50),state.abb=rep(rownames(coef(out.lmer)$state.abb),each=max.day.numeric+days.ahead+1), prettyval=rep(allstates$prettyval[order(match(allstates$`Province/State`,state.population$NAME))], each=max.day.numeric+days.ahead+1))
+
+#compute predictions
+predmat$prediction <- predict(out.lmer, predmat)
+
+#linear plot of predictions as estimated
+predmat %>% mutate(label = if_else(day.numeric == max(day.numeric), as.character(prettyval), NA_character_)) %>%
+  ggplot(aes(day.numeric,prediction,group=prettyval, color=prettyval )) +  geom_line()   +
+   geom_label_repel(aes(label= label), nudge_x=2, na.rm=T,segment.color = 'grey50', label.size=.01, size=2.5, show.legend=F) +
+coord_cartesian(clip = 'off') +  scale_x_continuous(limits=c(0,max.day.numeric+ days.ahead+3)) +
+    theme(legend.position="none", plot.margin = margin(0.1, 1, 0.1, 0.1, "cm"))
+
+#plot of same predictions as 10^prediction to put back on original percentage scale
+predmat %>% mutate(label = if_else(day.numeric == max(day.numeric), as.character(prettyval), NA_character_)) %>%
+ggplot( aes(day.numeric,10^prediction,group=prettyval, color=prettyval )) +  geom_line()   +
+   geom_label_repel(aes(label= label), nudge_x=2, na.rm=T,segment.color = 'grey50', label.size=.01, size=2.5, show.legend=F) +
+coord_cartesian(clip = 'off') +  scale_x_continuous(limits=c(0,max.day.numeric+ days.ahead+3)) +
+    theme(legend.position="none", plot.margin = margin(0.1, 1, 0.1, 0.1, "cm"))
+```
+
+```{r}
+day.plus.1 <- predmat[predmat$day.numeric==max.day.numeric+1,] %>% mutate(prediction = 10^prediction*state.population$value/100)
+day.plus.days.ahead <- predmat[predmat$day.numeric==max.day.numeric+days.ahead,] %>% mutate(prediction = 10^prediction*state.population$value/100)
+
+actual.counts.recent.pull <- allstates[order(match(allstates$`Province/State`,state.population$NAME)), c(1:4,which(as.Date(colnames(allstates), "%m/%d/%y")==max.day))]
+table.prediction <- data.frame(actual.counts.recent.pull, plus.one.day = day.plus.1$prediction, plus.days.ahead = day.plus.days.ahead$prediction)
+table.prediction[,5:7] <- round(table.prediction[,5:7],0)
+
+knitr::kable(table.prediction[,c(1,5:7)], col.names=c("State","Current","Prediction +1 Day",paste0("Prediction +",days.ahead,"s")))
+```
+
+This type of model where we transform the dependent variable by converting to logs, creates an additive error term in the log scale (i.e., log(counts) + $\epsilon$). But maybe that isn't the right error structure. We can study the residuals to see if there are nonlinearities. It may be that the error is added to the counts rather than the log of the counts (i.e., counts + $\epsilon$).  
+
+We now turn to modeing the curvature directly, in a form that permits the counts + $\epsilon$ model.
+
+## Exponential (Nonlinear) Regression 
+
+Pending
 
 ## Basic Machine Learning Examples
 
