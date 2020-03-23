@@ -158,6 +158,18 @@ apply(cdc.testing[,c(2,3)],2,sum,na.rm=T)
 cdc.testing$total.tests <- apply(cdc.testing[,c(2,3)],1,sum,na.rm=T)
 ```
 
+There is another site I found that reports positive and negative results by state. This is the [COVID tracking project](https://covidtracking.com).  I don't know how reputable this source is but I'll keep an eye on it. 
+It reports daily records by state on number of positive,  negative, pending, hospitalized, death, and total number of tests.  This page points out specifics about each state (e.g., Maryland stopped reporting negative cases as of 3/12, MA numbers include repeated testing on the same individual, not all states include data from commercial labs) showing that it is challenging to interpret such data at the aggregate level when there is so much heterogeneity across units. See, for example, [state-level details](https://covidtracking.com/data/)
+
+
+```{r warning=F, message=F}
+covid.tracking <- read_csv("https://covidtracking.com/api/states/daily.csv")
+head(covid.tracking)
+
+#focus just on the 50 states (i.e., drop DC and territories like American Samoa AS)
+covid.tracking <- subset(covid.tracking, covid.tracking$state %in% state.abb)
+```
+
 ## Conclusion
 
 A lot of code in this chapter, but the code is in service of downloading the relevant up-to-date data I wanted to automate everything and write code for all my data manupulations so that you could see what I did and to make the output completely reproducible. One benefit of this approach is that I can run this code every day to get the current information so that all my analyses and plots in this website automatically update. Any workflow process that would require that I manually download a spreadsheet and manually edit that file would not be easily reproducible and would create extra work for me each day when I update this website.
