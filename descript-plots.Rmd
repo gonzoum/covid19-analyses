@@ -208,10 +208,27 @@ This pattern is quite remarkable. The states appear to have similar slopes on th
 
 ## Map of US
 
-Pending:  Redo the plot and animation above for the world but focusing on the US.
+Here is the animation for the US.
 
 
-
-
+```{r}
+mybreaks <- c(1, 20, 100, 500, 1000, 5000, 10000)
+mylabels <- c("1-19", "20-99", "100-499", "500-999", "1,000-4,999", "5,000-9,999","10,000+")
+ggplot(allstates.long) +  borders("usa", colour = "gray90", fill = "gray85") +
+  theme_map() + 
+  geom_point(aes(x=Long, y=Lat, size=count, color=count),stroke=F, alpha=0.7) +
+ scale_size_continuous(name="Cases", trans="log", range=c(1,7),  breaks=mybreaks, labels = mylabels) +
+    scale_color_viridis_c(option="inferno",name="Cases", trans="log",breaks=mybreaks, labels = mylabels) +
+    theme_void() + 
+    guides( colour = guide_legend()) +
+    theme(
+      legend.position = "bottom",
+      text = element_text(color = "#22211d"),
+      plot.background = element_rect(fill = "#ffffff", color = NA), 
+      panel.background = element_rect(fill = "#ffffff", color = NA), 
+      legend.background = element_rect(fill = "#ffffff", color = NA)) + 
+  labs(title="Date: {frame_time}", caption = "Data Repository provided by Johns Hopkins CSSE") +
+  transition_time(day) + ease_aes('linear')
+```
 
 

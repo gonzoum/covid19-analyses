@@ -13,6 +13,7 @@ These data are a natural candidate for a random effects linear regression.  Each
 
 ```{r}
 #officially drop all 0 counts from the allstates.long data base. be careful, this data.frame no longer has 0s
+#can't study liftoff (see on descriptive plots) now that 0s are removed
 allstates.long <- allstates.long %>% mutate(count = na_if(count, "0"))
 
 #save percent variable and log10 version
