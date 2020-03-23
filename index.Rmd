@@ -10,6 +10,7 @@ site: bookdown::bookdown_site
 #        toc: true
 #        toc_float: true
 output: bookdown::gitbook 
+#output: bookdown::bookdown_site 
 documentclass: book
 bibliography: [book.bib, packages.bib]
 biblio-style: apalike
@@ -20,11 +21,13 @@ description: ""
 
 # Preface {-}
 
-These are some notes to illustrate 
-1. some advanced features for R (e.g., web scraping, git repositories, animated plots), 
-2. a way of creating a reproducible workflow for analyses and report writing and 
-3. using data from the covid-19 pandemic to illustrate some of the material we have been learning this year. 
+These notes have three primary goals: 
 
+1. illustrate some advanced features in R (e.g., web scraping, git repositories, animated plots), 
+
+2. illustrate a way of creating a reproducible workflow for analyses and report writing and 
+
+3. using data from the covid-19 pandemic to reinforce and expand some of the material we have been learning this year. 
 
 
 In these notes I won't be able to address issues of specificity and sensitivity of the covid-19 tests because I don't have access to information about the tests' false positive and false negative rates.   Further, there appear to be different tests in use, tests from different vendors, new tests coming on line, etc., which increases the complexity in understanding the counts of "confirmed" covid-19 cases. Also, it is too early to develop population models of the baseline proportions of who has the disease.  Without knowing the baserates of the disease and the specificity/sensitivity of the available tests, we are at a major disadvantage for using the usual tools we have (e.g., Bayesian statistics) to evaluate such matters.  These notes illustrate what we can do given the available information.
@@ -48,6 +51,10 @@ knitr::write_bib(c(
   .packages(), 'bookdown', 'knitr', 'rmarkdown'
 ), 'packages.bib')
 ```
+
+
+<!--  To stop the server, run servr::daemon_stop(1) or restart your R session -->
+<!--  Serving the directory /Users/gonzo/Dropbox/transfer/mac transfer/bookdown-demo-master at http://127.0.0.1:4321-->
 
 <!-- Various R notes -->
 <!-- You can label chapter and section titles using `{#label}` after them, e.g., we can reference Chapter \@ref(intro). If you do not manually label them, there will be automatic labels anyway, e.g., Chapter \@ref(methods). -->

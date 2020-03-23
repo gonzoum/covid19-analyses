@@ -46,7 +46,7 @@ datacov.long$day.numeric <- as.numeric(datacov.long$day)-18283
 
 Now the animated plot by day. I rewrote the original parts of the plotting program to make it more efficient for the animation (e.g., I use the ggthemes in the maps package). This animation uses the package gganimate to reproduce the plot for each day and then overlays the plots one on top of the other to produce the animation.
 
-```{r cache=T, warning=FALSE, message=FALSE}
+```{r cache=T, warning=FALSE, message=FALSE,fig.cap="World Count of Positive Cases"}
 ggplot(datacov.long) +  borders("world", colour = "gray90", fill = "gray85") +
   theme_map() + 
   geom_point(aes(x=Long, y=Lat, size=count, color=count),stroke=F, alpha=0.7) +
@@ -63,6 +63,10 @@ ggplot(datacov.long) +  borders("world", colour = "gray90", fill = "gray85") +
   labs(title="Date: {frame_time}", caption = "Data Repository provided by Johns Hopkins CSSE") +
   transition_time(day) + ease_aes('linear')
 ```
+
+
+While counts are useful they have their limitations. Does a country have a relatively high number of positive cases because it has a large population?  In this field it is common to normalize counts by the population and report numbers per capita (e.g., 62 cases out of 100,000).  I'll have to track down the populations of each country and merge that into this animation.  Later in this chapter, I develop this animation for US and I do have the state populations so will illustrate the difference in this animiation in counts versus per capita there.  However, raw counts still have a role in helping to understand the impact of covid-19.  If a state has 1500 available hospital beds (and presumably the staff and supplies to provide care for  those  beds), but there are 2000 people in need of hospitalization, then there is a public health issue and the 'per capita" concern becomes moot.
+
 
 ## Compare World Counts to US
 
@@ -109,11 +113,14 @@ allstates.long$day.numeric <- as.numeric(allstates.long$day)-18330
 
 #make the variable with the state abbreviations a factor in R
 allstates.long$state.abb <- factor(allstates.long$`Province/State`)
+
+#create per capita (out of 100)
+allstates.long$percap100 <- allstates.long$count/allstates$population * 100
 ```
 
 Now that we have allstates.long created we can compare cumulative counts in the World to the US cumulative counts.  For a definition of the multiplot() function see the Preliminaries chapter.
 
-```{r}
+```{r,fig.cap="Cumulative Counts of Positive Cases" }
 #compute sums for the entire world by day and store plot in object p1
 sum.world <- data.frame(count=apply(datacov[,5:ncol(datacov)],2,sum,na.rm=T))
 sum.world$day <- as.Date(rownames(sum.world), "%m/%d/%y")
@@ -153,7 +160,7 @@ multiplot(p1,p2,cols=1)
 
 I decided to plot percentage relative to population (i.e., counts/population * 100).  The numbers are small. I've seen people report this as cases per 100,000, but I decided to stick with cases per 100 to maintain the percentage interpretation.  This is just a scale issue and doesn't affect the plots or the analyses.   The labels in the plots, like "7.5 WA" means Washington state with a population of 7.5 million. These labels are the prettyval labels I created earlier.
 
-```{r}
+```{r fig.cap="Per Cap Positive Cases by State"}
 #most recent date in file
 max.day.numeric <- max(allstates.long$day.numeric)
 max.day <- max(allstates.long$day)
@@ -170,7 +177,7 @@ coord_cartesian(clip = 'off') + scale_x_date(limits=as.Date(c("2020-03-09", as.c
 
 Same plot but now putting the vertical axis on the log (base 10) scale.  An exponential process becomes linear when taking logs so we would expect to clost to straight lines if the count of confirmed cases follows an exponential form.  Each state can have a different growth rate, which will show up as different slopes.  The top two states (NY and WA) are close to a straight line but with different growth rates.  Too much overlap to see much for the other states.  West Virginia (WV) didn't show its first case until 3/17/20 so that is why the green curve (lowest) looks different than the rest.
 
-```{r warning=F, message=F}
+```{r warning=F, message=F, fig.cap="Per Cap Positive Cases by State (log10 scale)"}
 subset(allstates.long, day.numeric!=0) %>%mutate(label = if_else(day == max(day), as.character(prettyval), NA_character_)) %>%
 ggplot( aes(x=day, y=count/population*100,group=prettyval, color=prettyval)) + geom_line() +
  geom_label_repel(aes(label= label), nudge_x=2, na.rm=T,segment.color = 'grey50', label.size=.01, size=2.5, show.legend=F) +
@@ -181,7 +188,7 @@ coord_cartesian(clip = 'off') + scale_x_date(limits=as.Date(c("2020-03-09", as.c
 
 To help see the state by state structure in these curves (e.g., whether or not they are linear in the log scale), I partitioned the 50 states by population (sample sizes in each panel are 12 or 13 states). The states with larger populations (two lower panels) show relatively linear patterns.  The smaller in population states (two upper panels) show some curvature but that could be due to several states not showing cases until a few days later.  
 
-```{r warning=F, message=F}
+```{r warning=F, message=F, fig.cap="Per Cap Positive Cases by State (log10 scale); Panels are based on Population"}
 subset(allstates.long, day.numeric!=0) %>%mutate(label = if_else(day == max(day), as.character(prettyval), NA_character_)) %>%
 ggplot( aes(x=day, y=count/population*100,group=prettyval, color=prettyval)) + geom_line() +
  geom_label_repel(aes(label= label), nudge_x=2, na.rm=T,segment.color = 'grey50', label.size=.01, size=2.5, show.legend=F) +
@@ -192,7 +199,7 @@ coord_cartesian(clip = 'off') + scale_x_date(limits=as.Date(c("2020-03-09", as.c
 
 Here is another version of the plot where I set 0 to missing value (NA) so that the curves begin where there are nonzero points. The only difference is the 2nd line with the mutate() and na_if() command. This modification to the plot makes it easier to detect linearity as we don't have the artificial jump in the curve from 0. But, while it makes the plots a little easier to understand, it drops the important information about _liftoff_, the point at which the count moves from zero to nonzero.  This is something that could be modeled with a parameter in the structural model and so, in principle, one could see what factors affect the liftoff.
 
-```{r warning=F, message=F}
+```{r warning=F, message=F, fig.cap="Per Cap Positive Cases by State (log10 scale); Panels are based on Population; Os dropped"}
 subset(allstates.long, day.numeric!=0) %>%mutate(label = if_else(day == max(day), as.character(prettyval), NA_character_)) %>%
   mutate(count = na_if(count, "0")) %>%
 ggplot( aes(x=day, y=count/population*100,group=prettyval, color=prettyval)) + geom_line() +
@@ -206,16 +213,18 @@ This pattern is quite remarkable. The states appear to have similar slopes on th
 
 
 
-## Map of US
+## Animated Map of US
 
-Here is the animation for the US.
+Here is the animation for the US.  Not much to look at since it has only been about 2 weeks of data.  This map needs work as Alaska and Hawaii outlines are not printed (points are on the left side).
 
+/* deal with mapping https://stackoverflow.com/questions/49523375/graphing-lat-long-data-points-on-us-map-50-states-including-alaska-hawaii */
 
-```{r}
-mybreaks <- c(1, 20, 100, 500, 1000, 5000, 10000)
-mylabels <- c("1-19", "20-99", "100-499", "500-999", "1,000-4,999", "5,000-9,999","10,000+")
+```{r warning=F, message=F, cache=T,fig.cap="US Count of Positive Cases"}
+mybreaks <- c(1, 20, 100, 500, 1000, 2000, 10000)
+mylabels <- c("1-19", "20-99", "100-499", "500-999", "1,000-1,999", "2,000-9,999","10,000+")
+
 ggplot(allstates.long) +  borders("usa", colour = "gray90", fill = "gray85") +
-  theme_map() + 
+ theme_map() + 
   geom_point(aes(x=Long, y=Lat, size=count, color=count),stroke=F, alpha=0.7) +
  scale_size_continuous(name="Cases", trans="log", range=c(1,7),  breaks=mybreaks, labels = mylabels) +
     scale_color_viridis_c(option="inferno",name="Cases", trans="log",breaks=mybreaks, labels = mylabels) +
@@ -231,4 +240,27 @@ ggplot(allstates.long) +  borders("usa", colour = "gray90", fill = "gray85") +
   transition_time(day) + ease_aes('linear')
 ```
 
+Because I have the state-level population sizes I can redo the animation using a per capita normalization out of 100.  I modified the breaks and labels manually but there may be a way to do that automatically with ggplot2 features.
 
+```{r warning=F, message=F, cache=T, fig.cap="US Per Cap (100)"}
+temp <- cut2(allstates.long$percap100, g=5, m=5)
+mylabels <- levels(temp)
+#onlycuts = T saves the numeric break points, drop first element which is 0
+mybreaks <- cut2(allstates.long$percap100, g=5, m=5, onlycuts=T)[-1]
+
+ggplot(allstates.long) +  borders("usa", colour = "gray90", fill = "gray85") +
+ theme_map() + 
+  geom_point(aes(x=Long, y=Lat, size=percap100, color=percap100),stroke=F, alpha=0.7) +
+ scale_size_continuous(name="Cases", trans="log", range=c(1,7),  breaks=mybreaks, labels = mylabels) +
+    scale_color_viridis_c(option="inferno",name="Cases", trans="log",breaks=mybreaks, labels = mylabels) +
+    theme_void() + 
+    guides( colour = guide_legend()) +
+    theme(
+      legend.position = "bottom",
+      text = element_text(color = "#22211d"),
+      plot.background = element_rect(fill = "#ffffff", color = NA), 
+      panel.background = element_rect(fill = "#ffffff", color = NA), 
+      legend.background = element_rect(fill = "#ffffff", color = NA)) + 
+  labs(title="Date: {frame_time}", caption = "Data Repository provided by Johns Hopkins CSSE") +
+  transition_time(day) + ease_aes('linear')
+```

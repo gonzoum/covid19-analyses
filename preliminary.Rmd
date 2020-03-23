@@ -5,6 +5,7 @@ I organize in one place all the R packages that are used in these notes so they 
 ## Libraries
 
 ```{r message=F,warning=F,results='hide'}
+library(bookdown)
 library(readr)
 library(tidyverse)
 library(rvest)
@@ -32,7 +33,8 @@ For ease of use it would be better to use the pacman package because it also che
 if(!("pacman" %in% installed.packages()[,"Package"])) install.packages("pacman")
 library(pacman)
 #double check all the libraries listed above are listed here too
-p_load("readr","tidyverse","rvest","magrittr","stringr","tidycensus","ggplot2","gganimate","ggeffects", scales", "maps","ggthemes","viridis","ggrepel","lme4","nlme","merTools","Hmisc")
+p_load("bookdown","readr","tidyverse","rvest","magrittr","stringr","tidycensus","ggplot2","gganimate","ggeffects", "scales", 
+       "maps","ggthemes","viridis","ggrepel","lme4","nlme","merTools","Hmisc")
 ```
 
 ## Utility functions

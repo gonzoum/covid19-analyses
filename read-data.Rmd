@@ -3,11 +3,26 @@
 
 This chapter will cover three different ways to read data into R: 1) executing a pull from a git repository, 2) scraping data from the web, and 3) pulling data with an api from the national census.
 
+## Comments about R code
+
+I am writing these notes to serve as a tutorial for how to work with data. My goal is not to teach data science or statistics in these notes but rather to illustrate how to work with data and highlight some pros and cons of different approaches. I will emphasize the code so that interested readers can see what I did. You are free to take this code and use it for your own purposes.
+
+My style of writing code is idiosyncratic as I suspect it is for everyone who writes code.  R is a complex language and like most languages there are various dialects.  I have learned many of those dialects and use them frequntly, sometimes mixing and matching the dialects to create hybrids.  I'll try to maintain some consistency but can't promise I'll succeed.  Desiderata include
+
+1.  use ggplot2 as much as possible for plots rather than the original base R plotting (though sometimes I can't resist)
+
+2.  write code that is robust to possible changes in the data that are automatically read in, and
+
+3.  write code that is easy to read and follow even though it may not be efficient code.  
+
+Sometimes these present conflicts such as writing robust code may not be code that is easy to follow.
+
+
 ## Pulling from a git repository
 
 I'll use the data base that Johns Hopkins has been maintaining, which is also used by news outlets such as CNN.  I already cloned the git repository on my local computer so each day I merely have to issue a "git pull" command to get all new files that have been edited.  This is a better process than conducting a completely new download every day of the entire repository.
 
-if you want to learn more about working with git repositories, you can do a google search for how to clone a repository.  Rstudio also has features to help clone and manage a git repository. 
+If you want to learn more about working with git repositories, you can do a google search for how to clone a repository.  Rstudio also has features to help clone and manage a git repository. 
 
 This script will switch to the folder I'm keeping the git repository, execute the command "git pull" and then bring me back to the original folder.  To keep things organized I'm keeping the git repository in a seperate folder from the R files that are creating these pages.
 
@@ -172,7 +187,9 @@ covid.tracking <- subset(covid.tracking, covid.tracking$state %in% state.abb)
 
 ## Conclusion
 
-A lot of code in this chapter, but the code is in service of downloading the relevant up-to-date data I wanted to automate everything and write code for all my data manupulations so that you could see what I did and to make the output completely reproducible. One benefit of this approach is that I can run this code every day to get the current information so that all my analyses and plots in this website automatically update. Any workflow process that would require that I manually download a spreadsheet and manually edit that file would not be easily reproducible and would create extra work for me each day when I update this website.
+Just because data files can be created does not mean those data are meaningful.   There are differences across these  data sources and some data are difficult to compare across states or over time (e.g., reporting of testing differs across states, different types of tests are used across states, the type of testing may have changed during the time interval). The myth is that if you have a large enough data set these kinds of issues will wash out in the aggregrate.  Maybe random error will wash out, but large data sets do not necessarily eliminate, by virtue of their size alone, systematic differences or biases.  The size of the data set can impress and ease one into passive acceptance of a particular data pattern and interpretation. We must exercise the same skepticism we privledge small data sets, and be aware that large data sets may have additional issues not present in small-scale studies. 
+
+A lot of code was presented in this chapter, but the code is in service of downloading the relevant up-to-date data I wanted to automate everything and write code for all my data manupulations so that you could see what I did and to make the output completely reproducible. One benefit of this approach is that I can run this code every day to get the current information so that all my analyses and plots in this website automatically update. Any workflow process that would require that I manually download a spreadsheet and manually edit that file would not be easily reproducible and would create extra work for me each day when I update this website.
 
 ::: {.infobox .caution data-latex="{caution}"}
 
