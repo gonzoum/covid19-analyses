@@ -12,7 +12,7 @@ These data are a natural candidate for a random effects linear regression.  Each
 
 
 ```{r}
-#officially drop all 0 counts from the allstates.long data base. be careful, this data.frame no longer has 0s
+#drop all 0 counts from the allstates.long data base. be careful, this data.frame no longer has 0s
 #can't study liftoff (see on descriptive plots) now that 0s are removed
 allstates.long <- allstates.long %>% mutate(count = na_if(count, "0"))
 
@@ -22,8 +22,16 @@ allstates.long$percent.log10 <- log10(allstates.long$percent)
 
 
 out.lmer <- lmer(percent.log10 ~ day.numeric + (day.numeric|state.abb), allstates.long)
-summary(out.lmer)
+#summary(out.lmer)
+#tab_model() produces nicer looking tables
+tab_model(out.lmer, show.se=T, show.stat=T)
+```
 
+The estimates, se(est), CI, t and pvalue for the fixed effects are printed first, then the parameters of the random effect part. In order, they are the variance of the residuals, the variance of the random effect intercept, the variance of the random effect slope, the correlation between the random intercept and the random slope, the adjusted ICC, number of states, number of observations (recall 0s have been removed from this data file so tne N refers to the number of days by state for which there was a nonzero number of positive covid-19 cases), and the R$^2$ values.  For more documentation on the computation of these terms see the help page for tab_model().
+
+Let's look at the state-level slopes and intercepts.
+
+```{r}
 #list of the set of 50 intercept/slope pairs
 coef(out.lmer)$state.abb
 
