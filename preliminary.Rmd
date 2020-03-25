@@ -1,8 +1,14 @@
 # Preliminaries
 
-I organize in one place all the R packages that are used in these notes so they can be easily installed.
+I want these notes to serve as an example of how keep your analyses organized, reproducible and well-organized.  Analysis projects have many common elements, which include gathering data, cleaning and organizing data, preparing descriptive summaries, testing hypotheses, writing reports, and dissemination.  The end product should be a complete pipeline that takes you from soup to nuts with clear documentation.   While these notes are not perfect, they provide one example of how to prepare a workflow.
+
+These notes are written completely in R. They are organized across several Rmd files (like this one) that are executed in a particular order (e.g., the file that reads the data and cleans the data is sourced before the file that produces the descriptive summaries of the data).  
+
+I can reproduce all my analyses and so can you. I put the files for this project (except for the data downloads) in a git repository that you can clone and follow along. Further, I tried to be diligent in writing commits so you can see how these notes developed, edits I made, code I edited and re-edited, turns I took in my analyses that were dead ends so I didn't pursue them, etc.  This is all part of the regular scientific process.  In the "old days" scientists maintained lab notebooks where they recorded everything they did. A git repository serves the analogous role of an electronic library. It keeps track of everything I did for this project.  You can read the final product (the notes you are currently reading) but you are free to see my thought process, see how I edited these documents, and see the order in which I actually wrote things rather than the order they are presented.  All you have to do is visit the [github site for this project](https://github.com/gonzoum/covid19-analyses).
 
 ## Libraries
+
+I organize in one place all the R packages that are used in these notes so they can be easily installed.
 
 ```{r message=F,warning=F,results='hide'}
 library(bookdown)
@@ -29,10 +35,9 @@ library(merTools)
 library(Hmisc)
 ```
 
-For ease of use it would be better to use the pacman package because it also checks if the libraries are installed on your computer (if not, it automatically downloads them along with all their dependencies).  Finally, pacman initiates the library() call for each library in the list leaving you ready to proceed with the analyses. For illustration, here is the pacman code you would use. This facilitates reproducibility.  
+For ease of use it would be better to use the pacman package because it also checks if the libraries are installed on your computer (if not, the package automatically downloads them along with all their dependencies).  Finally, pacman initiates the library() call for each library in the list leaving you ready to proceed with the analyses. For illustration, here is the pacman code you would use. This facilitates reproducibility.  
 
 ```{r eval=F}
-#double check that the library list above is completely listed below in p_load
 #if pacman isn't installed, then install it and issue library(pacman)
 if(!("pacman" %in% installed.packages()[,"Package"])) install.packages("pacman")
 library(pacman)
@@ -47,7 +52,7 @@ Here are some functions I wrote that I will use later. I put them here to improv
 
 ### Multiple Plots
 
-This function puts multiple ggplots on the same page.  There are now packages that can do this as well, like [patchwork](https://patchwork.data-imaginist.com/), but I've been using this simple function for years even before such packages existed. I offer this function, which I got off someone's website years ago, as an example of how relatively simple some R functions can be, even when performing complex tasks like arranging multiple plots on a page.
+This function puts multiple ggplots on the same page.  There are now packages that can do this as well, like [patchwork](https://patchwork.data-imaginist.com/), [gridExtra](https://cran.r-project.org/web/packages/egg/vignettes/Ecosystem.html) and [gtable](https://cran.r-project.org/web/packages/gtable/index.html), but I've been using this simple function for years even before such packages existed. I offer this function, which I got off someone's website years ago, as an example of how relatively simple some R functions can be, even when performing complex tasks like arranging multiple plots on a page.  I believe this multiplot() function is embedded in a [larger package](http://larmarange.github.io/JLutils/reference/multiplot.html).
 
 ```{r}
 #Multiple plot function
@@ -147,6 +152,6 @@ ggCaterpillar <- function(re, QQ=TRUE, likeDotplot=TRUE) {
 
 **R Notes**
 
-For better reproducibility it is good to use a package like renv that saves the current versions of all your packages used in your run. This way if tomorrow a package is updata, and it breaks your code, you at least have the earlier version of the package available on your drive.
+For better reproducibility it is good to use a package like renv that saves the current versions of all your packages used in your pipeline. This way if  a package is updated tomorrow and the new version breaks your code, you at least have the earlier version of the package available locally on your drive to continue running the same code.
 
 :::

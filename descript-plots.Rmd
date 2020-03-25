@@ -1,11 +1,11 @@
 # Descriptive Plots
 
-This chapter  presents some descriptive plots of the raw data. No analyses, no standard errors, no parameters to estimate, no hypotheses to test. Just raw data presented in different forms to gain insight into the patterns.  I'll create a few plots at the world level, and then switch to the state level for US data.  You are free to take my code and edit it to produce additional plots for other countries and their states or provinces (up to the degree of resolution provided by the data sets we downloaded).
+This chapter  presents some descriptive plots of the raw data. No analyses, no standard errors, no parameters to estimate, no hypotheses to test. Just raw data presented in different forms to gain insight into the patterns that are in the data.  I'll create a few plots at the world level, and then switch to the state level for US data.  You are free to take my code and edit it to produce additional plots for other countries and their states or provinces (up to the degree of resolution provided by the data sets we downloaded, which as of 3/23/20 is at the US county level).
 
 ## World Map
 
 
-Here is an example I lifted from [here](https://datascienceplus.com/map-visualization-of-covid19-across-world/)
+Here is an example I copied from [here](https://datascienceplus.com/map-visualization-of-covid19-across-world/)
 
 I make use of the datacov file I read in from the Johns Hopkins git repository.
 
@@ -36,7 +36,11 @@ ggplot() +
 
 ```
 
-I'll expand this example to make an animation so we can see the world map animated with total cases changing by day.  We need to reformat the data file datacov into long format in order to be used by the animation function in the package gganimate.  That is, rather than using the datacov data.frame that is in wide format, I need to reformat the data.frame into long format and create a day column and a count column.  The gather() function in dplyr does this very efficiently.  To help in later analyses I also create a day.numeric variable that is 0 on 3/08/20 and increments by one each day after.  I'll explain later why I set 3/08/20 as day 0.
+Even more sophisticated is the  [interactive map](https://www.arcgis.com/apps/opsdashboard/index.html#/bda7594740fd40299423467b48e9ecf6) where you can zoom in and out, click on different countries (left panel) and see data for that country on the right panel, etc.
+
+### World Map with Time Animation
+
+I'll expand the example I just did in R to make an animation so we can see the total cases in the world map change by day.  We need to reformat the data file datacov into long format in order to be used by the animation function in the package gganimate.  That is, rather than using the datacov data.frame that is in wide format, I need to reformat the data.frame into long format and create a day column and a count column.  The gather() function in dplyr does this very efficiently.  To help in later analyses I also create a day.numeric variable that is 0 on 3/08/20 and increments by one each day after.  I'll explain later why I set 3/08/20 as day 0.
 
 ```{r}
 datacov.long <- gather(datacov, day, count, `1/22/20`:(names(datacov)[ncol(datacov)]))
@@ -65,7 +69,7 @@ ggplot(datacov.long) +  borders("world", colour = "gray90", fill = "gray85") +
 ```
 
 
-While counts are useful they have their limitations. Does a country have a relatively high number of positive cases because it has a large population?  In this field it is common to normalize counts by the population and report numbers per capita (e.g., 62 cases out of 100,000).  I'll have to track down the populations of each country and merge that into this animation.  Later in this chapter, I develop this animation for US and I do have the state populations so will illustrate the difference in this animiation in counts versus per capita there.  However, raw counts still have a role in helping to understand the impact of covid-19.  If a state has 1500 available hospital beds (and presumably the staff and supplies to provide care for  those  beds), but there are 2000 people in need of hospitalization, then there is a public health issue and the 'per capita" concern becomes moot.
+While counts are useful they have their limitations. Does a country have a relatively high number of positive cases because it has a large population?  In this field it is common to normalize counts by the population and report numbers per capita (e.g., 62 cases out of 100,000).  I'll have to track down the populations of each country and merge that information into this animation.  Later in this chapter, I develop this animation for the US and I do have the state populations so will illustrate the difference in this animation in counts versus per capita there.  However, raw counts still have a role in helping to understand the impact of covid-19.  If a state has 1500 available hospital beds (and presumably the staff and supplies to provide care for  those  beds), but there are 2000 people in need of hospitalization, then there is a public health issue and the 'per capita" concern becomes moot.
 
 
 ## Compare World Counts to US
@@ -98,7 +102,7 @@ allstates.long$day <- as.Date(allstates.long$day, "%m/%d/%y")
 #allstates.long$count.diff <- c(0,diff(allstates.long$count))
 ```
 
-More data manipulation needed.  Turns out that the Johns Hopkins data did not report state-level data prior to 3/08/2020 (just US totals apparently).  So for state-level analyses it may be helpful to only keep dates after 03/08/2020.  Also, in the comments I explain how R handles dates with a reference date of 01/01/1970. 
+More data manipulation needed.  Turns out that the Johns Hopkins data did not report state-level data prior to 3/08/2020 (just US totals apparently).  So for state-level analyses it may be helpful I only keep dates after 03/08/2020.  Also, in the comments I explain how R handles dates with a reference date of 01/01/1970. 
 
 ```{r}
 allstates.long <- subset(allstates.long, day > "2020-03-08")
@@ -132,7 +136,7 @@ p1 <- ggplot(sum.world, aes(x=day,y=count))  + geom_bar(stat="identity",fill="st
 #using weight option rather than y so that bar stat_count can do the sum (saves having to compute sum and then do what I did for sum.world)
 comparesums <- allstates.long %>% group_by(day) %>% summarize_at("count", sum,na.rm=T)
 comparesums
-#seems coding was by US then by state at about 3/10
+#seems coding was by US then by state at about 3/08
 #here is a command to produce total US counts for all days in the data set starting with 1/22/20 but it has lots of 0s
 #data.frame(count=apply(allstates[,5:(ncol(allstates)-cadded)],2,sum,na.rm=T))
 
@@ -175,7 +179,7 @@ coord_cartesian(clip = 'off') + scale_x_date(limits=as.Date(c("2020-03-09", as.c
     theme(legend.position="none", plot.margin = margin(0.1, 1, 0.1, 0.1, "cm"))
 ```
 
-Same plot but now putting the vertical axis on the log (base 10) scale.  An exponential process becomes linear when taking logs so we would expect to clost to straight lines if the count of confirmed cases follows an exponential form.  Each state can have a different growth rate, which will show up as different slopes.  The top two states (NY and WA) are close to a straight line but with different growth rates.  Too much overlap to see much for the other states.  West Virginia (WV) didn't show its first case until 3/17/20 so that is why the green curve (lowest) looks different than the rest.
+Same plot but now putting the vertical axis on the log (base 10) scale.  An exponential process becomes linear when taking logs so we would expect to see a pattern that closely resembles straight lines if the count of confirmed cases follows an exponential form.  Each state can have a different growth rate, which will show up as different slopes.  The top two states (NY and WA) are close to a straight line but with different growth rates.  Too much overlap to see much for the other states.  West Virginia (WV) didn't show its first case until 3/17/20 so that is why the green curve (lowest) looks different than the rest.
 
 ```{r warning=F, message=F, fig.cap="Per Cap Positive Cases by State (log10 scale)"}
 subset(allstates.long, day.numeric!=0) %>%mutate(label = if_else(day == max(day), as.character(prettyval), NA_character_)) %>%
@@ -209,15 +213,13 @@ coord_cartesian(clip = 'off') + scale_x_date(limits=as.Date(c("2020-03-09", as.c
 
 ```
 
-This pattern is quite remarkable. The states appear to have similar slopes on this log plot. They vary in intercept, but that reflects when the state started reporting positive cases.  It seems states are on a similar growth trajectory, but some states are further along (higher intercepts) than other states.  That that log transformation of the Y axis converted these curves into lines is consistent with the underlying pattern of these data following an exponential model. In the next chapter I'll cover the exponential more directly, both in its log linear form as in these graphs as well as through nonlinear regression.
+This pattern is quite remarkable. The states appear to have similar slopes on this log plot. They vary in intercept, but that reflects when the state started reporting positive cases.  It seems states are on a similar growth trajectory, but some states are further along (higher intercepts) than other states.  That the log transformation of the Y axis converted these curves into lines is consistent with the underlying pattern of these data following an exponential model. In the next chapter I'll cover the exponential more directly, both in its log linear form as in these graphs as well as through nonlinear regression.
 
 
 
 ## Animated Map of US
 
-Here is the animation for the US.  Not much to look at since it has only been about 2 weeks of data.  This map needs work as Alaska and Hawaii outlines are not printed (points are on the left side).
-
-/* deal with mapping https://stackoverflow.com/questions/49523375/graphing-lat-long-data-points-on-us-map-50-states-including-alaska-hawaii */
+Here is the animation for the US.  Not much to look at since it has only been about 2 weeks of data.  This map needs work as Alaska and Hawaii outlines are not printed (points are on the left side).  I'll need to do some coding to create an inset for Alaska and Hawaii (possible clue to inset)[https://stackoverflow.com/questions/49523375/graphing-lat-long-data-points-on-us-map-50-states-including-alaska-hawaii]
 
 ```{r warning=F, message=F, cache=T,fig.cap="US Count of Positive Cases"}
 mybreaks <- c(1, 20, 100, 500, 1000, 2000, 10000)
@@ -263,4 +265,33 @@ ggplot(allstates.long) +  borders("usa", colour = "gray90", fill = "gray85") +
       legend.background = element_rect(fill = "#ffffff", color = NA)) + 
   labs(title="Date: {frame_time}", caption = "Data Repository provided by Johns Hopkins CSSE") +
   transition_time(day) + ease_aes('linear')
+```
+
+## Incidence Plots
+
+It is common with these type of time series data to work with at are called first order differences. Rather than look at cumulative counts you look at day to day differences in the cumulative counts, or equivalently, the number of new cases each day.  This is what give rise to the "curves" when people talk about "flattening the curve". Think of this as daily counts and we merely compute histograms.  This section was adapted from [Tim Chruches Blog](https://timchurches.github.io/blog/posts/2020-02-18-analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1/)
+
+Here is the daily incidence rate using the same US data.  "Curve" does not appear to be flattening yet.
+
+```{r}
+allstates.temp <- allstates[,c(1:4,52:65)]
+temp <- t(apply(allstates.temp[,-c(1:4)], 1, function(i) diff(unlist(i))))
+#as least one negative, set to NA
+temp[temp<0] <- NA
+allstates.temp <- allstates.temp[,-5]
+allstates.temp[,5:17] <- temp
+
+temp <- apply(allstates.temp[,-c(1:4)],2,sum,na.rm=T)
+allstates.temp[1,5:17] <- temp
+allstates.temp <- allstates.temp[1,]
+temp.long <- gather(allstates.temp, day, count, `3/10/20`:`3/22/20`)
+temp.long$day <- as.Date(temp.long$day, "%m/%d/%y")
+temp.long %>%
+  ggplot(aes(x=day, y=count))  + 
+    geom_bar(stat="identity") + 
+    scale_x_date(date_breaks="1 week", date_labels = "%d %b") +
+    labs(y="Daily incremental incidence",
+                                   title="Positive US Covid-19 Cases")  +
+    theme(legend.position = "none", 
+          strip.text.y = element_text(size=11))
 ```

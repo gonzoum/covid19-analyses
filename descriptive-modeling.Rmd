@@ -1,13 +1,17 @@
 # Descriptive Modeling
 
-The previous chapter presnted several descriptive plots of raw data.  What I'd like to do in this chapter is show some simple modeling using methods we learned this year along with some extensions. 
-By no means is any of the modeling presented here considered breakthrough modeling. I call this descriptive modeling because all I do is describe the patterns using statistical models. In the next chapter I'll give some examples of models that attempt to capture mechanism. Another way of explaining the difference between descriptive models and explanatory models is that the former are good summeries of the data and can be used to forcast, but they do not provide  understanding of the underling mechanisms so they do not give any insight into what would happen if a change was imposed on the system.  These models don't tell us the effect of social distancing, for example. 
+The previous chapter presented several descriptive plots of raw data.  What I'd like to do in this chapter is show some simple modeling using methods we learned this year along with some extensions. 
+By no means is any of the modeling presented here considered breakthrough modeling. I call this descriptive modeling because all I do is describe the patterns using statistical methods. In the next chapter I'll give some examples of models that attempt to capture mechanism. Another way of explaining the difference between descriptive models and explanatory models is that the former are good summaries of the data and can be used to forecast, but they do not provide  understanding of the underling mechanisms so they do not give any insight into what would happen if a change was imposed on the system.  These models don't tell us the effect social distancing may have, for example, on the rate of covid-19. 
+
+I'll try to use only the R features necessary to make the points. There are more complicated approaches using time series packages that format the data differently (e.g., they use time series objects). There are benefits of doing this because there are automatic plotting and estimation routines that can take time series objects and do relevant computations. But I think as you are learning this it makes more sense to learn how to do some of the programming and then you are in a better position to learn the value of more advanced approaches like those for time series data.
+
+I won't cover commonly used descriptive summary methods such as smoothing techniques, mostly in the interest of time.
 
 ##  Regression on US State Percentages
 
 In the Chapter Descriptive Plots I showed that in the log scale the curves look quite linear by state for the count/population variable.
 
-These data are a natural candidate for a random effects linear regression.  Each state should have its own intercept and slope.  We could create a complicated interaction between day and state, so that we have a state factor with 50 levels (so 49 effect or contrast codes), giving us 49 intercepts and slopes but that seems overkill. The random effects approach we learned last semester for repeated measures makes more sense.  Each state is modeled as a random draw from a multivariate normal distribution such that we draw 50 pairs of slopes and intercepts from that multivariate distribution. Once we have those 50 slope and intercept pairs, then we compute the predicted scores for each state. The algorithm finds the mean and covariance matrix of that multivaraite distribution to minimize the discrepancy (i.e., squared residuals) between the observed counts and the predicted counts.  As shown in the previous chapter, if logs are taken of the percentages, then the state-level data appear to follow straight lines.
+These data are a natural candidate for a random effects linear regression.  Each state should have its own intercept and slope.  We could create a complicated interaction between day and state, so that we have a state factor with 50 levels (so 49 effect or contrast codes), giving us 49 intercepts and slopes but that is overkill. The random effects approach we learned last semester for repeated measures makes more sense.  Each state is modeled as a random draw from a multivariate normal distribution such that we draw 50 pairs of slopes and intercepts from that multivariate distribution of intercept and slope. Once we have those 50 slope and intercept pairs, then we compute the predicted scores for each state. The algorithm finds the mean and covariance matrix of that multivariate distribution to minimize the discrepancy (i.e., squared residuals) between the observed counts and the predicted counts.  As shown in the previous chapter, if logs are taken of the percentages, then the state-level data appear to follow straight lines.
 
 
 
@@ -27,9 +31,9 @@ out.lmer <- lmer(percent.log10 ~ day.numeric + (day.numeric|state.abb), allstate
 tab_model(out.lmer, show.se=T, show.stat=T)
 ```
 
-The estimates, se(est), CI, t and pvalue for the fixed effects are printed first, then the parameters of the random effect part. In order, they are the variance of the residuals, the variance of the random effect intercept, the variance of the random effect slope, the correlation between the random intercept and the random slope, the adjusted ICC, number of states, number of observations (recall 0s have been removed from this data file so tne N refers to the number of days by state for which there was a nonzero number of positive covid-19 cases), and the R$^2$ values.  For more documentation on the computation of these terms see the help page for tab_model().
+The estimates, se(est), CI, t and pvalue for the fixed effects are printed first, then the parameters of the random effect part. In order, they are the variance of the residuals, the variance of the random effect intercept, the variance of the random effect slope, the correlation between the random intercept and the random slope, the adjusted ICC, number of states, number of observations (recall 0s have been removed from this data file so the N refers to the number of days by state for which there was a nonzero number of positive covid-19 cases), and the R$^2$ values.  For more documentation on the computation of these terms see the help page for tab_model().
 
-Let's look at the state-level slopes and intercepts.
+Let's look at the state-level slopes and intercepts.  Light gray points have confidence intervals that overlap 0 so those parameter estimates are not significantly different from zero. But here we did not do a correction like Bonferroni or Scheffe to address the 100 tests we just did (50 states on each of slope and intercept).  This would just require a small modification to the code to adjust the level of the CI to correspond, say, to the Bonferroni corrected levels.
 
 ```{r}
 #list of the set of 50 intercept/slope pairs
@@ -44,9 +48,11 @@ raeff <- REsim(out.lmer)
 plotREsim(raeff,labs=T, stat="mean",level=.95)
 ```
 
-Now that we understand the slopes and intercepts, let's make some predictions.
+Now that we understand the slopes and intercepts, let's make some predictions.  I'll go 5 days out.  [Note: normally this code will be 5 days out from the most recent pull, but as noted in the Reading Data Chapter, the Johns Hopkins site made a change on 3/23/20 so I'm freezing the data to 3/22/20 until I have time to re-write the code.]
 
-```{r}
+The first plot will be on the log scale.
+
+```{r fig.cap="Log scale predictions 5 days out"}
 max.day.numeric <- max(allstates.long$day.numeric)
 max.day <- max(allstates.long$day)
 
@@ -54,7 +60,7 @@ max.day <- max(allstates.long$day)
 days.ahead <- 5
 
 #be sure order of states is the same across all parts of this command
-predmat <- data.frame(day.numeric=rep(c(0:(max.day.numeric+days.ahead)),50),state.abb=rep(rownames(coef(out.lmer)$state.abb),each=max.day.numeric+days.ahead+1), prettyval=rep(allstates$prettyval[order(match(allstates$`Province/State`,state.population$NAME))], each=max.day.numeric+days.ahead+1))
+predmat <- data.frame(day.numeric=rep(c(0:(max.day.numeric+days.ahead)),50),state.abb=rep(rownames(coef(out.lmer)$state.abb),each=max.day.numeric+days.ahead+1), prettyval=rep(allstates.long$prettyval[order(match(allstates$`Province/State`,state.population$NAME))], each=max.day.numeric+days.ahead+1))
 
 #compute predictions
 predmat$prediction <- predict(out.lmer, predmat)
@@ -65,7 +71,11 @@ predmat %>% mutate(label = if_else(day.numeric == max(day.numeric), as.character
    geom_label_repel(aes(label= label), nudge_x=2, na.rm=T,segment.color = 'grey50', label.size=.01, size=2.5, show.legend=F) +
 coord_cartesian(clip = 'off') +  scale_x_continuous(limits=c(0,max.day.numeric+ days.ahead+3)) +
     theme(legend.position="none", plot.margin = margin(0.1, 1, 0.1, 0.1, "cm"))
+```
 
+Taking the same data I  take the exponential of those predictions to see the raw counts with their predicted curves.
+
+```{r fig.cap="Log scale predictions 5 days out"}
 #plot of same predictions as 10^prediction to put back on original percentage scale
 predmat %>% mutate(label = if_else(day.numeric == max(day.numeric), as.character(prettyval), NA_character_)) %>%
 ggplot( aes(day.numeric,10^prediction,group=prettyval, color=prettyval )) +  geom_line()   +
@@ -73,6 +83,8 @@ ggplot( aes(day.numeric,10^prediction,group=prettyval, color=prettyval )) +  geo
 coord_cartesian(clip = 'off') +  scale_x_continuous(limits=c(0,max.day.numeric+ days.ahead+3)) +
     theme(legend.position="none", plot.margin = margin(0.1, 1, 0.1, 0.1, "cm"))
 ```
+
+Those curves look interesting, but let's pick out specific states and look at some numbers. I'll show the current date, tomorrow and 5 days out for New York state. [Recall this prediction is using data frozen at 3/22/20]
 
 ```{r}
 day.plus.1 <- predmat[predmat$day.numeric==max.day.numeric+1,] %>% mutate(prediction = 10^prediction*state.population$value/100)
@@ -85,7 +97,66 @@ table.prediction[,5:7] <- round(table.prediction[,5:7],0)
 knitr::kable(table.prediction[,c(1,5:7)], col.names=c("State","Current","Prediction +1 Day",paste0("Prediction +",days.ahead,"days")))
 ```
 
-On March 23 this table showed that NY has 15793 cases. The model predicts that the next day there will be 19888 cases and in 5 days there will be 92344 cases. This seems like a very high number. I suspect that local governments are faced with such predictions from their public health officials (predictions based on more sophisticated models than the one I'm using here), and this is one way to understand the urgency and action that government has taken to slow down the spread of the virus.  More locally, for Michigan, on March 23 there were 1037 reported cases, the model predicts the next day will see 2232 cases and in five days there will be 20675 cases.
+On March 22 this table showed that NY had 15793 cases. The model predicts that the next day there will be 19888 cases and in 5 days there will be 92344 cases. This seems like a very high number. I suspect that local governments are faced with such predictions from their public health officials (predictions based on more sophisticated models than the one I'm using here), and this is one way to understand the urgency and action that government has taken to slow down the spread of the virus.  More locally, for Michigan, on March 23 there were 1037 reported cases, the model predicts the next day will see 2232 cases and in five days the model predicts there will be 20675 cases.
+
+*Reality Check:*  On March 23 the confirmed rate in NY was 20884. The model's prediction of 19888 seemed high to me but it turned out to be almost 1000 cases short. I hope the model is wrong about its 3/27 prediction.  Social isolation and shelter-in-place may be working but it will take a few days to show effects. Another important factor to account for this increase is that NY has increased its testing dramatically.  On the other hand, the prediction for Michigan for 3/23 was 2232 but the actual count was 1329; the model overpredicted about 800 cases. Getting to 20000+ in Michigan in four days seems too extreme of a forecast. Forecasting is not an easy enterprise, and this model is about as simple as can be.
+
+A limitation of my predictions is that I merely computed point estimates.  It would have been better to also give prediction intervals around those point estimates.  So let's try. First, some code to perform computations and structure a data matrix. This code is ugly and could be made more elegant.
+
+```{r}
+#predictInterval is a great tool that takes into account uncertainty both from the fixed and random parts; very similar to a Bayesian approach
+temp <- predictInterval(out.lmer, predmat[,-3], stat="mean", which="full")
+predmat$fit <- temp$fit
+predmat$upr <- temp$upr
+predmat$lwr <- temp$lwr
+
+#hard coded for 3/22 given data issue
+max.day.numeric <- 13
+
+
+day.plus.1.fit <- 10^predmat[predmat$day.numeric==max.day.numeric+1 & predmat$state.abb=="New York","fit"]*state.population$value[state.population$NAME=="New York"]/100
+day.plus.1.upr <- 10^predmat[predmat$day.numeric==max.day.numeric+1 & predmat$state.abb=="New York","upr"]*state.population$value[state.population$NAME=="New York"]/100
+day.plus.1.lwr <- 10^predmat[predmat$day.numeric==max.day.numeric+1 & predmat$state.abb=="New York","lwr"]*state.population$value[state.population$NAME=="New York"]/100
+```
+
+Now that the coding work has been done, let's look at the prediction for New York and its confidence interval for both one day out and 5 days out. Both are quite wide intervals and they are wider with more extrapolation out into the future beyond where we have data.
+
+```{r}
+#one day prediction and lower/upper bound
+c(fit= day.plus.1.fit, lwr=day.plus.1.lwr, upr=day.plus.1.upr )
+
+
+day.plus.5.fit <- 10^predmat[predmat$day.numeric==max.day.numeric+days.ahead & predmat$state.abb=="New York","fit"]*state.population$value[state.population$NAME=="New York"]/100
+day.plus.5.upr <- 10^predmat[predmat$day.numeric==max.day.numeric+days.ahead & predmat$state.abb=="New York","upr"]*state.population$value[state.population$NAME=="New York"]/100
+day.plus.5.lwr <- 10^predmat[predmat$day.numeric==max.day.numeric+days.ahead & predmat$state.abb=="New York","lwr"]*state.population$value[state.population$NAME=="New York"]/100
+#5 days prediction and lower/upper bound
+c(fit= day.plus.5.fit, lwr=day.plus.5.lwr, upr=day.plus.5.upr )
+```
+
+It is better to visualize the confidence interval. I'll create a hybrid plot to communicate where we have observations, where we are making forecast, and distinguish the confidence intervals for where we have observations from the confidence interval where are forecasting.
+
+Let's just look at the plot and then I'll walk you through it.
+```{r fig.cap="New York counts with Prediction 5 days beyond observed data"}
+#focus just on New York for simplicity
+datapl <- data.frame(predmat[predmat$state.abb=="New York",c(1,5:7), ])
+
+#write a function to take the regression output which is in the log scale and put it back into the counts scale
+expfun <- function(x,pop) 10^x*pop/100
+
+#convert the fits and CI endpoints back to counts using expfun
+#note population of New York
+temp <- datapl %>% mutate_at(c("fit","lwr","upr"), expfun, pop=subset(allstates$population, allstates$`Province/State`=="New York"))
+
+#manually add the totals for New York for the forecasted days
+manualcounts <- data.frame(day.numeric= c((max.day.numeric+1):(max.day.numeric+2)), fit = c(20884, 25665)) #about 16000 in NYC alone
+
+#create the plot
+temp %>%   ggplot(aes(x=day.numeric, y=fit)) + geom_point(data=subset(temp,day.numeric<=max.day.numeric) )+ geom_ribbon(data=subset(temp,day.numeric>max.day.numeric), aes(y=fit, ymin=lwr,ymax=upr), alpha=.2,fill="red") + geom_line() + geom_linerange(data=subset(temp,day.numeric<=max.day.numeric),aes(y=fit, ymin=lwr,ymax=upr)) + ylab("Counts") + geom_point(data=manualcounts, aes(x=day.numeric, y=fit),color="blue",shape=2)
+```
+
+This graph shows the fitted curve for New York. Recall this was estimated as a straight line because I converted to logs and now I'm transforming back to the original scale so the line will now be a curve.  The points represent observed counts in New York for total confirmed cases. Those points have confidence intervals around them to indicate their variability. Then for the forecast part of the plot (5 days out) I use a red band to indicate the confidence intervals. As the data come in I'll fill in some points manually. We have had two days of data since I made this prediction: see the two blue triangles.  This is an extrapolation beyond where we have observations.
+
+Of course, this forecast is just based on the pattern shown by the observations during the first 14 days.  This does not take into account actions, like social distancing, that may affect the forecasts.  As I said earlier, this model is very simple. The only thing it has are the days, the rates (i.e., count/population), and ability to model heterogeneity across the 50 states. I have not added anything else to this, like information about the state policies or timing of when states started issuing shelter at home orders, etc.  All of that could be included as additional predictors and likely lead to better predictions.
 
 ### Comparison with polynomial regression
 
@@ -97,7 +168,7 @@ I'll run several regressions in order and produce one plot at the end.  The poin
 
 Next, I estimate the exponential directly using nonlinear regression. Instead of the parameter being a multiplier of the predictor (like in linear regression), the parameter serves as the growth factor. The green curve follows the data very closely. Here only one parameter was estimated and it was .1502, very close to the actual .15 I used to estimate the data.  The polynomial did quite well but needed 4 parameters (intercept and three slopes); those parameters are not easy to interpret. The single parameter of the exponential yields a very good fit with only one _interpretable_ parameter.  Note that here I am using the nls() command, which estimates a nonlinear regression.
 
-Finally, just for comparison, I run a linear regression through these data after transforming the Y variable into the log, then rexpressing the predicted scores back to the original scale like I did in the predictions using the linear mixed model with the lmer() command above.  I'll draw that curve in black---very similar result to the nonlinear regression with the exponential and the third order polynomial.
+Finally, just for comparison, I run a linear regression through these data after transforming the Y variable into the log, then re-expressing the predicted scores back to the original scale like I did in the predictions using the linear mixed model with the lmer() command above.  I'll draw that curve in black---very similar result to the nonlinear regression with the exponential and the third order polynomial.
 
 
 ```{r origplot}
@@ -134,6 +205,8 @@ summary(out)
 lines(x,exp(predict(out)), col="black")
 ```
 
+So, as we learned last semester, polynomials can do a great job at capturing functions but they are not always easy to interpret. I found this website that uses a [4th order polynomial to model data from Spain, Italy and US](https://www.mmogollon.com/corona-virus-2). This page also focuses on the daily incidence rate, a topic I mentioned earlier.
+
 ### Thoughts on the log transformation
 
 This type of model where we transform the dependent variable by converting to logs, creates an additive error term in the log scale (i.e., log(counts) + $\epsilon$). But maybe that isn't the right error structure. We can study the residuals to see if there are nonlinearities. It may be that the error is added to the counts rather than the log of the counts (i.e., counts + $\epsilon$).  
@@ -144,7 +217,34 @@ We now turn to modeling the curvature directly, in a form that permits the count
 
 In the previous section I illustrated how to run a nonlinear regression using the nls() command to estimate the growth factor of an exponential.
 
-Pending
+```{r include=F, results=F}
+allstates.long.new <- groupedData(count ~ day.numeric | state.abb, data=allstates.long)
+allstates.long.new$pos.perc <- allstates.long.new$count/allstates.long.new$population*100
+
+richfu <- function(d,l,rate,y,b1){
+ifelse(d<l,0,y*rate^(b1*(d-l)))
+}
+
+out <- nlme(pos.perc ~ richfu(day.numeric, l=0, rate,y,b1=1), fixed = rate+y~1,
+            random =  rate+y ~1, data=na.omit(allstates.long.new),start=c( rate=1.4,y=.00017), verbose=T, control=nlmeControl(msMaxIter=500,opt="nlminb",pnlsTol=.01,msVerbose=T,minScale=.01) )
+```
+
+```{r fig.cap="Exponential Function Estimated through Nonlinear Mixed Model Regression"}
+
+#need to fix this because length of predict(out) is off due to setting 0s to NA
+#temp1 <- data.frame(allstates.long.new, dv=allstates.long.new$count/allstates.long.new$population*100, prettyval=allstates.long.new$prettyval)  
+#temp2 <- data.frame(day.numeric=allstates.long.new$day.numeric, dv =predict(out),prettyval=allstates.long.new$prettyval)   
+#ggplot(temp1, aes(day.numeric,dv,group=prettyval, color=prettyval )) + geom_point() + geom_line(data=temp2)   
+
+#alternative approach to getting this plot
+predmat <- data.frame(day.numeric=rep(c(0:14),50),state.abb=rep(rownames(coef(out)),each=15), prettyval=rep(allstates.long.new$prettyval, each=15))
+#predict(out, list(day.numeric=predmat$day.numeric),level=0)
+predmat$prediction <- predict(out, list(day.numeric=predmat$day.numeric, state.abb=predmat$state.abb),level=1)
+ggplot(predmat, aes(day.numeric,prediction,group=prettyval, color=prettyval )) +  geom_line()   
+
+```
+
+Here one could run the same code above I used in the linear mixed model case on the log scale to produce tables of predicted counts, their confidence intervals, and the forecast plots with the confidence bands. This information could be compared with the previous ones to help us evaluate the models.
 
 ## Basic Machine Learning Examples
 

@@ -1,13 +1,19 @@
 # Reading Data into R {#intro}
 
 
-This chapter will cover three different ways to read data into R: 1) executing a pull from a git repository, 2) scraping data from the web, and 3) pulling data with an api from the national census.
+This chapter will cover three different ways to read data into R: 
+
+1. executing a pull from a git repository, 
+
+2. scraping data from the web, and 
+
+3. pulling data with an api from the national census.
 
 ## Comments about R code
 
 I am writing these notes to serve as a tutorial for how to work with data. My goal is not to teach data science or statistics in these notes but rather to illustrate how to work with data and highlight some pros and cons of different approaches. I will emphasize the code so that interested readers can see what I did. You are free to take this code and use it for your own purposes.
 
-My style of writing code is idiosyncratic as I suspect it is for everyone who writes code.  R is a complex language and like most languages there are various dialects.  I have learned many of those dialects and use them frequntly, sometimes mixing and matching the dialects to create hybrids.  I'll try to maintain some consistency but can't promise I'll succeed.  Desiderata include
+My style of writing code is idiosyncratic as I suspect it is for everyone who writes code.  R is a complex language and like most languages there are various dialects.  I have learned many of those dialects and use them frequently, sometimes mixing and matching the dialects to create hybrids.  I'll try to maintain some consistency but can't promise I'll succeed.  Desiderata include
 
 1.  use ggplot2 as much as possible for plots rather than the original base R plotting (though sometimes I can't resist)
 
@@ -22,9 +28,9 @@ Sometimes these present conflicts such as writing robust code may not be code th
 
 I'll use the data base that Johns Hopkins has been maintaining, which is also used by news outlets such as CNN.  I already cloned the git repository on my local computer so each day I merely have to issue a "git pull" command to get all new files that have been edited.  This is a better process than conducting a completely new download every day of the entire repository.
 
-If you want to learn more about working with git repositories, you can do a google search for how to clone a repository.  Rstudio also has features to help clone and manage a git repository. 
+If you want to learn more about working with git repositories, you can do a Google search for how to clone a repository.  Rstudio also has features to help clone and manage a git repository. 
 
-This script will switch to the folder I'm keeping the git repository, execute the command "git pull" and then bring me back to the original folder.  To keep things organized I'm keeping the git repository in a seperate folder from the R files that are creating these pages.
+This script will switch to the folder I'm keeping the git repository, execute the command "git pull" and then bring me back to the original folder.  To keep things organized I'm keeping the git repository in a separate folder from the R files that are creating these pages.
 
 
 
@@ -34,28 +40,46 @@ system("pushd '/Users/gonzo/Dropbox/transfer/mac transfer/COVID-19' && git pull 
 
 Now read the file that has the cumulative counts of confirmed covid-19 cases by country and, if relevant, state or province. I'll save it into an object called datacov; I list the first 6 rows of datacov.
 
+**NOTE:** On 3/23/20 this site reorganized the data structure.  Now US is in a separate file from the rest of the world, and the files are completely restructured where the US is now by county rather than state. This is more granular data but the change means much work will need to be done to reformat these files. I'm going to freeze uploading new data until this gets resolved or I have time to rewrite the code.  So data in these notes are analyzed  just through 3/22, the day before the change.  Changing data is very common occurrence in the world of downloads and web scraping. What works today may break tomorrow during a system update.  One just needs to be flexible and write robust code that can be easily modified as needed.  I think employment prospects for people working in data science will be very good.
+
+Here is the notice of the change to the data structure: [link](https://github.com/CSSEGISandData/COVID-19/issues/1250).
+
 ```{r}
-datacov <- read_csv("/Users/gonzo/Dropbox/transfer/mac transfer/COVID-19/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Confirmed.csv")
+#datacov <- read_csv("/Users/gonzo/Dropbox/transfer/mac transfer/COVID-19/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Confirmed.csv")
+#PLACE HOLDER: keep days up to and including 3/22/23; don't read file from git which is being updated.
+datacov <- read_csv("/Users/gonzo/Dropbox/transfer/mac transfer/covid19-analyses/time_series_19-covid-Confirmed.csv")
+datacov <- datacov[,1:(which(names(datacov)=="3/22/20"))]
 head(datacov)
+
+###IGNORE THESE LINES, JUST FOR TESTING PURPOSES
+#temp <- read_csv("/Users/gonzo/Dropbox/transfer/mac transfer/COVID-19/csse_covid_19_data/csse_covid_19_daily_reports/03-23-2020.csv")
+#ny <- subset(temp, `Province_State`=="New York")
+#apply(ny[8:11],2,sum)
+#mi <- subset(temp, `Province_State`=="Michigan")
+#apply(mi[8:11],2,sum)
 ```
 
-The column labels the object datacov are by date starting in column 5. The column names are special string variables because they start with numbers and R doesn't like variable names to start with numbers. For example, \`1/22/20\` (backticks), and you'll see in later syntax where I need to refer to these columns using the backwards apostrophes.  THe other columns contain province/state and counry/region labels as well as latitude and longitude.
+The column labels of the object datacov are ordered by date starting in column 5. The column names are special string variables because they start with numbers and R doesn't like variable names to start with numbers. For example, `1/22/20` (backticks), and you'll see in later syntax where I need to refer to these columns using the backwards apostrophes.  The other columns contain province/state and county/region labels as well as latitude and longitude of each geographic unit.
 
-The column names though get converted to regular strings when treated as names.  You can also check this to see if it includes yesterday's date as the last entry. The data seems to be updated late in the evening so if these commands are run late in the evening you may see today's date as the most recent date.
+The column names though get converted by R to regular strings when treated as names.  You can also check data pulls each day to see if yesterday's date is the last entry (otherwise there is a problem). The data base seems to be updated late in the evening so if these commands are run late in the evening you may see today's date as the most recent date.
 
 ```{r}
 colnames(datacov)
 ```
 
+### Issues around dealing with counts
+
 A few words about these this data set.  All we have are the counts of confirmed cases. This data set does not include other important information like the number of tests conducted or the population size for each unit.  It makes it difficult to evaluate the total number of confirmed cases without knowing how many tests that unit conducted or its population size. When evaluating changes over time in counts of confirmed cases, for example, we don't know if the total counts are increasing because more people are getting sick or the unit is also increasing the number of tests they conducted. Further, it becomes difficult to compare counts of confirmed covid-19 cases across units without knowing whether the two units have different testing rates, different sample sizes, different population densities, etc.  Basically, counts of confirmed cases are quite limited in the information they provide.  Below I'll scrape testing data by US state as well as population totals by US state, and we'll use these numbers in subsequent analyses.
 
 ## Scraping data from the web example
 
-This is a method using commands in the rvest library to read an html page and extract the table as well as stringr to do some string manipulations. The user needs to supply the URL.
+This is a method using commands in the rvest library to read an html page and extract the table as well as the package stringr to do some string manipulations. 
+
+The user needs to supply the URL.
 
 There is always additional manipulation needed to format the table, here I had to rename columns, remove characters from the country names dealing with footnotes that appeared in the original page, and other little issues documented below.
 
-If the table on the wiki changes, it could very well break this code.  This already changed in that originally the table I want was the 4th table and now it is the 5th table.
+If the table on the wiki changes, it could very well break this code.  This already changed in that originally the table I wanted was the 4th table and now it is the 5th table in the html file.
 
 ```{r}
 URL <- "https://en.wikipedia.org/wiki/2019%E2%80%9320_coronavirus_pandemic"
@@ -91,15 +115,22 @@ head(table, 10)
 wiki.corona.counts <- table
 ```
 
-Now this table is ready to use in analyses.  It differs from the datacov Johns Hopkins data.frame I downloaded in the previous section because in addition to counts of confirmed cases it has number of deaths as well as number recovered.
+This table is ready to use in analyses.  It differs from the datacov Johns Hopkins data.frame I downloaded in the previous section because in addition to counts of confirmed cases it has number of deaths as well as number recovered.
 
 ## Using APIs
 
-For later analyses I'll need to know current population sizes. Here I'll just focus on US states.  The files I downloaded are covid-19 counts by state and country. They do not have population size information, which is important information to evalate the total number of covid-19 cases in a unit. 
+For later analyses I'll need to know current population sizes. Here I'll just focus on US states.  The files I downloaded are covid-19 counts by state and country. They do not have population size information, which is important information to evaluate the total number of covid-19 cases in a unit. 
 
 This code makes use of the library tidycensus (and also functions in tidyverse). To access the national census data base one needs to register with the census site and receive a unique key.  My unique key is not printed here to keep it private. If you want to run this code yourself, you would need to register with the national census and then enter the key you receive as an argument to the census_api_key() command below. See the documentation of the tidycensus package for more information; here is the registration page to get your own key [registration](https://api.census.gov/data/key_signup.html)
 
 ```{r eval=F, echo=FALSE}
+#hey, I said I'll keep this key private and I hid it from printing in the outpout
+#but guess what, this code chunk got uploaded to git so if you are looking at this file
+#you can see my code; a better way to do this is to save the code in a local file
+#and issue an R command to read that file to read the code like
+#my.key.code <- source(keycode.R)
+#where the file keycode.R merely sets the text to a name like mykey="THE.NUMBERS.LETTERS"
+#and don't include that keycode.R file in the git repository.
 census_api_key(key="9fdfc1d46398c3a9e30971df2850174583db8a48", install=T)
 ```
 
@@ -132,7 +163,7 @@ head(state.population,10)
 
 Another important piece of information we need are the number of tests that have been conducted. Is the total count in a region high or low because the infection rate is high or because more or fewer tests (respectively) have been conducted?
 
-As of 3/21/20 this information is spotty.  We can go to the CDC website to collect this information.  The website now lists testing data for both CDC and Public Health Labs.  After scraping the data off the CDC website I had to do some cleaning, parsing data into numbers as some cells had extra characters that are the footnote symbols appearing on the website, and had to change the format of the date column to be compatible with the date format I'm using elsehwere in these notes.
+As of 3/21/20 this information is spotty.  We can go to the CDC website to collect this information.  The website now lists testing data for both CDC and Public Health Labs.  After scraping the data off the CDC website I had to do some cleaning, parsing data into numbers as some cells had extra characters that are the footnote symbols appearing on the website, and had to change the format of the date column to be compatible with the date format I'm using elsewhere in these notes.
 
 
 ```{r warning=F, message=F}
@@ -185,11 +216,15 @@ head(covid.tracking)
 covid.tracking <- subset(covid.tracking, covid.tracking$state %in% state.abb)
 ```
 
+## State-level information
+
+PENDING: here I will download relevant data by state or county that can help me understand the trends. I need hypotheses for this such as population density, rural vs. urban, nature of public transportation offered, etc. I will also gather data around timing of key covid-related policies such as dates each state issued shelter in place rulings, or dates local and state governments issued restrictions on the number of people who could gather (seems some states issues numbers of 250, then 100, then 25, then 10, then 2, then shelter in place).  Lots of potentially interesting stuff. I'm not a political scientist nor a sociologist nor a public health expert nor a policy expert so I don't have a solid scientific bases on which to generate reasonable hypotheses to test, which would guide my thinking on which variables I should get.  I was trained to think this way:  organize your thinking and then seek out the relevant variables to test that thinking.  The modern approach in data science though turns that upside down:  don't worry about hypotheses, just gather as much information as you can conceive of gathering, clean and organize that information, then run it through special algorithms that simplify the complexity. The world of machine learning. I hope to add some examples of machine learning approaches at a very small scale to these data to give you a flavor of what this approach has to offer. 
+
 ## Conclusion
 
-Just because data files can be created does not mean those data are meaningful.   There are differences across these  data sources and some data are difficult to compare across states or over time (e.g., reporting of testing differs across states, different types of tests are used across states, the type of testing may have changed during the time interval). The myth is that if you have a large enough data set these kinds of issues will wash out in the aggregrate.  Maybe random error will wash out, but large data sets do not necessarily eliminate, by virtue of their size alone, systematic differences or biases.  The size of the data set can impress and ease one into passive acceptance of a particular data pattern and interpretation. We must exercise the same skepticism we privledge small data sets, and be aware that large data sets may have additional issues not present in small-scale studies. 
+Just because data files can be created does not mean those data are meaningful.   There are differences across these  data sources and some data are difficult to compare across states or over time (e.g., reporting of testing differs across states, different types of tests are used across states, the type of testing may have changed during the time interval). The myth is that if you have a large enough data set these kinds of issues will wash out in the aggregate.  Maybe random error will wash out, but large data sets do not necessarily eliminate, by virtue of their size alone, systematic differences or biases.  The size of the data set can impress and ease one into passive acceptance of a particular data pattern and interpretation. We must exercise the same skepticism we privilege small data sets, and be aware that large data sets may have additional issues not present in small-scale studies. 
 
-A lot of code was presented in this chapter, but the code is in service of downloading the relevant up-to-date data I wanted to automate everything and write code for all my data manupulations so that you could see what I did and to make the output completely reproducible. One benefit of this approach is that I can run this code every day to get the current information so that all my analyses and plots in this website automatically update. Any workflow process that would require that I manually download a spreadsheet and manually edit that file would not be easily reproducible and would create extra work for me each day when I update this website.
+A lot of code was presented in this chapter, but the code is in service of downloading the relevant up-to-date data I wanted to automate everything and write code for all my data manipulations so that you could see what I did and to make the output completely reproducible. One benefit of this approach is that I can run this code every day to get the current information so that all my analyses and plots in this website automatically update. Any workflow process that would require that I manually download a spreadsheet and manually edit that file would not be easily reproducible and would create extra work for me each day when I update this website.
 
 ::: {.infobox .caution data-latex="{caution}"}
 
