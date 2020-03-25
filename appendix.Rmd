@@ -1,0 +1,26 @@
+# Appendix {-}
+
+## Git and Session Info
+
+This code lists the versions of R and all the R packages I'm using, tells me which computer and operating system processed these files, and connects this output to its git commit.
+```{r cache=FALSE}
+#don't cache this otherwise it won't update
+print(system("hostname",intern=T))
+print(system("git log -1",intern=T)[1:3])
+print(sessionInfo(),locale=F)
+#save sessioninfo to file
+writeLines(capture.output(sessionInfo()), "sessioninfo.txt")
+```
+
+## Save Workspace
+
+Save workspace 
+so data can be retrieved at later time.  Normally not something I do but given data are changing so often might as well keep a snapshot of the data according to each release. I may decide to stop saving the data.  File name will change when I change the version number on git (e.g., v0.9).
+
+```{r}
+#version was defined at the beginning of the the index.Rmd file
+#get current tag and use a filename prefix
+currentversion <- system("git describe --tags",intern=T)
+save.image(file=paste0("data-archive/",currentversion,"-dataworkspace.RData"))
+print(paste0("File name associated with this run is ", currentversion, "-dataworkspace.RData"))
+```

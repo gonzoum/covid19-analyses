@@ -217,8 +217,22 @@ covid.tracking <- subset(covid.tracking, covid.tracking$state %in% state.abb)
 ```
 
 ## State-level information
+Ken Kollman helped track some of these sources.
 
 PENDING: here I will download relevant data by state or county that can help me understand the trends. I need hypotheses for this such as population density, rural vs. urban, nature of public transportation offered, etc. I will also gather data around timing of key covid-related policies such as dates each state issued shelter in place rulings, or dates local and state governments issued restrictions on the number of people who could gather (seems some states issues numbers of 250, then 100, then 25, then 10, then 2, then shelter in place).  Lots of potentially interesting stuff. I'm not a political scientist nor a sociologist nor a public health expert nor a policy expert so I don't have a solid scientific bases on which to generate reasonable hypotheses to test, which would guide my thinking on which variables I should get.  I was trained to think this way:  organize your thinking and then seek out the relevant variables to test that thinking.  The modern approach in data science though turns that upside down:  don't worry about hypotheses, just gather as much information as you can conceive of gathering, clean and organize that information, then run it through special algorithms that simplify the complexity. The world of machine learning. I hope to add some examples of machine learning approaches at a very small scale to these data to give you a flavor of what this approach has to offer. 
+
+### School Closure Data
+
+```{r}
+#couldn't get automatic download so did cut and paste from screen
+#https://editproj.sharepoint.com/:x:/g/Ea32XJl_g9VBreFAia_zMmEBY6FW2ZWh8F4VeJ1Rt5Z4YA?rtime=XJX0eHvL10g
+#https://www.edweek.org/ew/section/multimedia/map-coronavirus-and-school-closures.html
+#saved results locally into schoolclosure.xlsx and then read it into R
+
+schooldata <- read_excel("schoolclosure.xlsx")
+
+```
+
 
 ## Conclusion
 

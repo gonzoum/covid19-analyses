@@ -36,6 +36,21 @@ We can still learn useful information from studying counts of confirmed cases of
 
 ![Snow's Cholera Map of London](figures/snow-cholera.jpg)
 
+
+# Additional Sources
+
+Here are some interesting sites:
+
+1. [Our World in Data](https://ourworldindata.org/coronavirus)
+
+2. [CDC](https://www.cdc.gov/coronavirus/2019-nCoV/index.html)
+
+3. [Corona Data Scraper](https://coronadatascraper.com/#home)
+
+4. [Stats and R](https://www.statsandr.com/blog/top-r-resources-on-covid-19-coronavirus/#covid-19-data-analysis-with-tidyverse-and-ggplot2) 
+
+5. [Kaiser Family Foundation](https://www.kff.org/coronavirus-covid-19/)
+
 ::: {.infobox .caution data-latex="{caution}"}
 
 **Caution**

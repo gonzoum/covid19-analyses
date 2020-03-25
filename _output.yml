@@ -1,5 +1,8 @@
 bookdown::gitbook:
   css: style.css
+#adding comments but requires javascript to be turned on and browswers have it turned off
+#  includes:
+#    after_body:  disqus.html
   config:
     toc:
       before: |
