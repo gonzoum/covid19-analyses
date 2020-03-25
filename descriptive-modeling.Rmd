@@ -217,7 +217,7 @@ We now turn to modeling the curvature directly, in a form that permits the count
 
 In the previous section I illustrated how to run a nonlinear regression using the nls() command to estimate the growth factor of an exponential.
 
-```{r include=F, results=F}
+```{r messages=F, warnings=F}
 allstates.long.new <- groupedData(count ~ day.numeric | state.abb, data=allstates.long)
 allstates.long.new$pos.perc <- allstates.long.new$count/allstates.long.new$population*100
 
