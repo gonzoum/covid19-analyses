@@ -1,0 +1,4 @@
+YEAR: 2020
+COPYRIGHT HOLDER: Richard Gonzaelz
+ORGANIZATION: University of Michigan
+LICENSE.note: This package makes use of R, RStudio and scores of packages from CRAN and other sources.  All such sources are cited by virtue of loading the package or pointing to URLs.  Data cannot be copyrighted, at least not in the United States. Licenses relevant to those sources apply here for their code.  Any language in this note that contradicts the license mentioned in the file DESCRIPTION should be discarded.

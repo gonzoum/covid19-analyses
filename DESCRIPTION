@@ -1,6 +1,11 @@
 Package: placeholder
 Type: Book
-Title: Does not matter.
+Title: Data Analysis Examples Around Covid-19
 Version: 0.0.1
+Author: Richard Gonzalez, University of Michigan
 Imports: bookdown
 Remotes: rstudio/bookdown
+Description: 
+License: GPL (>= 2) + file LICENSE
+URL: http://www-personal.umich.edu/~gonzo/covid19/_book/, https://github.com/gonzoum/covid19-analyses
+BugReports: https://github.com/gonzoum/covid19-analyses/issues
