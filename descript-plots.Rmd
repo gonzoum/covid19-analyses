@@ -267,7 +267,7 @@ ggplot(allstates.long) +  borders("usa", colour = "gray90", fill = "gray85") +
   transition_time(day) + ease_aes('linear')
 ```
 
-## Incidence Plots
+## Incidence Plots {#incidenceplots}
 
 It is common with these type of time series data to work with at are called first order differences. Rather than look at cumulative counts you look at day to day differences in the cumulative counts, or equivalently, the number of new cases each day.  This is what give rise to the "curves" when people talk about "flattening the curve". Think of this as daily counts and we merely compute histograms.  This section was adapted from [Tim Chruches Blog](https://timchurches.github.io/blog/posts/2020-02-18-analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1/)
 
@@ -294,4 +294,19 @@ temp.long %>%
                                    title="Positive US Covid-19 Cases")  +
     theme(legend.position = "none", 
           strip.text.y = element_text(size=11))
+```
+
+
+## Use of PCA to check for outliers
+
+Here is yet another use for PCA.  We can use it to detect outliers in a complicated data set. Let's take the 50 states and the time series from 3/09/20 to 3/22/20, to create a 50 by 13 data matrix of positive counts.  Compute a PCA of the correlation matrix between states. This correlation matrix is 50 x 50 and represents how similar each state's cumulative trajectory is to another state's cumulative trajectory for all possible pairs of states.  Plot the factor scores of the 50 states on the first two PCs.  The majority of the states will cluster together. The outlier states, those with very different trajectories, appear far away from the primary cluster suggesting they have a very different trajectory. The four candidate outliers are the 3 states early in the news:  NY, WA and CA. Worth checking why MA is away from the cluster. Recall the numbers in front of the state abbreviation correspond to the state population in millions.  This is commonly done in biological modeling to check for outliers, sometimes not on the raw data but the set of parameters that are estimated for each unit. 
+
+```{r fig.cap="PCA to identify states with candidate outliers", warning=F}
+temporal.data <- allstates[,53:65]
+rownames(temporal.data) <- allstates[,"prettyval"]$prettyval
+
+pca.out <- prcomp(temporal.data, center=T, scale=T)
+
+ggplot(data.frame(PC1=pca.out$x[,1], PC2=pca.out$x[,2], labels=rownames(pca.out$x)), aes(x=PC1, y=PC2, label=labels)) + geom_text(size=4)
+
 ```
