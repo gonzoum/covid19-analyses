@@ -11,6 +11,7 @@ I can reproduce all my analyses and so can you. I put the files for this project
 I organize in one place all the R packages that are used in these notes so they can be easily installed.
 
 ```{r message=F,warning=F,results='hide'}
+#be careful in case there are conflicts between these packages
 library(bookdown)
 library(readr)
 library(tidyverse)
@@ -34,6 +35,7 @@ library(nlme)
 library(merTools)
 library(Hmisc)
 library(readxl)
+library(rnn)
 ```
 
 For ease of use it would be better to use the pacman package because it also checks if the libraries are installed on your computer (if not, the package automatically downloads them along with all their dependencies).  Finally, pacman initiates the library() call for each library in the list leaving you ready to proceed with the analyses. For illustration, here is the pacman code you would use. This facilitates reproducibility.  
@@ -44,7 +46,7 @@ if(!("pacman" %in% installed.packages()[,"Package"])) install.packages("pacman")
 library(pacman)
 #double check all the libraries listed above are listed here too
 p_load("bookdown","readr","tidyverse","rvest","magrittr","stringr","tidycensus","ggplot2","gganimate","ggeffects", "scales", 
-       "maps","ggthemes","viridis","ggrepel","sjPlot","sjmisc", "sjlabelled","lme4","nlme","merTools","Hmisc","readxl")
+       "maps","ggthemes","viridis","ggrepel","sjPlot","sjmisc", "sjlabelled","lme4","nlme","merTools","Hmisc","readxl","rnn")
 ```
 
 ## Utility functions
