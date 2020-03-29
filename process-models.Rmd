@@ -2,6 +2,9 @@
 
 Entire chapter is pending
 
+Process models are models where we model mechanisms. A use of such models is that they allow us to model "what if" scenarios, such as what would be expected to happen to the spread of covid-19 cases if a state imposes a shelter-in-place order.  The models in the previous chapters don't allow us do such analyses.  The material in the earlier chapters allow us to justify some of the assumptions we may need in process models.
+
+For a basic example of how we can use basic data along with sum assumptions to estimate the "actual number of cases" check out this [video](https://www.youtube.com/watch?v=mCa0JXEwDEk).
 ## SIR Models
 
 ## Network-based Models
@@ -10,4 +13,4 @@ Entire chapter is pending
 
 ## Public Policy Models
 
-## Conclusion
+## Summary

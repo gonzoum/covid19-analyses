@@ -1,6 +1,6 @@
 --- 
 title: "Data Analysis Examples Around Covid-19"
-author: "Richard Gonzalez"
+author: "Richard Gonzalez, University of Michigan (gonzo@umich.edu)"
 date: "`r Sys.Date()`"
 site: bookdown::bookdown_site
 #output:
@@ -16,7 +16,7 @@ bibliography: [book.bib, packages.bib]
 biblio-style: apalike
 link-citations: yes
 github-repo: rstudio/bookdown-demo
-description: ""
+description: "Pages to make remote teaching of statistics more interesting during the covid-19 pandemic."
 ---
 
 # Preface {-}
