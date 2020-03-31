@@ -47,6 +47,9 @@ Now read the file that has the cumulative counts of confirmed covid-19 cases by 
 
 Here is the notice of the change to the data structure: [link](https://github.com/CSSEGISandData/COVID-19/issues/1250).
 
+**NOTE:** On 3/30/20 the repository now lists the updated files. I won't have time to work them into the code for Tuesday's 3/31/20 lecture but hopefully by Thur we will have an updated file.
+
+
 ```{r}
 #datacov <- read_csv("/Users/gonzo/Dropbox/transfer/mac transfer/COVID-19/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Confirmed.csv")
 #PLACE HOLDER: keep days up to and including 3/22/23; don't read file from git which is being updated.
@@ -79,7 +82,7 @@ mi <- subset(temp, `Province_State`=="Michigan")
 apply(mi[8:11],2,sum)
 ```
 
-The column labels of the object datacov are ordered by date starting in column 5. The column names are special string variables because they start with numbers and R doesn't like variable names to start with numbers. For example, `1/22/20` (backticks), and you'll see in later syntax where I need to refer to these columns using the backwards apostrophes.  The other columns contain province/state and county/region labels as well as latitude and longitude of each geographic unit.
+The column labels of the object datacov are ordered by date starting in column 5. The column names are special string variables because they start with numbers and R doesn't like variable names to start with numbers. For example, `` `1/22/20` `` (backticks), and you'll see in later syntax where I need to refer to these columns using the backwards apostrophes.  The other columns contain province/state and county/region labels as well as latitude and longitude of each geographic unit.
 
 The column names though get converted by R to regular strings when treated as names.  You can also check data pulls each day to see if yesterday's date is the last entry (otherwise there is a problem). The data base seems to be updated late in the evening so if these commands are run late in the evening you may see today's date as the most recent date.
 
@@ -87,9 +90,11 @@ The column names though get converted by R to regular strings when treated as na
 colnames(datacov)
 ```
 
+The behavior of the variable names I am showing here follows the default of R on a Mac.  It seems that R on a PC follows a different convention: rather than using backticks it adds an X to the beginning of the column name that starts with a nonstandard character a number. To make the PC behave like a Mac on this issue, just add check.names=FALSE in the call to read.csv when the data are read.   This way my notes will run on both PC and Mac/linux.
+
 ### Issues around dealing with counts
 
-A few words about these this data set.  All we have are the counts of confirmed cases. This data set does not include other important information like the number of tests conducted or the population size for each unit.  It makes it difficult to evaluate the total number of confirmed cases without knowing how many tests that unit conducted or its population size. When evaluating changes over time in counts of confirmed cases, for example, we don't know if the total counts are increasing because more people are getting sick or the unit is also increasing the number of tests they conducted. Further, it becomes difficult to compare counts of confirmed covid-19 cases across units without knowing whether the two units have different testing rates, different sample sizes, different population densities, etc.  Basically, counts of confirmed cases are quite limited in the information they provide.  Below I'll scrape testing data by US state as well as population totals by US state, and we'll use these numbers in subsequent analyses.
+A few words about these this data set from Johns Hopkins.  All we have in this file are the counts of confirmed cases. This data set does not include other important information like the number of tests conducted or the population size for each unit.  It makes it difficult to evaluate the total number of confirmed cases without knowing how many tests that unit conducted or its population size. When evaluating changes over time in counts of confirmed cases, for example, we don't know if the total counts are increasing because more people are getting sick or the unit is also increasing the number of tests they conducted. Further, it becomes difficult to compare counts of confirmed covid-19 cases across units without knowing whether the two units have different testing rates, different sample sizes, different population densities, etc.  Basically, counts of confirmed cases are quite limited in the information they provide.  Below I'll scrape testing data by US state as well as population totals by US state, and we'll use these numbers in subsequent analyses.
 
 ## Scraping data from the web example
 
@@ -250,7 +255,10 @@ PENDING: here I will download relevant data by state or county that can help me 
 #https://www.edweek.org/ew/section/multimedia/map-coronavirus-and-school-closures.html
 #saved results locally into schoolclosure.xlsx and then read it into R
 
+#downloaded roughly 3/25/20 (check manually for more recent files)
 schooldata <- read_excel("schoolclosure.xlsx")
+
+head(schooldata)
 
 ```
 
