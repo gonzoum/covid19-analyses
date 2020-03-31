@@ -25,21 +25,21 @@ These notes have three primary goals:
 
 1. illustrate some advanced features in R (e.g., web scraping, git repositories, animated plots), 
 
-2. illustrate a way of creating a reproducible workflow for analyses and report writing and 
+2. illustrate a reproducible workflow for analyses and report writing and 
 
-3. using data from the covid-19 pandemic to reinforce and expand some of the material we have been learning this year. 
+3. using data from the covid-19 pandemic to reinforce and expand some of the material we covered this year. 
 
 
-In these notes I won't be able to address issues of specificity and sensitivity of the covid-19 tests because I don't have access to information about the tests' false positive and false negative rates.   Further, there appear to be different tests in use, tests from different vendors, new tests coming on line very frequently, etc., which increases the complexity in understanding the counts of "confirmed" covid-19 cases. Also, it is too early to develop population models of the baseline proportions of who has the disease.  Without knowing the base rates of the disease and the specificity/sensitivity of the available tests, we are at a major disadvantage for using the usual tools we have (e.g., Bayesian statistics) to evaluate such matters.  These notes illustrate what we can do given the available information.
+In these notes I won't be able to address issues of specificity and sensitivity of the covid-19 tests because I don't have access to information about the tests' false positive and false negative rates.   Further, there appear to be different tests in use, tests from different vendors, new tests coming on line  frequently, etc., which increases the complexity in understanding the counts of "confirmed" covid-19 cases. Also, it is too early to develop population models of the baseline proportions of who has the disease.  Without knowing the base rates of the disease and the specificity/sensitivity of the available tests, we are at a major disadvantage for using the usual tools we have (e.g., Bayesian statistics) to evaluate such matters.  I find it strange that public health officials  talk about increasing the throughput of tests (e.g., on 3/29/20 a report indicated a new test that gives a result in 5 minutes) without discussing error rates of false positives and false negatives.  An inexpensive test that can deliver a result in 5 minutes but has a relatively high false negative rate (i.e., people who are sick test negative for the coronavirus) may do more harm than good. The Wiki page on [sensitivity and specificity](https://en.wikipedia.org/wiki/Sensitivity_and_specificity) offers a basic introduction (and you'll see related concepts from Lecture Notes 1 on hypothesis testing); much of the original work was done between the 1940s and 1960s including the work by Green and Swets on signal detection theory. These notes illustrate what we can do given the limited available information.  
 
-We can still learn useful information from studying counts of confirmed cases of disease.  The most famous example of examining the patterns of counts comes from the cholera outbreak in London in the mid 1800s, before the germ theory of disease was developed. London had a cholera epidemic. Cholera produces severe diarrhea, it is caused by a bacteria and can lead to death.  The residents of London where experiencing a severe outbreak leading to about 500 deaths in 10 days.  Now we know that clean drinking water (free from sewage) and non-contaminated foods are the best way to control cholera, but back then they didn't understand much about the cause or spread of this disease. John Snow's contribution was to collect data on where the cholera deaths occurred.  He noticed that the deaths tended to be clustered in houses near particular water pumps. In those days, you would walk to the nearest water pump to get the daily supply of water for your household. People tend to go to the same water pump every day, so households would drink water from the same water pump. Snow started keeping track of which households developed cholera, where there were deaths and he found clustering near particular water pumps.  His observations led to the handle from one water pump, the Broad Street Pump, being removed to stop water usage at that location. Cholera cases began to decrease as people would source water from other pumps. Later it was discovered that this particular pump was contaminated by the sanitation waste from a nearby home. We do not have additional information, such as the number of residents around each water pump, making it difficult to evaluate the clustering of deaths around specific locations (i.e.,  those may have been the locations where more people lived).
+We can still learn useful information from studying counts of confirmed cases of disease.  The most famous example of examining the patterns of counts comes from the cholera outbreak in London in the mid 1800s, before the germ theory of disease was developed. Cholera produces severe diarrhea, it is caused by a bacteria and can lead to death.  The residents of London where experiencing a severe outbreak leading to about 500 deaths in 10 days.  Now we know that clean drinking water (free from sewage) and non-contaminated foods are the best way to control cholera, but back then they didn't understand much about the cause or spread of this disease. John Snow's contribution was to collect data on where the cholera deaths occurred.  He noticed that the deaths tended to be clustered in houses near particular water pumps. In those days, you would walk to the nearest water pump to fill up your jugs with the daily supply of water for your household. People tend to go to the same water pump every day, so households would drink water from the same water pump. Snow started keeping track of which households developed cholera, where there were deaths and he found clustering near particular water pumps.  His observations led to the handle from one water pump, the Broad Street Pump, being removed to stop water usage at that location (an early form of a public health intervention). Cholera cases began to decrease as people would source water from other pumps. Later it was discovered that this particular pump was contaminated by the sanitation waste from a nearby home. We do not have additional information, such as the number of residents around each water pump, making it difficult to evaluate the clustering of deaths around specific locations (i.e.,  those may have been the locations where more people lived).
 
 ![Snow's Cholera Map of London](figures/snow-cholera.jpg)
 
 
-# Additional Sources
+## Additional Sources  {-}
 
-Here are some interesting sites:
+Here are some interesting covid-19 related sites:
 
 1. [Our World in Data](https://ourworldindata.org/coronavirus)
 
@@ -51,11 +51,15 @@ Here are some interesting sites:
 
 5. [Kaiser Family Foundation](https://www.kff.org/coronavirus-covid-19/)
 
+## Postscript {-}
+
+I am not the [Richard Gonzalez](https://www.fiercepharma.com/pharma/abbvie-ceo-gonzalez-nabbed-21-6b-pay-package-year-marked-by-megamerger-humira-decline) who is the CEO of the biopharma company [AbbVie](https://www.abbvie.com/our-company.html?utm_campaign=cc_herenow_2020_rep&utm_medium=psearch&utm_source=google&utm_content=brand%20core&utm_term=abbvie), nor am I the salsa dancer and choreographer [Richard Gonzalez](https://gibneydance.org/event/mixed-flava-contemporary-caribbean-dance/2018-12-02/). 
+
 ::: {.infobox .caution data-latex="{caution}"}
 
 **Caution**
 
-Throughout these notes I adapted existing code and examples. Where I borrowed from other people I provide appropriate citation.  I wrote these notes relatively quickly and have not double checked all the code nor have edited the text carefully.
+Throughout these notes I adapted existing code and examples. Where I borrowed from other people I provide appropriate citation.  I wrote these notes relatively quickly and have not double checked all the code nor have edited the text carefully. I also worked on this in small pieces so there may be inconsistencies or redundancies across pieces, which will eventually be fixed and written in more elegant flowing code.
 
 :::
 
