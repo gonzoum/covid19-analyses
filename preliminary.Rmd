@@ -1,6 +1,6 @@
 # Preliminaries
 
-I want these notes to serve as an example of how keep your analyses organized, reproducible and well-organized.  Analysis projects have many common elements, which include gathering data, cleaning and organizing data, preparing descriptive summaries, testing hypotheses, writing reports, and dissemination.  The end product should be a complete pipeline that takes you from soup to nuts with clear documentation.   While these notes are not perfect, they provide one example of how to prepare a workflow.
+I want these notes to serve as an example of how to keep your analyses organized, reproducible and well-organized.  Analysis projects have many common elements, which include gathering data, cleaning and organizing data, preparing descriptive summaries, testing hypotheses, writing reports, and dissemination.  The end product should be a complete pipeline that takes you from soup to nuts with clear documentation.   While these notes are not perfect, they provide one example of how to prepare a workflow.
 
 These notes are written completely in R. They are organized across several Rmd files (like this one) that are executed in a particular order (e.g., the file that reads the data and cleans the data is sourced before the file that produces the descriptive summaries of the data).  
 

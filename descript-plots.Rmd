@@ -1,6 +1,6 @@
 # Descriptive Plots
 
-This chapter  presents some descriptive plots of the raw data. No analyses, no standard errors, no parameters to estimate, no hypotheses to test. Just raw data presented in different forms to gain insight into the patterns that are in the data.  I'll create a few plots at the world level, and then switch to the state level for US data.  You are free to take my code and edit it to produce additional plots for other countries and their states or provinces (up to the degree of resolution provided by the data sets we downloaded, which as of 3/23/20 is at the US county level).
+This chapter  presents some descriptive plots of the raw data. No analyses, no standard errors, no parameters to estimate, no hypotheses to test. Just raw data presented in different forms to gain insight into the patterns that are in the data.  I'll create a few plots at the world level, and then switch to the state level for US data.  You are free to take my code and edit it to produce additional plots for other countries and their states or provinces (up to the degree of resolution provided by the data sets we downloaded, which as of 3/23/20 is at the US county level).  Throughout these notes I'll focus on the counts and rates of testing positive. I'll defer death counts and rates until the chapter on process models. 
 
 ## World Map
 
@@ -36,7 +36,7 @@ ggplot() +
 
 ```
 
-Even more sophisticated is the  [interactive map](https://www.arcgis.com/apps/opsdashboard/index.html#/bda7594740fd40299423467b48e9ecf6) where you can zoom in and out, click on different countries (left panel) and see data for that country on the right panel, etc.
+Even more sophisticated is the  [interactive map](https://www.arcgis.com/apps/opsdashboard/index.html#/bda7594740fd40299423467b48e9ecf6) developed at Johns Hopkins (same group that provides the key data we downloaded in Chapter \@ref(intro)), where you can zoom in and out, click on different countries (left panel) and see data for that country on the right panel, etc.
 
 ### World Map with Time Animation
 

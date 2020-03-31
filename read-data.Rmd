@@ -30,11 +30,14 @@ I'll use the data base that Johns Hopkins has been maintaining, which is also us
 
 If you want to learn more about working with git repositories, you can do a Google search for how to clone a repository.  Rstudio also has features to help clone and manage a git repository. 
 
-This script will switch to the folder I'm keeping the git repository, execute the command "git pull" and then bring me back to the original folder.  To keep things organized I'm keeping the git repository in a separate folder from the R files that are creating these pages.
+This script will switch to the folder I'm keeping the git repository, execute the command "git pull" and then bring me back to the original folder.  To keep things organized I'm keeping the git repository in a separate folder from the R files that are creating these pages. Another way of accomplishing the same thing is to pull the git repository manually each time you want to run the most updated data set. All this next line of code does is download the most recent data for me so I don't have to do it manually.
 
 
 
 ```{r}
+#assuming git has been installed on your machine (e.g., Xcode in mac)
+#this is mac and linux specific; pc may be different unless unix commands have been installed
+#I haven't done any testing of this code on a PC
 system("pushd '/Users/gonzo/Dropbox/transfer/mac transfer/COVID-19' && git pull && popd")
 ```
 
@@ -51,12 +54,29 @@ datacov <- read_csv("/Users/gonzo/Dropbox/transfer/mac transfer/covid19-analyses
 datacov <- datacov[,1:(which(names(datacov)=="3/22/20"))]
 head(datacov)
 
-###IGNORE THESE LINES, JUST FOR TESTING PURPOSES
-#temp <- read_csv("/Users/gonzo/Dropbox/transfer/mac transfer/COVID-19/csse_covid_19_data/csse_covid_19_daily_reports/03-23-2020.csv")
-#ny <- subset(temp, `Province_State`=="New York")
-#apply(ny[8:11],2,sum)
-#mi <- subset(temp, `Province_State`=="Michigan")
-#apply(mi[8:11],2,sum)
+###THE LINES ARE TEMPORARY UNTIL I FIND TIME TO REWRITE CODE TO ADDRESS NEW DATA STRUCTURE STARTING ON 3.23
+#includes DC and territories so need further cleaning and put in proper order when merging later with allstates
+temp <- read_csv("/Users/gonzo/Dropbox/transfer/mac transfer/COVID-19/csse_covid_19_data/csse_covid_19_daily_reports/03-23-2020.csv")
+m3.23.sum <- temp[temp$Country_Region=="US",c("Province_State","Confirmed")] %>% group_by(Province_State) %>% summarise(daysum = sum(Confirmed))
+temp<- read_csv("/Users/gonzo/Dropbox/transfer/mac transfer/COVID-19/csse_covid_19_data/csse_covid_19_daily_reports/03-24-2020.csv")
+m3.24.sum <- temp[temp$Country_Region=="US",c("Province_State","Confirmed")] %>% group_by(Province_State) %>% summarise(daysum = sum(Confirmed))
+temp<- read_csv("/Users/gonzo/Dropbox/transfer/mac transfer/COVID-19/csse_covid_19_data/csse_covid_19_daily_reports/03-25-2020.csv")
+m3.25.sum <- temp[temp$Country_Region=="US",c("Province_State","Confirmed")] %>% group_by(Province_State) %>% summarise(daysum = sum(Confirmed))
+temp<- read_csv("/Users/gonzo/Dropbox/transfer/mac transfer/COVID-19/csse_covid_19_data/csse_covid_19_daily_reports/03-26-2020.csv")
+m3.26.sum <- temp[temp$Country_Region=="US",c("Province_State","Confirmed")] %>% group_by(Province_State) %>% summarise(daysum = sum(Confirmed))
+temp<- read_csv("/Users/gonzo/Dropbox/transfer/mac transfer/COVID-19/csse_covid_19_data/csse_covid_19_daily_reports/03-27-2020.csv")
+m3.27.sum <- temp[temp$Country_Region=="US",c("Province_State","Confirmed")] %>% group_by(Province_State) %>% summarise(daysum = sum(Confirmed))
+temp<- read_csv("/Users/gonzo/Dropbox/transfer/mac transfer/COVID-19/csse_covid_19_data/csse_covid_19_daily_reports/03-28-2020.csv")
+m3.28.sum <- temp[temp$Country_Region=="US",c("Province_State","Confirmed")] %>% group_by(Province_State) %>% summarise(daysum = sum(Confirmed))
+temp<- read_csv("/Users/gonzo/Dropbox/transfer/mac transfer/COVID-19/csse_covid_19_data/csse_covid_19_daily_reports/03-29-2020.csv")
+m3.29.sum <- temp[temp$Country_Region=="US",c("Province_State","Confirmed")] %>% group_by(Province_State) %>% summarise(daysum = sum(Confirmed))
+
+#most recent day totals for NY and MI to fill in numbers in later notes 
+#better to do this through coding but will wait until  format of JH data is final
+ny <- subset(temp, `Province_State`=="New York")
+apply(ny[8:11],2,sum)
+mi <- subset(temp, `Province_State`=="Michigan")
+apply(mi[8:11],2,sum)
 ```
 
 The column labels of the object datacov are ordered by date starting in column 5. The column names are special string variables because they start with numbers and R doesn't like variable names to start with numbers. For example, `1/22/20` (backticks), and you'll see in later syntax where I need to refer to these columns using the backwards apostrophes.  The other columns contain province/state and county/region labels as well as latitude and longitude of each geographic unit.
@@ -79,14 +99,14 @@ The user needs to supply the URL.
 
 There is always additional manipulation needed to format the table, here I had to rename columns, remove characters from the country names dealing with footnotes that appeared in the original page, and other little issues documented below.
 
-If the table on the wiki changes, it could very well break this code.  This already changed in that originally the table I wanted was the 4th table and now it is the 5th table in the html file.
+If the table on the wiki changes, it could very well break this code.  This already changed in that originally the table I wanted was the 4th table, then it was the 5th table in the html file, then the 6th table, and now back to the 5th.
 
 ```{r}
 URL <- "https://en.wikipedia.org/wiki/2019%E2%80%9320_coronavirus_pandemic"
 
 wikipage <- read_html(URL)
 
-#the 5th table in this html page is the country totals (so .5 below)
+#the 5th table in this html page is the country totals (so .[5] below)
 #the number 5 is hardcoded here, not great programming style
 table <- wikipage %>%
 html_nodes("table") %>% .[5] %>%
@@ -105,8 +125,9 @@ k <- table[,1]
 k <- ifelse(substr(k,nchar(k),nchar(k)) == "]", substr(k,1,nchar(k)-3), k)
 table[,1] <- k
 
+#this line no longer needed as table has been reformatted
 #change label to sum referring to sum of all countries
-table[1,1] <- "World Sum"
+#table[1,1] <- "World Sum"
 
 #print first 10 rows
 head(table, 10)
@@ -234,7 +255,7 @@ schooldata <- read_excel("schoolclosure.xlsx")
 ```
 
 
-## Conclusion
+## Summary
 
 Just because data files can be created does not mean those data are meaningful.   There are differences across these  data sources and some data are difficult to compare across states or over time (e.g., reporting of testing differs across states, different types of tests are used across states, the type of testing may have changed during the time interval). The myth is that if you have a large enough data set these kinds of issues will wash out in the aggregate.  Maybe random error will wash out, but large data sets do not necessarily eliminate, by virtue of their size alone, systematic differences or biases.  The size of the data set can impress and ease one into passive acceptance of a particular data pattern and interpretation. We must exercise the same skepticism we privilege small data sets, and be aware that large data sets may have additional issues not present in small-scale studies. 
 
