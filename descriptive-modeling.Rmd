@@ -99,13 +99,14 @@ knitr::kable(table.prediction[,c(1,5:7)], col.names=c("State","Current","Predict
 
 On March 22 this table showed that NY had 15793 cases. The model predicts that the next day there will be 19888 cases and in 5 days there will be 92344 cases. This seems like a very high number. I suspect that local governments are faced with such predictions from their public health officials (predictions based on more sophisticated models than the one I'm using here), and this is one way to understand the urgency and action that government has taken to slow down the spread of the virus.  More locally, for Michigan, on March 23 there were 1037 reported cases, the model predicts the next day will see 2232 cases and in five days the model predicts there will be 20675 cases.
 
-*Reality Check:*  On March 23 the confirmed rate in NY was 20884. The model's prediction of 19888 seemed high to me but it turned out to be almost 1000 cases short. I hope the model is wrong about its 3/27 prediction.  Social isolation and shelter-in-place may be working but it will take a few days to show effects. Another important factor to account for this increase is that NY has increased its testing dramatically.  On the other hand, the prediction for Michigan for 3/23 was 2232 but the actual count was 1329; the model overpredicted about 800 cases. Getting to 20000+ in Michigan in four days seems too extreme of a forecast. Forecasting is not an easy enterprise, and this model is about as simple as can be.
+*Reality Check:*  On March 23 the confirmed cases in NY was 20884. The model's prediction of 19888 seemed high to me but it turned out to be almost 1000 cases short. I hope the model is wrong about its 3/27 prediction.  Social isolation and shelter-in-place may be working but it will take a few days to show effects. Another important factor to account for this increase is that NY has increased its testing dramatically.  On the other hand, the prediction for Michigan for 3/23 was 2232 but the actual count was 1329; the model overpredicted about 800 cases. Getting to 20000+ in Michigan in four days seems too extreme of a forecast. Forecasting is not an easy enterprise, and this model is about as simple as can be.
 
 A limitation of my predictions is that I merely computed point estimates.  It would have been better to also give prediction intervals around those point estimates.  So let's try. First, some code to perform computations and structure a data matrix. This code is ugly and could be made more elegant.
 
 ```{r}
 #predictInterval is a great tool that takes into account uncertainty both from the fixed and random parts; very similar to a Bayesian approach
 temp <- predictInterval(out.lmer, predmat[,-3], stat="mean", which="full")
+
 predmat$fit <- temp$fit
 predmat$upr <- temp$upr
 predmat$lwr <- temp$lwr
@@ -136,7 +137,7 @@ c(fit= day.plus.5.fit, lwr=day.plus.5.lwr, upr=day.plus.5.upr )
 It is better to visualize the confidence interval. I'll create a hybrid plot to communicate where we have observations, where we are making forecast, and distinguish the confidence intervals for where we have observations from the confidence interval where are forecasting.
 
 Let's just look at the plot and then I'll walk you through it.
-```{r fig.cap="New York counts with Prediction 5 days beyond observed data"}
+```{r loglinearplot, fig.cap="New York counts with Prediction 5 days beyond observed data"}
 #focus just on New York for simplicity
 datapl <- data.frame(predmat[predmat$state.abb=="New York",c(1,5:7), ])
 
@@ -148,7 +149,8 @@ expfun <- function(x,pop) 10^x*pop/100
 temp <- datapl %>% mutate_at(c("fit","lwr","upr"), expfun, pop=subset(allstates$population, allstates$`Province/State`=="New York"))
 
 #manually add the totals for New York for the forecasted days
-manualcounts <- data.frame(day.numeric= c((max.day.numeric+1):(max.day.numeric+2)), fit = c(20884, 25665)) #about 16000 in NYC alone
+#not pretty, need to fix once JH data format is finalized
+manualcounts <- data.frame(day.numeric= c((max.day.numeric+1):(max.day.numeric+7)), fit = c(20884, 25681,30841,37877,44876, 52410,  59648)) 
 
 #create the plot
 temp %>%   ggplot(aes(x=day.numeric, y=fit)) + geom_point(data=subset(temp,day.numeric<=max.day.numeric) )+ geom_ribbon(data=subset(temp,day.numeric>max.day.numeric), aes(y=fit, ymin=lwr,ymax=upr), alpha=.2,fill="red") + geom_line() + geom_linerange(data=subset(temp,day.numeric<=max.day.numeric),aes(y=fit, ymin=lwr,ymax=upr)) + ylab("Counts") + geom_point(data=manualcounts, aes(x=day.numeric, y=fit),color="blue",shape=2)
@@ -217,16 +219,20 @@ We now turn to modeling the curvature directly, in a form that permits the count
 
 In the previous section I illustrated how to run a nonlinear regression using the nls() command to estimate the growth factor of an exponential.
 
+For a good explanation of exponential growth and logistic growth (next subsection) see this [video](https://www.youtube.com/watch?v=Kas0tIxDvrg). 
+
 ```{r messages=F, warnings=F}
 allstates.long.new <- groupedData(count ~ day.numeric | state.abb, data=allstates.long)
-allstates.long.new$pos.perc <- allstates.long.new$count/allstates.long.new$population*100
 
+#this is a more general function that can estimate liftoff l (point at which counts begin to be nonzero)
+#for for now set l=0 
 richfu <- function(d,l,rate,y,b1){
 ifelse(d<l,0,y*rate^(b1*(d-l)))
 }
 
-out <- nlme(pos.perc ~ richfu(day.numeric, l=0, rate,y,b1=1), fixed = rate+y~1,
+out <- nlme(percent ~ richfu(day.numeric, l=0, rate,y,b1=1), fixed = rate+y~1,
             random =  rate+y ~1, data=na.omit(allstates.long.new),start=c( rate=1.4,y=.00017), verbose=T, control=nlmeControl(msMaxIter=500,opt="nlminb",pnlsTol=.01,msVerbose=T,minScale=.01) )
+out.exponential <- out
 ```
 
 ```{r fig.cap="Exponential Function Estimated through Nonlinear Mixed Model Regression"}
@@ -237,15 +243,215 @@ out <- nlme(pos.perc ~ richfu(day.numeric, l=0, rate,y,b1=1), fixed = rate+y~1,
 #ggplot(temp1, aes(day.numeric,dv,group=prettyval, color=prettyval )) + geom_point() + geom_line(data=temp2)   
 
 #alternative approach to getting this plot
-predmat <- data.frame(day.numeric=rep(c(0:14),50),state.abb=rep(rownames(coef(out)),each=15), prettyval=rep(allstates.long.new$prettyval, each=15))
-#predict(out, list(day.numeric=predmat$day.numeric),level=0)
-predmat$prediction <- predict(out, list(day.numeric=predmat$day.numeric, state.abb=predmat$state.abb),level=1)
-ggplot(predmat, aes(day.numeric,prediction,group=prettyval, color=prettyval )) +  geom_line()   
+predmatnonlin <- data.frame(day.numeric=rep(c(0:14),50),state.abb=rep(rownames(coef(out)),each=15))
+predmatnonlin$prediction <- predict(out, list(day.numeric=predmatnonlin$day.numeric, state.abb=predmatnonlin$state.abb),level=1)
+nonlinreg <- ggplot(predmatnonlin, aes(day.numeric,prediction,group=state.abb, color=state.abb )) +  geom_line()   
+nonlinreg
+```
+
+Here one could run the same code above I used in the linear mixed model case on the log scale to produce tables of predicted counts, their confidence intervals, and the forecast plots with the confidence bands. This information could be compared with the previous ones to help us evaluate the models.  Some thought needs to go into writing code to simulate the confidence bands around the predictions from the nonlinear model.
+
+I'll compare the predicted curve for New York five days out from 3/23 using this nonlinear mixed model regression to the earlier linear mixed model regression on the log scale, by superimposing the predicted curve in green from the nonlinear model on the plot for  the log linear model.
+
+```{r}
+#go days.ahead out
+predmatnonlin <- data.frame(day.numeric=rep(c(0:(14+days.ahead)),50),state.abb=rep(rownames(coef(out)),each=15+days.ahead))
+predmatnonlin$prediction <- predict(out, list(day.numeric=predmatnonlin$day.numeric, state.abb=predmatnonlin$state.abb),level=1)
+
+#focus just on New York for simplicity
+datapl <- data.frame(predmatnonlin[predmatnonlin$state.abb=="New York", ])
+
+#convert the fits back to counts to match the plot used in the log linear 
+datapl$counts <- datapl$prediction * c(state.population[state.population$NAME=="New York","value"])$value / 100
+
+actualny <- data.frame(y=allstates.long.new[allstates.long.new$state.abb == "New York","count"], x=0:13)
+
+temp %>%   ggplot(aes(x=day.numeric, y=fit)) + geom_point(data=subset(temp,day.numeric<=max.day.numeric) )+ geom_ribbon(data=subset(temp,day.numeric>max.day.numeric), aes(y=fit, ymin=lwr,ymax=upr), alpha=.2,fill="red") + geom_line() + geom_linerange(data=subset(temp,day.numeric<=max.day.numeric),aes(y=fit, ymin=lwr,ymax=upr)) + ylab("Counts") + geom_point(data=manualcounts, aes(x=day.numeric, y=fit),color="blue",shape=2) + geom_line(data=datapl, aes(x=day.numeric, y=counts),color="green") + geom_point(data=datapl, aes(x=day.numeric, y=counts),color="green") + geom_point(data=datapl, aes(x=day.numeric, y=counts),color="green") + geom_point(data=actualny, aes(x=x,y=y), color="violet")
+```
+
+
+## Logistic (Nonlinear) Regression 
+
+Now let's switch to a logistic growth model (not the same as logistic regression we covered earlier for binary data).  The nlme has some additional routines ways to simplify the fitting logistic growth models (e.g., SSlogis), which make it easier to set up starting values. I'll avoid that so as to be more transparent with the code I'm writing.  In other work I've seen more efficient estimation (and less fussyiness around starting values with the stochastic EM approach to fitting nonlinear regression models such as in the package saemix).
+
+The nlme() command has a difficult time with the three parameters of the logistic growth model. I did a little bit of tinkering with starting values and the three parameters.  I was able to get a reasonable fit with fitting three parameters of the logistic growth model and having two of them be random effects (i.e., they are allowed to vary by state
+
+```{r messages=F, warnings=F}
+
+richfu.logistic <- function(d,l,y,b1){
+l/(1+y*exp(b1*d))
+}
+
+out <- nlme(count ~ richfu.logistic(day.numeric, l,y,b1), fixed = l+y+b1~1,
+            random =  l+y~1, data=na.omit(allstates.long.new),start=c( l=15000,y=800,b1=-.65), verbose=T, control=nlmeControl(msMaxIter=1000,opt="nlminb",pnlsTol=.02,msVerbose=T,minScale=.02, maxIter=1000) )
+AIC(out)
+out.logistic <- out
+
+#example of another version that had higher AIC so I discarded this model
+#out2 <- nlme(count ~ richfu.logistic(day.numeric, l,y,b1), fixed = l+y+b1~1,
+#            random =  l+b1~1, data=na.omit(allstates.long.new),start=c( l=15000,y=800,b1=-.65), verbose=T, #control=nlmeControl(msMaxIter=1000,opt="nlminb",pnlsTol=.02,msVerbose=T,minScale=.02, maxIter=1000) )
+#AIC(out2)
+
+#example of a different parameterization of logistic growth (previous y = 1 and allowing shift by subracting by parameter)
+#starts <- getInitial(count~ SSlogis(day.numeric, Asym=1, xmid=1, scal=1), data=allstates.long.new)
+#out3 <- nlme(count ~ SSlogis(day.numeric, Asym, xmid,scal), fixed =  Asym + xmid + scal  ~1,
+#            random = xmid + Asym ~ 1, data=na.omit(allstates.long.new),start=c(Asym=starts[1], xmid=starts[2],scal=starts[3]), verbose=T, #control=nlmeControl(msMaxIter=500))
+#AIC(out3)
 
 ```
 
-Here one could run the same code above I used in the linear mixed model case on the log scale to produce tables of predicted counts, their confidence intervals, and the forecast plots with the confidence bands. This information could be compared with the previous ones to help us evaluate the models.
+Notice that the fits for some states taper off according to this model, but for the previous exponential growth model all the states showed exponential increase but to different degrees.  One could examine these differences to see which model performs better in predictive accuracy (i.e., see if the actual data for the state tapers off or continues to grow exponetially). Such patterns are testable and the ideal way to compare models and decide which one provides a better representation of the data.
+
+
+
+```{r fig.cap="Logistic Growth Model"}
+#alternative approach to getting this plot
+predmatnonlin <- data.frame(day.numeric=rep(c(0:14),50),state.abb=rep(rownames(coef(out)),each=15))
+predmatnonlin$prediction <- predict(out, list(day.numeric=predmatnonlin$day.numeric, state.abb=predmatnonlin$state.abb),level=1)
+nonlinreg.logistic <- ggplot(predmatnonlin, aes(day.numeric,prediction,group=state.abb, color=state.abb )) +  geom_line()   
+nonlinreg.logistic
+```
+
+Another way to compare models is to use an index such as the AIC, which is a measure based on information theory and akin to R^2 adjusted that can be used to compare regression models that vary in the number of parameters. One needs to be careful when using AIC across models where the dependent variable is on different scales as in these notes. For example, my log transform of percentage cases (count/population) in the linear mixed model is on a different scale than the exponential nonlinear regression model I computed above.  R provides such information-based criteria measures such as AIC() and alternative called BIC(). Here I give AIC and BIC for the logistic growth models. When comparing models on comparable dependent variables the model with the lower AIC (or BIC) value is selected as the best model.
+
+```{r}
+AIC(out.logistic)
+BIC(out.logistic)
+```
+
+I'll compare the predicted curve for New York five days out from 3/23 using this nonlinear mixed model regression to the earlier linear mixed model regression on the log scale, by superimposing the predicted curve in green from the nonlinear model on the plot for  the log linear model.
+
+```{r}
+#go days.ahead out
+predmatnonlin <- data.frame(day.numeric=rep(c(0:(14+days.ahead)),50),state.abb=rep(rownames(coef(out)),each=15+days.ahead))
+predmatnonlin$prediction <- predict(out, list(day.numeric=predmatnonlin$day.numeric, state.abb=predmatnonlin$state.abb),level=1)
+
+#focus just on New York for simplicity
+datapl <- data.frame(predmatnonlin[predmatnonlin$state.abb=="New York", ])
+
+#convert the fits back to counts to match the plot used in the log linear 
+datapl$counts <- datapl$prediction * c(state.population[state.population$NAME=="New York","value"])$value / 100
+
+actualny <- data.frame(y=allstates.long.new[allstates.long.new$state.abb == "New York","count"], x=0:13)
+
+temp %>%   ggplot(aes(x=day.numeric, y=fit)) + geom_point(data=subset(temp,day.numeric<=max.day.numeric) )+ geom_ribbon(data=subset(temp,day.numeric>max.day.numeric), aes(y=fit, ymin=lwr,ymax=upr), alpha=.2,fill="red") + geom_line() + geom_linerange(data=subset(temp,day.numeric<=max.day.numeric),aes(y=fit, ymin=lwr,ymax=upr)) + ylab("Counts") + geom_point(data=manualcounts, aes(x=day.numeric, y=fit),color="blue",shape=2) + geom_line(data=datapl, aes(x=day.numeric, y=counts),color="green") + geom_point(data=datapl, aes(x=day.numeric, y=counts),color="green") + geom_point(data=datapl, aes(x=day.numeric, y=counts),color="green") + geom_point(data=actualny, aes(x=x,y=y), color="violet")
+
+```
+
 
 ## Basic Machine Learning Examples
 
-Pending
+In my opinion, while impressive progress has been made in text analysis and image analysis, the machine learning literature has lagged behind where it needs to be on development of methods that address multiple time series (e.g., times series by state, country or county).  Here I review one approach, an implementation of a recurrent neural network (RNN) that I used for the data from  New York state. We need to use an RNN, a specialized version of a neural network, because we have time series data. The R package I will illustrate is rnn and it is a basic implementation of a recurrent neural network. There are much better implementations, such as the keras package and I'll explore that later once I make more progress on other parts of these notes.  For now, we'll use the simple rnn R package.
+
+It is common to model time series using the counts for each day (such as with the [incidence plot](#incidenceplots) we saw in the Section \@ref(incidenceplots) rather than the cumulative counts we have been using throughout most of these notes. I'll follow that convention here.
+
+The following is a relatively large chunk of code. Other implementations of deep learning networks require even more code.  The basic idea is that we put all our data into one data frame, then partition it into testing data and training data. We want to be sure we partition early so as not to contaminate the testing data with any information that is in the testing data. For example, if we compute a mean we may inadvertently compute a mean for all the data (testing and training), and then if we use the mean in training we have contaminated the training data with information from the testing data.  
+
+The only information I have to work with so far is the number days and the previously observed daily counts; that is, as of this point in the notes we don't have access to other possible predictors of a state's dailiy count.  Here, "previously observed" means if I'm at time t then any data prior to t is "previous" data that I have but any data after t has not occurred yet as far as prediction goes. In the case of data I'm downloading, t may be say 3/23/20 so from that perspective any data after 3/23/20 cannot be used because as of that time point t I didn't know of any data after t.  Part of the machine learning algorithm works by varying t to different dates and trying to learn the patterns by figuring out what it is getting wrong, making adjustments in the model's parameters and then making new predictions.
+
+The rest of the code is creating daily counts and several features to use as predictors. We don't have a rich set of predictors here so I created some from day, so I'm using day, day$^2$ and day$3$ (of course, centering day). I also created a predictor of how much daily change there was (e.g., the count at t minus the count at t - 1). This serves as a slope estimate of change but it is the slope one time point back as I don't know the current time points count yet.  I also created a "difference of difference" (or second order difference) to measure how much the slope is changing from day to day. In other words how different is the change today from the change we saw yesterday.  
+
+So, overall the long bit of code is because we have to do some work to put the data in the right format for machine learning to do its magic.  I'll be the first to acknoweldge that this is just for demonstration purposes. Our data set is way way too small to have any chance of estimating meaningful machine learning models and I created a kludgy set of predictors (aka features) without much thought.
+
+In the figure below the red dots are the actual daily cases in New York.  The green curve is what the machine learning model learned. It was able to predict pretty well the data it was given in the training set.  I intentionally over trained it. The last day shows the prediction by the machine learning model in blue and the actual in red. So, the machine learning model as slightly off.  
+
+```{r cache=T, warning=F, message=F}
+#create a data frame for all avaiable days, both for the downloaded data and the manually entered data
+data <- data.frame(days= c(actualny$x[-1],14:(14+nrow(manualcounts)-1)), counts= c(actualny$y[-1], manualcounts$fit))
+
+#partition train and test data; good to do that first so that test data doesn't creep into training
+#this could happen accidentally say when computing a mean
+#for this classroom example the test set is the last day, so I'm testing by a prediction one day out
+data_train <- data[-nrow(data),]
+data_test <- data[nrow(data),]
+
+#diff computes first order differences so need to add day 1 at the begining of the series
+time.series.day.counts <- ts(c(173,diff(data_train$counts)))
+time.series.day.counts
+
+#first order difference
+first.diff  <- diff(time.series.day.counts)
+first.diff
+#second order difference
+second.diff  <- diff(first.diff)
+second.diff
+
+#put into data matrix and pad differences with NA 
+data.mat <- data.frame(days.numeric=data_train$days-mean(data_train$days), first=c(NA,first.diff), second=c(NA,NA,second.diff))
+#create day sq and day cube with centering
+data.mat$daysq <- (data.mat$days.numeric-mean(data.mat$days.numeric))^2
+data.mat$daycube <- (data.mat$days.numeric-mean(data.mat$days.numeric))^3
+data.mat$previous.day.count <- c(NA, time.series.day.counts[-length(time.series.day.counts)])
+
+#but to make future prediction is sensible I can't compute first and second order difference knowing the future count I'm predicting
+#so move the 1st and 2nd order diff down one row and pad with NAs; save the last count I'm dropping here because I do know it when 
+#making prediction to the training set (previous.day.count is already moved up)
+save.last.row.data.mat <- data.mat[nrow(data.mat),]
+data.mat[,2:3] <- cbind(c(NA, data.mat[1:(nrow(data.mat)-1),2]), c(NA, data.mat[1:(nrow(data.mat)-1),3]))
+
+#drop first three rows to avoid missing data
+data.mat <- data.mat[-c(1:3),]
+
+#define scaling function for scaling 0-1
+sc <- function(x){(x-min(x,na.rm=T))/(max(x,na.rm=T)-min(x,na.rm=T))}
+#testing function sc as identity to check creation of X and Y arrays
+#sc <- function(x) x
+
+#save the original mean, sd, min and max of the data_train features for later user
+tempmat <- cbind(data.mat$days.numeric,data.mat$daysq, data.mat$daycube, data.mat$first,data.mat$second, data.mat$previous.day.count, counts=time.series.day.counts[-c(1:3)])
+minmat <- apply(tempmat, 2, min,na.rm=T)
+maxmat <- apply(tempmat, 2, max,na.rm=T)
+meanmat <- apply(tempmat, 2, mean,na.rm=T)
+sdmat <- apply(tempmat, 2, function(i) sqrt(var(i,na.rm=T)))
+
+X <- array(c(sc(data.mat$days.numeric),sc(data.mat$daysq), sc(data.mat$daycube), sc(data.mat$first),sc(data.mat$second), sc(data.mat$previous.day.count)), dim=c(1,nrow(data.mat),6))
+
+Y <- array(sc(time.series.day.counts[-c(1:3)]), dim=c(1,nrow(data.mat),1))
+
+model <- trainr(Y = Y,
+                X = X,
+                learningrate = .8,
+                hidden_dim = 6, use_bias=T,
+                numepochs = 1000, network_type="rnn")
+
+# Predicted values
+Yp <- predictr(model, X)
+
+# Plot predicted vs actual. Training set + testing set
+dv.Y <- (maxmat[7]-minmat[7])*Yp + minmat[7]
+dv.Y
+
+#when sq and cubing, center using day mean from training set [1], save.last.row.datamat use [2] or [3] for first and second,respectively
+Xnew <- array(c((data_train[nrow(data_train),1]-minmat[1])/(maxmat[1]-minmat[1]), (data_train[nrow(data_train),1]^2-minmat[2])/(maxmat[2]-minmat[2]), (data_train[nrow(data_train),1]^3-minmat[3])/(maxmat[3]-minmat[3]), unlist((save.last.row.data.mat[2]-minmat[4])/(maxmat[4]-minmat[4])),unlist((save.last.row.data.mat[3]-minmat[5])/(maxmat[5]-minmat[5])), 
+(time.series.day.counts[length(time.series.day.counts)]-minmat[6])/(maxmat[6]-minmat[6])), dim=c(1,1,6))
+
+X <- array(c(sc(data.mat$days.numeric),sc(data.mat$daysq), sc(data.mat$daycube), sc(data.mat$first),sc(data.mat$second), sc(data.mat$previous.day.count)), dim=c(1,nrow(data.mat),6))
+
+Y <- array(sc(time.series.day.counts[-c(1:3)]), dim=c(1,nrow(data.mat),1))
+
+Yp.new <- predictr(model, Xnew)
+Yp.new <- (maxmat[7]-minmat[7])*Yp.new + minmat[7]
+Yp.new
+
+plot(data$days[-c(1:3, length(data$days))], time.series.day.counts[-c(1:3)] , col = 'red', type = 'p', main = "New York State Daily Confirmed Cases\n actual counts (red & solid blue), RNN training (green); RNN predicted (solid blue)", ylab = "Daily Counts", xlab="Day", xlim=c(0,length(data$days)), ylim=c(0,max(diff(data$counts))))
+points(data$days[length(data$days)], Yp.new,col = 'blue' ,pch=19)
+points(data$days[length(data$days)], diff(data$counts)[nrow(data)-1],col = 'red' , pch=19)
+lines(data$days[-c(1:3)], c(dv.Y,Yp.new),col="green")
+legend(0,max(diff(data$counts)),legend=paste("Last Day: difference between predicted  (blue) and actual  (red) counts:\n",round(Yp.new-diff(data$counts)[nrow(data)-1],0), "cases"))
+abline(v=nrow(data)-.5)
+text(15,0,"training")
+text(nrow(data),0,"test")
+
+#plot commented out; shows error decrease over iterations
+#plot(colMeans(model$error), type="l")
+```
+
+There are many other approaches that fall under the large machine learning umbrella, these include general additive models with penalized smoothers, genetic algorithms, recurrent networks, and symbolic regression and several packages in R to compute these methods. Overall, I was underwhelmed by the effort.  Some packages gave error messages even running the very examples supplied in the package or they gave very strange predictions (e.g., half the number of yesterday's count and we know that isn't the case).
+Part of the issue is that we don't have enough data to  allow these machine learning methods to shine. Also, I, functioning as the data analyst, need to spend more time thinking about the feature engineering side of things.  In machine learning parlance feature engineering refers to how the input variables are processed. When one works with time, for instance, it is common to think about multiple ways that time could enter into the model and include all of them. Machine learning algorithms are designed to drop out the irrelevant formulations, as we saw when we covered sparse PCA and lasso and ridge methods for regression.  There is one time series package used in machine learning (TSFRESH in python) that computes several hundred possible measures on each time series (mean, max, min, variance, entropy, auto-correlation, etc) and stores these computations into a large matrix so that they can be used down stream in subsquent analyses.  I didn't put in the effort to go through the sensible features to compute and include those as input into the models so I shouldn't be surprised at the relatively low performance of these models given that I didn't play by their rules.
+
+I'll continue adding to this section and improving the quality of the machine learning example as time frees up from completing other sections.
+
+
+## Summary
+
+We covered a lot of material in this chapter. We started with a simple linear mixed model on log transformed data that did a reasonable job of accounting for the patterns across states. The finding that the linear relation in the log scale holds fairly well suggests that there is exponential growth. The ability to make a statement about the underlying process, in this case exponential growth, is far more valuable than finding a good fit to a data set.  The rest of these notes covered a more direct way of fitting exponential growth models through nonlinear regression, a different type of growth model based on the logistic curve and a relatively toy example using a standard machine learning example.
