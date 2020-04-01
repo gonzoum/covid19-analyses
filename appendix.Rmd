@@ -2,12 +2,13 @@
 
 ## Using Git
 
+**EDITED 3/31/20**
 
 Git is a version control system that can be used to deliver software, program code, data files, and other useful files. It is also facilitates updating code. For example, if I make a change to a file, I push it to the repository, and then users of the repository can download the changes to their working copy. The system will keep track of versions and manage mergers without conflicts. If it can't resolve conflicts across versions, then the program let's you know about the conflicts and you can choose to keep the conflicts as is or update to the newer version.
 
 ### Installing git
 
-Here I separate installing on PC and Mac.  There are some issues that occur on each platform. For more information see the webpage [Git Hell](https://stat545-ubc.github.io/git66_rstudio-git-github-hell.html)
+Here I separate installing on PC and Mac.  There are some issues that occur on each platform. For more information on RStudio and git see the webpage [Using git from RStudio](https://nceas.github.io/oss-lessons/version-control/4-getting-started-with-git-in-RStudio.html),
 
 
 #### Git on a PC
@@ -17,17 +18,6 @@ Git doesn't usually come installed on a PC.  You can download it at http://git-s
 
 There may be an issue of RStudio finding the path to the git executable, so within RStudio you may need to go to Tools/Global Options/Git and select the path to the git.exe file (likely c:\\Program Files\\Git\\bin).
 
-Some things to check include running git config -l to see your local configuration;  you may need to set username and email typing the following commands in the shell. 
-
-git config --global user.name "John Doe"
-
-git config --global user.email johndoe@example.com
-
-Other solutions that worked in the past include manually pulling the repository and there after Rstudio Git works fine. 
-
-git remote add origin https://github.com/jennybc/myrepo.git
-
-git pull origin master
 
 #### Git on Mac
 
@@ -36,7 +26,7 @@ If you already have xcode installed, then you are ok because git comes with xcod
 
 which git
 
-If git is installed it will report the directory path.  All you have to do is enter that directory path in Tools/Global Options/Git. You open up a browser window and click to the path.  The path may look something line /usr/bin/git. That is not a mispelling there is a folder called /usr (not /users). On more recent macs, many utility folders like /usr are hidden. To see them from the dialogue box (like when you open a window to select a folder and you see a list of possible folders), enter command-shift-. (the last symbol is period). Now you may see a few more folders pop up, just navigate to the path you found from which.  Usually to get to /usr you need to get the highest path possible, not your home directory. Your home directory is in /users/YOURNAME but the /usr folder is one level up, on par with /users.
+If git is installed it will report the directory path.  All you have to do is enter that directory path in RStudio under Tools/Global Options/Git so that RStudio can find the git program. You open up a terminal window and click to the path.  The path may look something line /usr/bin/git. That is not a mispelling there is a folder called /usr (not /users). On more recent macs, many utility folders like /usr are hidden. To see them from the dialogue box (like when you open a window to select a folder and you see a list of possible folders), enter command-shift-. (the last symbol is period). Now you may see a few more folders pop up, just navigate to the path you found from which.  Usually to get to /usr you need to get the highest path possible, not your home directory. Your home directory is in /users/YOURNAME but the /usr folder is one level up, on par with /users.
 
 Some mac users reported that even after installing git RStudio reported not finding git.  The kludgy solution appears is to point the Rstudio git to the default path. In RStudio from Tools/Global Options/Git click on Browse to change the path, go to /Applications/Xcode and select Xcode.  The path will change to Xcode.app.  Then click Browse again (yes, again as second time is a charm) and click on contents/developer/usr/bin and click on git. The path will change, save, exit RStudio and restart. Git should now work.  
 
@@ -46,6 +36,23 @@ Another student reported success using SSH instead of https. This involved setti
 
 I wish I had a simpler set of instructions for Mac users. I'm a Mac user too and I've never had these problems so I'm going mostly with what I'm hearing from students.
 
+### Once Installed Run these Commands (both PC and Mac)
+
+Some things to check include running git config -l to see your local configuration. These commands are typed in the "terminal" section of RStudio (not the R console where you type R commands). You could also type them into the terminal window on your Mac or PC.
+
+You may need to set username and email typing the following commands in the shell or in the terminal section of RSstudio. 
+
+git config --global user.name "John Doe"
+
+git config --global user.email johndoe@example.com
+
+Other solutions that worked in the past include manually pulling the repository and there after Rstudio Git works fine. For example, if you want to pull my covid-19 repository issue the following two commands in the terminal section of RStudio: 
+
+git remote add origin https://github.com/gonzoum/covid19-analyses
+
+git pull origin master
+
+You would need to be in the folder where you want to save this repository because this git remote add command downloads the repository to the current folder.
 
 
 
@@ -67,7 +74,7 @@ There are several interfaces available to work with Git with many more features 
 
 You can create your own repositories using the popular GitHub or BitBucket websites. BitBucket has more options for free private repositories, and academics with an edu in their email get special free academic upgrades (see the BitBucket website for details).
 
-## Git and Session Info in R
+## Reporting on Git and Session Info in R
 
 This code lists the versions of R and all the R packages I'm using, tells me which computer and operating system processed these files, and connects this output to its git commit.
 ```{r cache=FALSE}
