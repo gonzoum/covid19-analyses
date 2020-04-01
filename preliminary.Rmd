@@ -12,6 +12,8 @@ I organize in one place all the R packages that are used in these notes so they 
 
 ```{r message=F,warning=F,results='hide'}
 #be careful in case there are conflicts between these packages
+#e.g., select in dplyr is written over by a select function in a different package
+#so need to call select from dplyr with dplyr::select
 library(bookdown)
 library(readr)
 library(tidyverse)
@@ -53,7 +55,7 @@ p_load("bookdown","readr","tidyverse","rvest","magrittr","stringr","tidycensus",
 
 Here are some functions I wrote that I will use later. I put them here to improve flow and readability of the key content.
 
-### Multiple Plots
+### Multiple Plots {#multiplot}
 
 This function puts multiple ggplots on the same page.  There are now packages that can do this as well, like [patchwork](https://patchwork.data-imaginist.com/), [gridExtra](https://cran.r-project.org/web/packages/egg/vignettes/Ecosystem.html) and [gtable](https://cran.r-project.org/web/packages/gtable/index.html), but I've been using this simple function for years even before such packages existed. I offer this function, which I got off someone's website years ago, as an example of how relatively simple some R functions can be, even when performing complex tasks like arranging multiple plots on a page.  I believe this multiplot() function is now embedded in a [larger package](http://larmarange.github.io/JLutils/reference/multiplot.html).
 
