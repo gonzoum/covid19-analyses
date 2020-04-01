@@ -12,6 +12,11 @@ I make use of the datacov file I read in from the Johns Hopkins git repository.
 
 
 ```{r warning=F, message=F}
+#for these code chunks I use the datacov.World data file
+#coding trick; by switching the definition of datacov I can keep my original code post the 3/23/20 change and just swap 
+#out which file, world or us, to drop into datacov.  Rest of code should remain the same as prior to the change.
+datacov <- datacov.World
+
 # cutoffs and labels to use in the plot based on the number of cases
 mybreaks <- c(1, 20, 100, 1000, 50000)
 mylabels <- c("1-19", "20-99", "100-999", "1,000-49,999", "50,000+")
@@ -69,7 +74,7 @@ ggplot(datacov.long) +  borders("world", colour = "gray90", fill = "gray85") +
 ```
 
 
-While counts are useful they have their limitations. Does a country have a relatively high number of positive cases because it has a large population?  In this field it is common to normalize counts by the population and report numbers per capita (e.g., 62 cases out of 100,000).  I'll have to track down the populations of each country and merge that information into this animation.  Later in this chapter, I develop this animation for the US and I do have the state populations so will illustrate the difference in this animation in counts versus per capita there.  However, raw counts still have a role in helping to understand the impact of covid-19.  If a state has 1500 available hospital beds (and presumably the staff and supplies to provide care for  those  beds), but there are 2000 people in need of hospitalization, then there is a public health issue and the 'per capita" concern becomes moot.
+While counts are useful (see [Preface](#preface) for a discussion of London's cholera epidemic) they have their limitations. Does a country have a relatively high number of positive cases because it has a large population?  In this field it is common to normalize counts by the population and report numbers per capita (e.g., 62 cases out of 100,000).  I'll have to track down the populations of each country and merge that information into this animation.  Later in this chapter, I develop this animation for the US and I do have the state populations so will illustrate the difference in this animation in counts versus per capita there.  However, raw counts still have a role in helping to inform the impact of covid-19.  If a city has 1500 available hospital beds (and presumably the staff and supplies to provide care for  those  beds), but there are 2000 people in need of hospitalization, then there is a public health issue and the 'per capita" concern becomes moot.
 
 
 ## Compare World Counts to US
@@ -77,8 +82,33 @@ While counts are useful they have their limitations. Does a country have a relat
 It would be helpful to see the pattern over time of the world counts of confirmed covid-19 cases relative to the US counts.  Here I create a subset of the datacov data.frame that includes just the 50 states (I dropped DC and the US territories for this analysis).
 
 ```{r}
-#create subset of 50 states
-allstates <- subset(datacov, `Province/State`%in% states)
+#keep this to make this code chunk work (i.e. temporarily revert to the datacov.ori file)
+#revert back to old datacov
+datacov <- datacov.ori
+
+#new code with datacov.US 3/31/20 edits
+datacov.temp <- datacov.US
+allstates.temp <- subset(datacov.temp, `Province/State`%in% states)
+allstates.temp2 <- allstates.temp %>% group_by(`Province/State`) %>%  summarize_at(vars(`1/22/20`:(names(allstates.temp)[ncol(allstates.temp)])), sum,na.rm=T)
+#need state level long and lat (these are county) so just replace these sums with the ones in the old allstates
+
+#create subset of 50 states from original datacov in order to have the correct long and lat by state (rather than county)
+allstates <- subset(datacov.ori, `Province/State`%in% states)
+allstates.ori <- allstates
+
+
+allstates.temp2 <- allstates.temp2[order(match(allstates.temp2$`Province/State`,allstates$`Province/State`)),]
+#double check ordering of rows
+head(cbind(allstates$`Province/State`, allstates.temp2$`Province/State`))
+
+allstates.temp2$Lat <- allstates$Lat
+allstates.temp2$Long <- allstates$Long
+allstates.temp2$`Country/Region` <- allstates.ori$`Country/Region`
+
+#reorder columns to be like allstates.ori so subsequent code works
+allstates <- allstates.temp2[,c(1,ncol(allstates.temp2), ncol(allstates.temp2)-2, ncol(allstates.temp2)-1, 2:(ncol(allstates.temp2)-3))]
+
+#now everything is set so new data structure looks like the old data structure
 
 #prettyval is an extra column appended at the end; it has population size and state abbreviation like "19.5 NY"
 #need to be sure the row orders of state.population that we downloaded from the census website
@@ -122,11 +152,11 @@ allstates.long$state.abb <- factor(allstates.long$`Province/State`)
 allstates.long$percap100 <- allstates.long$count/allstates$population * 100
 ```
 
-Now that we have allstates.long created we can compare cumulative counts in the World to the US cumulative counts.  For a definition of the multiplot() function see the Preliminaries chapter.
+Now that we have allstates.long created we can compare cumulative counts in the World to the US cumulative counts.  For a definition of the multiplot() function see the [Preliminaries chapter](#multiplot).
 
 ```{r,fig.cap="Cumulative Counts of Positive Cases" }
 #compute sums for the entire world by day and store plot in object p1
-sum.world <- data.frame(count=apply(datacov[,5:ncol(datacov)],2,sum,na.rm=T))
+sum.world <- data.frame(count=apply(datacov.World[,5:ncol(datacov.World)],2,sum,na.rm=T))
 sum.world$day <- as.Date(rownames(sum.world), "%m/%d/%y")
 p1 <- ggplot(sum.world, aes(x=day,y=count))  + geom_bar(stat="identity",fill="steel blue") + ggtitle("World Wide Counts") + theme_minimal() + scale_y_continuous(labels=comma)
 #above line: labels=comma prints y axis labels as numbers rather than scientific notation
@@ -169,7 +199,7 @@ I decided to plot percentage relative to population (i.e., counts/population * 1
 max.day.numeric <- max(allstates.long$day.numeric)
 max.day <- max(allstates.long$day)
 
-#extend plot region to allow room for state labels
+#extend plot region on the right to allow room for state labels
 extend.days <- 4
 
 allstates.long%>%mutate(label = if_else(day == max(day), as.character(prettyval), NA_character_)) %>%
@@ -179,7 +209,7 @@ coord_cartesian(clip = 'off') + scale_x_date(limits=as.Date(c("2020-03-09", as.c
     theme(legend.position="none", plot.margin = margin(0.1, 1, 0.1, 0.1, "cm"))
 ```
 
-Same plot but now putting the vertical axis on the log (base 10) scale.  An exponential process becomes linear when taking logs so we would expect to see a pattern that closely resembles straight lines if the count of confirmed cases follows an exponential form.  Each state can have a different growth rate, which will show up as different slopes.  The top two states (NY and WA) are close to a straight line but with different growth rates.  Too much overlap to see much for the other states.  West Virginia (WV) didn't show its first case until 3/17/20 so that is why the green curve (lowest) looks different than the rest.
+Same plot but now putting the vertical axis on the log (base 10) scale.  An exponential process becomes linear when taking logs so we would expect to see a pattern that closely resembles straight lines if the count of confirmed cases follows an exponential form.  Each state can have a different growth rate, which will show up as different slopes.  A straight line representation makes sense though there is some heterogeneity across states in the intercept and maybe some slight differences in the slope, which translates into the growth rate. West Virginia (WV) didn't show its first case until 3/17/20 so that is why the green curve (lowest) looks different than the rest.
 
 ```{r warning=F, message=F, fig.cap="Per Cap Positive Cases by State (log10 scale)"}
 subset(allstates.long, day.numeric!=0) %>%mutate(label = if_else(day == max(day), as.character(prettyval), NA_character_)) %>%
@@ -219,7 +249,7 @@ This pattern is quite remarkable. The states appear to have similar slopes on th
 
 ## Animated Map of US
 
-Here is the animation for the US.  Not much to look at since it has only been about 2 weeks of data.  This map needs work as Alaska and Hawaii outlines are not printed (points are on the left side).  I'll need to do some coding to create an inset for Alaska and Hawaii (possible clue to inset)[https://stackoverflow.com/questions/49523375/graphing-lat-long-data-points-on-us-map-50-states-including-alaska-hawaii]
+Here is the animation for the US.  Not much to look at since it has only been about 2 weeks of data.  This map needs work as Alaska and Hawaii outlines are not printed (their data points appear on the left side roughly where the states would be on the map).  I'll need to do some coding to create an inset for Alaska and Hawaii (possible clue to inset: https://stackoverflow.com/questions/49523375/graphing-lat-long-data-points-on-us-map-50-states-including-alaska-hawaii
 
 ```{r warning=F, message=F, cache=T,fig.cap="US Count of Positive Cases"}
 mybreaks <- c(1, 20, 100, 500, 1000, 2000, 10000)
@@ -269,22 +299,22 @@ ggplot(allstates.long) +  borders("usa", colour = "gray90", fill = "gray85") +
 
 ## Incidence Plots {#incidenceplots}
 
-It is common with these type of time series data to work with at are called first order differences. Rather than look at cumulative counts you look at day to day differences in the cumulative counts, or equivalently, the number of new cases each day.  This is what give rise to the "curves" when people talk about "flattening the curve". Think of this as daily counts and we merely compute histograms.  This section was adapted from [Tim Chruches Blog](https://timchurches.github.io/blog/posts/2020-02-18-analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1/)
+It is common with these type of time series data to work with what are called first order differences. Rather than look at cumulative counts you look at day to day differences in the cumulative counts, or equivalently, the number of new cases each day.  This is what give rise to the "curves" when people talk about "flattening the curve". Think of this as daily counts and we merely compute histograms.  This section was adapted from [Tim Chruches Blog](https://timchurches.github.io/blog/posts/2020-02-18-analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1/)
 
-Here is the daily incidence rate using the same US data.  "Curve" does not appear to be flattening yet.
+Here is the daily incidence rate using the same US data.   The curve does not appear to be flattening yet.
 
 ```{r}
-allstates.temp <- allstates[,c(1:4,52:65)]
+allstates.temp <- allstates[,c(1:4,52:(ncol(allstates)-2))]
 temp <- t(apply(allstates.temp[,-c(1:4)], 1, function(i) diff(unlist(i))))
 #as least one negative, set to NA
 temp[temp<0] <- NA
 allstates.temp <- allstates.temp[,-5]
-allstates.temp[,5:17] <- temp
+allstates.temp[,5:(ncol(temp)+4)] <- temp
 
 temp <- apply(allstates.temp[,-c(1:4)],2,sum,na.rm=T)
-allstates.temp[1,5:17] <- temp
+allstates.temp[1,5:(length(temp)+4)] <- temp
 allstates.temp <- allstates.temp[1,]
-temp.long <- gather(allstates.temp, day, count, `3/10/20`:`3/22/20`)
+temp.long <- gather(allstates.temp, day, count, `3/10/20`:ncol(allstates.temp))
 temp.long$day <- as.Date(temp.long$day, "%m/%d/%y")
 temp.long %>%
   ggplot(aes(x=day, y=count))  + 
@@ -299,10 +329,10 @@ temp.long %>%
 
 ## Use of PCA to check for outliers
 
-Here is yet another use for PCA.  We can use it to detect outliers in a complicated data set. Let's take the 50 states and the time series from 3/09/20 to 3/22/20, to create a 50 by 13 data matrix of positive counts.  Compute a PCA of the correlation matrix between states. This correlation matrix is 50 x 50 and represents how similar each state's cumulative trajectory is to another state's cumulative trajectory for all possible pairs of states.  Plot the factor scores of the 50 states on the first two PCs.  The majority of the states will cluster together. The outlier states, those with very different trajectories, appear far away from the primary cluster suggesting they have a very different trajectory. The four candidate outliers are the 3 states early in the news:  NY, WA and CA. Worth checking why MA is away from the cluster. Recall the numbers in front of the state abbreviation correspond to the state population in millions.  This is commonly done in biological modeling to check for outliers, sometimes not on the raw data but the set of parameters that are estimated for each unit. 
+Here is yet another use for PCA.  We can use it to detect outliers in a complicated data set. Let's take the 50 states and the time series from 3/09/20 to present, to create a 50 by day data matrix of positive counts.  Then compute a PCA of the correlation matrix between states. This correlation matrix is 50 x 50 and represents how similar each state's cumulative trajectory is to another state's cumulative trajectory for all possible pairs of states.  Plot the factor scores of the 50 states on the first two PCs.  The majority of the states will cluster together. The outlier states, those with very different trajectories, appear far away from the primary cluster suggesting they have a very different trajectory. The three candidate outliers are the 3 states early in the news:  NY, WA and CA. Worth checking why MA and NJ are slightly away from the cluster. Recall the numbers in front of the state abbreviation correspond to the state population in millions.  This type of PCA is commonly done in biological modeling to check for outliers, sometimes not on the raw data but the set of parameters that are estimated for each unit (e.g., if you run regressions for each state, gather the betas from those regressions as data such as 8 betas per state, then compute a correlation matrix acorss states, then run a PCA on that correlation matrix to detect outliers). 
 
 ```{r fig.cap="PCA to identify states with candidate outliers", warning=F}
-temporal.data <- allstates[,53:65]
+temporal.data <- allstates[,53:(ncol(allstates)-2)]
 rownames(temporal.data) <- allstates[,"prettyval"]$prettyval
 
 pca.out <- prcomp(temporal.data, center=T, scale=T)
