@@ -7,6 +7,13 @@ Process models are models where we model mechanisms. A use of such models is tha
 For a basic example of how we can use basic data along with sum assumptions to estimate the "actual number of cases" check out this [video](https://www.youtube.com/watch?v=mCa0JXEwDEk).
 ## SIR Models
 
+
+<!-- eSIR site: http://www.socr.umich.edu/people/dinov/courses/DSPA_notes/18_BigLongitudinalDataAnalysis_RNN.html
+
+song lab slides https://github.com/lilywang1988/eSIR
+-->
+
+
 ## Network-based Models
 
 ## Agent-based Models
