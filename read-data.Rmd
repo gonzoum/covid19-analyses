@@ -9,7 +9,7 @@ This chapter will cover three different ways to read data into R:
 
 3. pulling data with an api from the national census.
 
-## Comments about R code
+### Comments about R code {-}
 
 I am writing these notes to serve as a tutorial for how to work with data. My goal is not to teach data science or statistics in these notes but rather to illustrate how to work with data and highlight some pros and cons of different approaches. I will emphasize the code so that interested readers can see what I did. You are free to take this code and use it for your own purposes.
 
@@ -47,14 +47,21 @@ Now read the file that has the cumulative counts of confirmed covid-19 cases by 
 
 Here is the notice of the change to the data structure: [link](https://github.com/CSSEGISandData/COVID-19/issues/1250).
 
-**NOTE:** On 3/30/20 the repository now lists the updated files. I won't have time to work them into the code for Tuesday's 3/31/20 lecture but hopefully by Thur we will have an updated file.
+**NOTE:** On 3/30/20 the repository now lists the updated files. The new files changed in small ways that require some rewriting of the code. These changes include separating the US into a different file from the world (though the total US counts appear in the world data set), changing the names of a few columns but these are not consistent between the different data files that are downloaded (e.g., the US file has slightly different column names than the world data file), US data file ends one day behind the world data file (i.e., 3/30 and 3/31 respectively), and for the US data providing county-level counts rather than state-level counts so I need to create sums by states. These aren't big deals but can create lots of problems catching all the edits needed in  later code. For example, originally the longitude variable was called Long but now it is called Long_, and in the US data column names are given with dates as 2020 but in the world data file they are given as 20. There are several ways to address such changes. I'll go the route of changing the variable names here so that I don't need to make many changes throughout the rest of the code.  Another possible way to address these changes is to adopt the new variable names and then carefully go through all the lines of code to make the necessary changes.  I suspect there may be more changes in the comming days so I don't want to make the minimal changes now in a way that let's me adapt to future changes.
 
+I include little notes so you can see how I adapted my code to the changing landscape and evaluate the decisions I made along the way.  As much as possible I will document my edits and use clear commit messages in git so that one could go back to earlier versions as needed. Such documentation is an important part of conducting reproducible science.  The approach I've taken here still makes the code readable yet my historical changes can be examined without a bunch of clutter of obsolete code commented out with unhelpful statements such as "DO NOT USE THIS" (see below for a silly example).
 
 ```{r}
+#DO NOT USE THIS (SILLY EXAMPLE)
+#OLD CODE PRIOR TO 3/23/20
+#imagine how difficult it would be to figure out my code with a lot of these obsolete lines with ignore messages; git version control is much better approach
 #datacov <- read_csv("/Users/gonzo/Dropbox/transfer/mac transfer/COVID-19/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Confirmed.csv")
+
 #PLACE HOLDER: keep days up to and including 3/22/23; don't read file from git which is being updated.
 datacov <- read_csv("/Users/gonzo/Dropbox/transfer/mac transfer/covid19-analyses/time_series_19-covid-Confirmed.csv")
 datacov <- datacov[,1:(which(names(datacov)=="3/22/20"))]
+datacov.ori <- datacov
+
 head(datacov)
 
 ###THE LINES ARE TEMPORARY UNTIL I FIND TIME TO REWRITE CODE TO ADDRESS NEW DATA STRUCTURE STARTING ON 3.23
@@ -73,6 +80,10 @@ temp<- read_csv("/Users/gonzo/Dropbox/transfer/mac transfer/COVID-19/csse_covid_
 m3.28.sum <- temp[temp$Country_Region=="US",c("Province_State","Confirmed")] %>% group_by(Province_State) %>% summarise(daysum = sum(Confirmed))
 temp<- read_csv("/Users/gonzo/Dropbox/transfer/mac transfer/COVID-19/csse_covid_19_data/csse_covid_19_daily_reports/03-29-2020.csv")
 m3.29.sum <- temp[temp$Country_Region=="US",c("Province_State","Confirmed")] %>% group_by(Province_State) %>% summarise(daysum = sum(Confirmed))
+temp<- read_csv("/Users/gonzo/Dropbox/transfer/mac transfer/COVID-19/csse_covid_19_data/csse_covid_19_daily_reports/03-30-2020.csv")
+m3.30.sum <- temp[temp$Country_Region=="US",c("Province_State","Confirmed")] %>% group_by(Province_State) %>% summarise(daysum = sum(Confirmed))
+temp<- read_csv("/Users/gonzo/Dropbox/transfer/mac transfer/COVID-19/csse_covid_19_data/csse_covid_19_daily_reports/03-31-2020.csv")
+m3.31.sum <- temp[temp$Country_Region=="US",c("Province_State","Confirmed")] %>% group_by(Province_State) %>% summarise(daysum = sum(Confirmed))
 
 #most recent day totals for NY and MI to fill in numbers in later notes 
 #better to do this through coding but will wait until  format of JH data is final
@@ -82,7 +93,9 @@ mi <- subset(temp, `Province_State`=="Michigan")
 apply(mi[8:11],2,sum)
 ```
 
-The column labels of the object datacov are ordered by date starting in column 5. The column names are special string variables because they start with numbers and R doesn't like variable names to start with numbers. For example, `` `1/22/20` `` (backticks), and you'll see in later syntax where I need to refer to these columns using the backwards apostrophes.  The other columns contain province/state and county/region labels as well as latitude and longitude of each geographic unit.
+<!-- Had trouble getting backticks to display across multipe displays (r viewers, pdf, web browsers so went with html code) -->
+
+The column labels of the object datacov are ordered by date starting in column 5. The column names are special string variables because they start with numbers and R doesn't like variable names to start with numbers. For example, <code>&grave;1/22/20&grave;</code> (backticks), and you'll see in later syntax where I need to refer to these columns using the backwards apostrophes.  The other columns contain province/state and county/region labels as well as latitude and longitude of each geographic unit.
 
 The column names though get converted by R to regular strings when treated as names.  You can also check data pulls each day to see if yesterday's date is the last entry (otherwise there is a problem). The data base seems to be updated late in the evening so if these commands are run late in the evening you may see today's date as the most recent date.
 
@@ -91,6 +104,28 @@ colnames(datacov)
 ```
 
 The behavior of the variable names I am showing here follows the default of R on a Mac.  It seems that R on a PC follows a different convention: rather than using backticks it adds an X to the beginning of the column name that starts with a nonstandard character a number. To make the PC behave like a Mac on this issue, just add check.names=FALSE in the call to read.csv when the data are read.   This way my notes will run on both PC and Mac/linux.
+
+new code under development 3/31/20
+
+```{r}
+#data for World and US county/states are now in separate files
+datacov.World <- read_csv("/Users/gonzo/Dropbox/transfer/mac transfer/COVID-19/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_global.csv")
+datacov.US <- read_csv("/Users/gonzo/Dropbox/transfer/mac transfer/COVID-19/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_US.csv")
+
+#fix variable names in US to match World file and my previous code
+names(datacov.US)[7] <- names(datacov.World)[1]
+names(datacov.US)[8] <- names(datacov.World)[2]
+names(datacov.US)[10] <- "Long"
+#make column name dates in US match the date format use in world (and drop last day in world file because not in US file)
+colnames(datacov.US)[12:ncol(datacov.US)] <- colnames(datacov.World)[5:(ncol(datacov.World)-1)]
+
+```
+
+Now I have two datacov files, World and US, and I can use each as need in the subsequent code.  The main thing left to "fix" is that the new datacov.US is broken down by county and my code is currently written for state.  I'll sum over county later to get state counts, but will keep the county level information for possible use in later examples using more granular county-level information.
+
+### Issues around dealing with downloaded data
+
+While it is great to have an automatic routine that downloads data on a regular basis, such as daily, there is a potential risk. The data file may change as we saw in this repository on 3/23/20.  There could be more subtle issues such as an error in reading in data so a column shift, or the data for one day was entered slightly late after midnight so it shows up as being the next day's data. Just because one has automatic code one still should double check their results for any weird things.  Examples of things that happened in this repository is that data for 3/22/20 was missing when the US data was released on 3/31/20 as was the data for 3/31/20.
 
 ### Issues around dealing with counts
 
@@ -243,7 +278,7 @@ covid.tracking <- subset(covid.tracking, covid.tracking$state %in% state.abb)
 ```
 
 ## State-level information
-Ken Kollman helped track some of these sources.
+[Ken Kollman](https://www.isr.umich.edu/cps/people_faculty_kkollman.html) pointed me to some of these sources.
 
 PENDING: here I will download relevant data by state or county that can help me understand the trends. I need hypotheses for this such as population density, rural vs. urban, nature of public transportation offered, etc. I will also gather data around timing of key covid-related policies such as dates each state issued shelter in place rulings, or dates local and state governments issued restrictions on the number of people who could gather (seems some states issues numbers of 250, then 100, then 25, then 10, then 2, then shelter in place).  Lots of potentially interesting stuff. I'm not a political scientist nor a sociologist nor a public health expert nor a policy expert so I don't have a solid scientific bases on which to generate reasonable hypotheses to test, which would guide my thinking on which variables I should get.  I was trained to think this way:  organize your thinking and then seek out the relevant variables to test that thinking.  The modern approach in data science though turns that upside down:  don't worry about hypotheses, just gather as much information as you can conceive of gathering, clean and organize that information, then run it through special algorithms that simplify the complexity. The world of machine learning. I hope to add some examples of machine learning approaches at a very small scale to these data to give you a flavor of what this approach has to offer. 
 
@@ -262,6 +297,22 @@ head(schooldata)
 
 ```
 
+### State-level Policy Data
+
+A few research groups have already started studying the public health implications of various state-level measures around social distancing.  One such example is a team at the [University of Washington](https://faculty.washington.edu/cadolph/papers/AABFW2020.pdf) and a link to their [git repository](https://github.com/COVID19StatePolicy/SocialDistancing) for the most up-to-date information.  Here I just read in the csv file I downloaded on 4/1/20; will switch to reading from the git directly at some point.
+
+```{r}
+#downloaded 4/1/20; switch to git repo at some point for most current 
+#data set needs some cleaning
+distancingpolicy <- read.csv("USstatesCov19distancingpolicy.csv", header=T)
+
+head(distancingpolicy)
+
+#for a Michigan focus 
+#looks like another package has a "select" as I was getting an error; specifically call dplyr
+distancingpolicy %>% subset(StateName=="Michigan") %>% dplyr::select(DateIssued, PolicyCodingNotes) %>% head(n=10)
+
+```
 
 ## Summary
 
