@@ -234,10 +234,22 @@ richfu <- function(d,l,rate,y,b1){
 ifelse(d<l,0,y*rate^(b1*(d-l)))
 }
 
+#example exponential growth model
+plot(0:max.day.numeric, richfu(0:max.day.numeric, 0, 1.23 , .000555 , 1)*19500000/100,type="l",xlab="days",ylab="counts",main="Hypothetical plot of counts following an exponential growth (tied to population of New York)")
+```
+
+
+Now let's estimate an exponential growth model using a nonlinear mixed model regression. This mimics the LMER model we ran earlier in these notes but rather than transforming with a log to convert the data into straight lines we model the curvature direction with an exponential function.
+
+```{r}
 out <- nlme(percent ~ richfu(day.numeric, l=0, rate,y,b1=1), fixed = rate+y~1,
             random =  rate+y ~1, data=na.omit(allstates.long.new),start=c( rate=1.4,y=.001), verbose=T, control=nlmeControl(msMaxIter=500,opt="nlminb",pnlsTol=.02,msVerbose=T,minScale=.02) )
 out.exponential <- out
 summary(out.exponential)
+#confidence intervals of the parameters
+intervals(out.exponential)
+#idea for boostrapping to get predicted interval but be careful about the time aspect; maybe better to simulate data 
+#https://stackoverflow.com/questions/55552080/how-to-obtain-confidence-intervals-for-non-linear-mixed-model-logistic-growth-c
 ```
 
 ```{r fig.cap="Exponential Function Estimated through Nonlinear Mixed Model Regression"}
@@ -248,17 +260,18 @@ summary(out.exponential)
 #ggplot(temp1, aes(day.numeric,dv,group=prettyval, color=prettyval )) + geom_point() + geom_line(data=temp2)   
 
 #alternative approach to getting this plot
-predmatnonlin <- data.frame(day.numeric=rep(c(0:14),50),state.abb=rep(rownames(coef(out)),each=15))
+predmatnonlin <- data.frame(day.numeric=rep(c(0:max.day.numeric),50),state.abb=rep(rownames(coef(out)),each=max.day.numeric+1))
 predmatnonlin$prediction <- predict(out, list(day.numeric=predmatnonlin$day.numeric, state.abb=predmatnonlin$state.abb),level=1)
 nonlinreg <- ggplot(predmatnonlin, aes(day.numeric,prediction,group=state.abb, color=state.abb )) +  geom_line()   
 nonlinreg
 ```
 
-Here one could run the same code above I used in the linear mixed model case on the log scale to produce tables of predicted counts, their confidence intervals, and the forecast plots with the confidence bands. This information could be compared with the previous ones to help us evaluate the models.  Some thought needs to go into writing code to simulate the confidence bands around the predictions from the nonlinear model.
+<!-- Here one could run the same code above I used in the linear mixed model case on the log scale to produce tables of predicted counts, their confidence intervals, and the forecast plots with the confidence bands. This information could be compared with the previous ones to help us evaluate the models.  Some thought needs to go into writing code to simulate the confidence bands around the predictions from the nonlinear model. -->
 
-I'll compare the predicted curve for New York five days out from 3/23 using this nonlinear mixed model regression to the earlier linear mixed model regression on the log scale, by superimposing the predicted curve in green from the nonlinear model on the plot for  the log linear model.
+<!-- I'll compare the predicted curve for New York five days out from 3/23 using this nonlinear mixed model regression to the earlier linear mixed model regression on the log scale, by superimposing the predicted curve in green from the nonlinear model on the plot for  the log linear model. -->
 
-```{r}
+```{r eval=F, echo=F}
+#need to rewrite this to incldue predictioninteval for nlme (don't use temp from log linear version)
 #go days.ahead out
 predmatnonlin <- data.frame(day.numeric=rep(c(0:(14+days.ahead)),50),state.abb=rep(rownames(coef(out)),each=15+days.ahead))
 predmatnonlin$prediction <- predict(out, list(day.numeric=predmatnonlin$day.numeric, state.abb=predmatnonlin$state.abb),level=1)
@@ -273,6 +286,7 @@ y = allstates.long.new[allstates.long.new$state.abb == "New York","count"]
 actualny <- data.frame(y=y, x=0:(length(y)-1))
 
 temp %>%   ggplot(aes(x=day.numeric, y=fit)) + geom_point(data=subset(temp,day.numeric<=max.day.numeric) )+ geom_ribbon(data=subset(temp,day.numeric>max.day.numeric), aes(y=fit, ymin=lwr,ymax=upr), alpha=.2,fill="red") + geom_line() + geom_linerange(data=subset(temp,day.numeric<=max.day.numeric),aes(y=fit, ymin=lwr,ymax=upr)) + ylab("Counts") + geom_point(data=manualcounts, aes(x=day.numeric, y=fit),color="blue",shape=2) + geom_line(data=datapl, aes(x=day.numeric, y=counts),color="green") + geom_point(data=datapl, aes(x=day.numeric, y=counts),color="green") + geom_point(data=datapl, aes(x=day.numeric, y=counts),color="green") + geom_point(data=actualny, aes(x=x,y=y), color="violet")
+
 ```
 
 
@@ -280,7 +294,9 @@ temp %>%   ggplot(aes(x=day.numeric, y=fit)) + geom_point(data=subset(temp,day.n
 
 Now let's switch to a logistic growth model (not the same as logistic regression we covered earlier for binary data).  The nlme has some additional routines ways to simplify the fitting logistic growth models (e.g., SSlogis), which make it easier to set up starting values. I'll avoid that so as to be more transparent with the code I'm writing.  In other work I've seen more efficient estimation (and less fussiness around starting values with the stochastic EM approach to fitting nonlinear regression models such as in the package saemix).
 
-The nlme() command has a difficult time with the three parameters of the logistic growth model. I did a little bit of tinkering with starting values and the three parameters.  I was able to get a reasonable fit with fitting three parameters of the logistic growth model and having two of them be random effects (i.e., they are allowed to vary by state
+The nlme() command has a difficult time with the three parameters of the logistic growth model. I did a little bit of tinkering with starting values and the three parameters.  I was able to get a reasonable fit with fitting three parameters of the logistic growth model and having two of them be random effects (i.e., they are allowed to vary by state).
+
+The logistic growth model starts off being very close to an exponential but eventuallly tapers off. Many biological systems behave like a logistic growth function.
 
 ```{r messages=F, warnings=F}
 
@@ -288,10 +304,20 @@ richfu.logistic <- function(d,l,y,b1){
 l/(1+y*exp(b1*d))
 }
 
+#example logistic growth model
+plot(0:max.day.numeric, richfu.logistic(0:max.day.numeric, 3880, 133.45, -.332),type="l",xlab="days",ylab="counts",main="Hypothetical plot of counts following a logistic growth function")
+```
+
+Let's fit the logistic function to the data.
+```{r}
+
 out <- nlme(count ~ richfu.logistic(day.numeric, l,y,b1), fixed = l+y+b1~1,
             random =  l+y~1, data=na.omit(allstates.long.new),start=c( l=15000,y=800,b1=-.65), verbose=T, control=nlmeControl(msMaxIter=1000,opt="nlminb",pnlsTol=.02,msVerbose=T,minScale=.02, maxIter=1000) )
 AIC(out)
 out.logistic <- out
+summary(out.logistic)
+#confidence intervals of the parameters
+intervals(out.logistic)
 
 #example of another version that had higher AIC so I discarded this model
 #out2 <- nlme(count ~ richfu.logistic(day.numeric, l,y,b1), fixed = l+y+b1~1,
@@ -312,8 +338,8 @@ Notice that the fits for some states taper off according to this model, but for 
 
 ```{r fig.cap="Logistic Growth Model"}
 #alternative approach to getting this plot
-predmatnonlin <- data.frame(day.numeric=rep(c(0:14),50),state.abb=rep(rownames(coef(out)),each=15))
-predmatnonlin$prediction <- predict(out, list(day.numeric=predmatnonlin$day.numeric, state.abb=predmatnonlin$state.abb),level=1)
+predmatnonlin <- data.frame(day.numeric=rep(c(0:max.day.numeric),50),state.abb=rep(rownames(coef(out)),each=max.day.numeric+1))
+predmatnonlin$prediction <- predict(out.logistic, list(day.numeric=predmatnonlin$day.numeric, state.abb=predmatnonlin$state.abb),level=1)
 nonlinreg.logistic <- ggplot(predmatnonlin, aes(day.numeric,prediction,group=state.abb, color=state.abb )) +  geom_line()   
 nonlinreg.logistic
 ```
@@ -325,9 +351,10 @@ AIC(out.logistic)
 BIC(out.logistic)
 ```
 
-I'll compare the predicted curve for New York five days out from 3/23 using this nonlinear mixed model regression to the earlier linear mixed model regression on the log scale, by superimposing the predicted curve in green from the nonlinear model on the plot for  the log linear model.
+<!-- I'll compare the predicted curve for New York five days out from 3/23 using this nonlinear mixed model regression to the earlier linear mixed model regression on the log scale, by superimposing the predicted curve in green from the nonlinear model on the plot for  the log linear model. -->
 
-```{r}
+```{r eval=F, echo=F}
+#once nlme is fixed for exponential, then fix this segment
 #go days.ahead out
 predmatnonlin <- data.frame(day.numeric=rep(c(0:(14+days.ahead)),50),state.abb=rep(rownames(coef(out)),each=15+days.ahead))
 predmatnonlin$prediction <- predict(out, list(day.numeric=predmatnonlin$day.numeric, state.abb=predmatnonlin$state.abb),level=1)
@@ -367,6 +394,10 @@ In the figure below the red dots are the actual daily cases in New York.  The gr
 #create a data frame for all avaiable days, both for the downloaded data and the manually entered data
 #OLDDATA
 #data <- data.frame(days= c(actualny$x[-1],14:(14+nrow(manualcounts)-1)), counts= c(actualny$y[-1], manualcounts$fit))
+
+y = allstates.long.new[allstates.long.new$state.abb == "New York","count"]
+actualny <- data.frame(y=y, x=0:(length(y)-1))
+
 data <- data.frame(days= actualny$x[-1], counts= actualny$y[-1])
 
 #partition train and test data; good to do that first so that test data doesn't creep into training
