@@ -2,11 +2,16 @@
 
 Entire chapter is pending
 
-Process models are models where we model mechanisms. A use of such models is that they allow us to model "what if" scenarios, such as what would be expected to happen to the spread of covid-19 cases if a state imposes a shelter-in-place order.  The models in the previous chapters don't allow us do such analyses.  The material in the earlier chapters allow us to justify some of the assumptions we may need in process models.
+Process models are models where we model mechanisms. A use of such models is that they allow us to model "what if" scenarios, such as what would be expected to happen to the spread of covid-19 cases if a state imposes a shelter-in-place order.  The models in the previous chapters don't allow us do such analyses.  The material in the earlier chapters allow us to justify some of the assumptions we may need in process models.  Sometimes process models can be estimated directly from data, sometimes data merely provide ways of justifying assumptions one needs to make.
 
 For a basic example of how we can use basic data along with sum assumptions to estimate the "actual number of cases" check out this [video](https://www.youtube.com/watch?v=mCa0JXEwDEk).
+
+
 ## SIR Models
 
+SIR models refer to a modeling approach that uses differential equations, which are equations that govern how a process changes over time.  The basic model starts by having three kinds of people:  Susceptible, Infectious and Recovered (SIR).  In various versions of these models one could change assumptions such as "once an individual recovers they will not get the disease again because they develop antibodies" to "an individual who recovers has a p chance of being reinfected if they come in contact with an infected person" (where p is a probability between 0 and 1 and could be varied to study the implications). 
+
+[Here](https://mail.google.com/mail/u/0/#inbox/QgrcJHrhwzzjMlbFSsGcwGcnZcVmwGkBHMl?projector=1) is a 20min video on SIR models geared for the pandemic with examples around social distancing.
 
 <!-- eSIR site: http://www.socr.umich.edu/people/dinov/courses/DSPA_notes/18_BigLongitudinalDataAnalysis_RNN.html
 

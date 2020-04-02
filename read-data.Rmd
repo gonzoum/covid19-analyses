@@ -125,7 +125,7 @@ Now I have two datacov files, World and US, and I can use each as need in the su
 
 ### Issues around dealing with downloaded data
 
-While it is great to have an automatic routine that downloads data on a regular basis, such as daily, there is a potential risk. The data file may change as we saw in this repository on 3/23/20.  There could be more subtle issues such as an error in reading in data so a column shift, or the data for one day was entered slightly late after midnight so it shows up as being the next day's data. Just because one has automatic code one still should double check their results for any weird things.  Examples of things that happened in this repository is that data for 3/22/20 was missing when the US data was released on 3/31/20 as was the data for 3/31/20.
+While it is great to have an automatic routine that downloads data on a regular basis, such as daily, there is a potential risk. The data file may change as we saw in this repository on 3/23/20.  There could be more subtle issues such as an error in reading in data so a column shift, or the data for one day was entered slightly late after midnight so it shows up as being the next day's data. Just because one has automatic code one still should double check their results for any weird things.  Examples of things that happened in this repository is that data for 3/22/20 was missing when the US data was released on 3/31/20 as was the data for 3/31/20 even though 3/31/20 data were included in the World data file.
 
 ### Issues around dealing with counts
 
