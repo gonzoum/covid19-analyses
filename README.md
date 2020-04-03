@@ -1,1 +1,1 @@
-General Description goes here
+Some notes and analyses examples using data from 2019-2020 covid-19 pandemic for use in Psych 614 lectures. I started this with the goal of teaching some data visualizations such as some animations, and this project grew into a much more extensive exercise. I show how to scrape data off the web, use git, work with an API to download data, plus working with some nonlinear mixed models. I'll also illustrate some additional models about process.
