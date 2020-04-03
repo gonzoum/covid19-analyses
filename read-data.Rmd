@@ -26,7 +26,7 @@ Sometimes these present conflicts such as writing robust code may not be code th
 
 ## Pulling from a git repository
 
-I'll use the data base that Johns Hopkins has been maintaining, which is also used by news outlets such as CNN.  I already cloned the git repository on my local computer so each day I merely have to issue a "git pull" command to get all new files that have been edited.  This is a better process than conducting a completely new download every day of the entire repository.
+I'll use the [data base that Johns Hopkins](https://github.com/CSSEGISandData/COVID-19) has been maintaining on github, which is also used by news outlets such as CNN.  I already cloned the git repository on my local computer so each day I merely have to issue a "git pull" command to get all new files that have been edited.  This is a better process than conducting a completely new download every day of the entire repository.
 
 If you want to learn more about working with git repositories, you can do a Google search for how to clone a repository.  Rstudio also has features to help clone and manage a git repository. 
 
@@ -84,6 +84,8 @@ temp<- read_csv("/Users/gonzo/Dropbox/transfer/mac transfer/COVID-19/csse_covid_
 m3.30.sum <- temp[temp$Country_Region=="US",c("Province_State","Confirmed")] %>% group_by(Province_State) %>% summarise(daysum = sum(Confirmed))
 temp<- read_csv("/Users/gonzo/Dropbox/transfer/mac transfer/COVID-19/csse_covid_19_data/csse_covid_19_daily_reports/03-31-2020.csv")
 m3.31.sum <- temp[temp$Country_Region=="US",c("Province_State","Confirmed")] %>% group_by(Province_State) %>% summarise(daysum = sum(Confirmed))
+temp<- read_csv("/Users/gonzo/Dropbox/transfer/mac transfer/COVID-19/csse_covid_19_data/csse_covid_19_daily_reports/04-01-2020.csv")
+m4.01.sum <- temp[temp$Country_Region=="US",c("Province_State","Confirmed")] %>% group_by(Province_State) %>% summarise(daysum = sum(Confirmed))
 
 #most recent day totals for NY and MI to fill in numbers in later notes 
 #better to do this through coding but will wait until  format of JH data is final
@@ -116,8 +118,8 @@ datacov.US <- read_csv("/Users/gonzo/Dropbox/transfer/mac transfer/COVID-19/csse
 names(datacov.US)[7] <- names(datacov.World)[1]
 names(datacov.US)[8] <- names(datacov.World)[2]
 names(datacov.US)[10] <- "Long"
-#make column name dates in US match the date format use in world (and drop last day in world file because not in US file)
-colnames(datacov.US)[12:ncol(datacov.US)] <- colnames(datacov.World)[5:(ncol(datacov.World)-1)]
+#make column name dates in US match the date format use in world
+colnames(datacov.US)[12:ncol(datacov.US)] <- colnames(datacov.World)[5:(ncol(datacov.World))]
 
 ```
 

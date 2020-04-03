@@ -11,7 +11,7 @@ For a basic example of how we can use basic data along with sum assumptions to e
 
 SIR models refer to a modeling approach that uses differential equations, which are equations that govern how a process changes over time.  The basic model starts by having three kinds of people:  Susceptible, Infectious and Recovered (SIR).  In various versions of these models one could change assumptions such as "once an individual recovers they will not get the disease again because they develop antibodies" to "an individual who recovers has a p chance of being reinfected if they come in contact with an infected person" (where p is a probability between 0 and 1 and could be varied to study the implications). 
 
-[Here](https://mail.google.com/mail/u/0/#inbox/QgrcJHrhwzzjMlbFSsGcwGcnZcVmwGkBHMl?projector=1) is a 20min video on SIR models geared for the pandemic with examples around social distancing.
+[Here](https://mail.google.com/mail/u/0/#inbox/QgrcJHrhwzzjMlbFSsGcwGcnZcVmwGkBHMl?projector=1) is a 20min video on SIR models geared for the pandemic with examples around social distancing and [Washington Post article](https://www.washingtonpost.com/graphics/2020/world/corona-simulator/) using an SIR approach to illustrate the effects of social distancing.
 
 <!-- eSIR site: http://www.socr.umich.edu/people/dinov/courses/DSPA_notes/18_BigLongitudinalDataAnalysis_RNN.html
 
