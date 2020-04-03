@@ -1,7 +1,7 @@
 # Descriptive Modeling
 
 The previous chapter presented several descriptive plots of raw data.  What I'd like to do in this chapter is show some simple modeling using methods we learned this year along with some extensions. 
-By no means is any of the modeling presented here considered breakthrough modeling. I call this descriptive modeling because all I do is describe the patterns using statistical methods. In the next chapter I'll give some examples of models that attempt to capture mechanism. Another way of explaining the difference between descriptive models and explanatory models is that the former are good summaries of the data and can be used to forecast, but they do not provide  understanding of the underling mechanisms so they do not give any insight into what would happen if a change was imposed on the system.  These models don't tell us the effect social distancing may have, for example, on the rate of covid-19. I sometimes refer to descriptive modeling as "models of data", which actually characterizes many of the structural models we've covered this year.
+By no means is any of the modeling presented here considered breakthrough modeling. I call this descriptive modeling because all I do is describe the patterns using statistical methods. In the next chapter I'll give some examples of models that attempt to capture mechanism. Another way of explaining the difference between descriptive models and explanatory models is that the former are good summaries of the data and can be used to forecast, but they do not provide  understanding of the underling mechanisms so they do not give any insight into what would happen if a change was imposed on the system.  Descriptive models don't tell us the effect social distancing may have, for example, on the rate of covid-19. I sometimes refer to descriptive modeling as "models of data", which actually characterizes many of the structural models we've covered this year.
 
 I'll try to use only the R features necessary to make the points. There are more complicated approaches using time series packages that format the data differently (e.g., they use time series objects). There are benefits of doing this because there are automatic plotting and estimation routines that can take time series objects and do relevant computations. But I think as you are learning this it makes more sense to learn how to do some of the programming and then you are in a better position to learn the value of more advanced approaches like those for time series data.
 
@@ -9,15 +9,17 @@ I won't cover commonly used descriptive summary methods such as smoothing techni
 
 ##  Regression on US State Percentages
 
-In the chapter [Descriptive Plots](#descplots) I showed that in the log scale the curves look  linear by state for the count/population variable.
+In the chapter [Descriptive Plots](#descplots) I showed that on the log scale the curves look  like they can be approximated by straight lines by state for the count/population variable.
 
-These data are a natural candidate for a random effects linear regression.  Each state should have its own intercept and slope.  We could create a complicated interaction between day and state, so that we have a state factor with 50 levels (so 49 effect or contrast codes), giving us 49 intercepts and slopes but that is overkill. The random effects approach we learned last semester for repeated measures makes more sense.  Each state is modeled as a random draw from a multivariate normal distribution such that we draw 50 pairs of slopes and intercepts from that multivariate distribution of intercept and slope. Once we have those 50 slope and intercept pairs, then we compute the predicted scores for each state. The algorithm finds the mean and covariance matrix of that multivariate distribution to minimize the discrepancy (i.e., squared residuals) between the observed  and the predicted data  As shown in the previous chapter, if logs are taken of the percentages, then the state-level data appear to follow straight lines.
+These data are a natural candidate for a random effects linear regression.  Each state should have its own intercept and slope.  We could create a complicated interaction between day and state, so that we have a state factor with 50 levels (so 49 effect or contrast codes), giving us 49 intercepts and slopes but that is overkill. The random effects approach we learned last semester for repeated measures makes more sense.  Each state is modeled as a random draw from a multivariate normal distribution such that we draw 50 pairs of slopes and intercepts from that multivariate distribution of intercept and slope. Once we have those 50 slope and intercept pairs, then we compute the predicted scores for each state. The algorithm finds the mean and covariance matrix of that multivariate distribution to minimize the discrepancy (i.e., squared residuals) between the observed  and the predicted data.  As shown in the previous chapter, if logs are taken of the percentages, then the state-level data appear to follow straight lines.
 
-Day is entered as a linear time variable (1, 2, 3, etc). Our previous plots suggest that on the log scale we are fine with linear time as a predictor but this could be checked to see if any curvature is statistically significant (e.g., include additional quadratic and cubic terms).
+Day is entered into the model as a linear time variable (1, 2, 3, etc). Our previous plots suggest that on the log scale we are fine with linear time as a predictor but this could be checked to see if any curvature is statistically significant (e.g., include additional quadratic and cubic terms).
+
 
 ```{r}
 #drop all 0 counts from the allstates.long data base. be careful, this data.frame no longer has 0s
 #can't study liftoff (see on descriptive plots) now that 0s are removed
+#reason is that log10(0) = -Inf
 allstates.long <- allstates.long %>% mutate(count = na_if(count, "0"))
 
 #save percent variable and log10 version
@@ -37,7 +39,19 @@ tab_model(out.lmer, show.se=T, show.stat=T)
 
 The estimates, se(est), CI, t and pvalue for the fixed effects are printed first, then the parameters of the random effect part. In order, they are the variance of the residuals, the variance of the random effect intercept, the variance of the random effect slope, the correlation between the random intercept and the random slope, the adjusted ICC, number of states, number of observations (recall 0s have been removed from this data file so the N refers to the number of days by state for which there was a nonzero number of positive covid-19 cases), and the R$^2$ values.  For more documentation on the computation of these terms see the help page for function tab_model().
 
-Let's look at the state-level slopes and intercepts more directly.  Light gray points have confidence intervals that overlap 0 so those parameter estimates are not significantly different from zero. But here we did not do a correction like Bonferroni or Scheffe to address the 100 tests we just did (50 states on each of slope and intercept).  This would just require a small modification to the code to adjust the level of the CI to correspond, say, to the Bonferroni corrected levels.
+Now lets look plots of residuals to diagnose potential issues.
+
+```{r}
+#plots of residuals
+plot(out.lmer)
+qqnorm(resid(out.lmer))
+qqline(resid(out.lmer))
+```
+
+The residuals against the fitted values suggest a nonlinear pattern remains in the data. This suggests that we may not have completely linearized by the log transformation. The qqplot suggests there may be a long tail.  Both of these plots suggest there are issues that have to be addressed.  We probably don't want to jump right into doing another transformation right way as that may create new issues with interpreation.
+
+
+Let's look at the state-level slopes and intercepts more directly:  first with a table of each state and then with some plots.  Light gray points have confidence intervals that overlap 0 so those parameter estimates are not significantly different from zero. But here we did not do a correction like Bonferroni or Scheffe to address the 100 tests we just did (50 states on each of slope and intercept).  This would just require a small modification to the code to adjust the level of the CI to correspond, say, to the Bonferroni corrected levels.
 
 ```{r}
 #list of the set of 50 intercept/slope pairs
@@ -52,9 +66,40 @@ raeff <- REsim(out.lmer)
 plotREsim(raeff,labs=T, stat="mean",level=.95)
 ```
 
-Now that we understand the slopes and intercepts, let's make some predictions.  I'll go 5 days out. 
 
-The first plot will be on the log scale.
+It turns out that computing standard errors for the prediction (recall the regression prediction and confidence intervals from last semester) is not straightforward for linear mixed models and quite complicated for nonlinear mixed models that we will perform later.  You can read about the complexity [here](https://stats.stackexchange.com/questions/235018/r-extract-and-plot-confidence-intervals-from-a-lmer-object-using-ggplot).
+
+Here is one method for computing the predicted value and a prediction interval. To maintain clarity I'll focus just on two states, but one could do these plots for all 50 states.
+
+```{r warning=F, message=F}
+#First New York
+nydf <- allstates.long %>% filter(state.abb == "New York")
+pred <- data.frame(nydf, predictInterval(out.lmer, nydf))
+pred
+
+ggplot(pred) + 
+  geom_line(aes(day.numeric, fit)) +
+  geom_ribbon(aes(day.numeric, ymin = lwr, ymax = upr), alpha = .2) +
+  geom_point(aes(day.numeric, y = log10(percap100)))+ ggtitle("New York")
+```
+Note that the linear pattern (line and prediction band) doesn't do a good job of capturing the actual data points. Some points are under predicted in the early days, then overpredicted, then underpredicted again. This would produce a patter where the residuals are negative, then positive, then negative again as we saw in one of the residual plots. 
+
+For Michigan a similar story, where we see under, over and under prediction. These plots suggest while the linear model may seem ok at first pass, there may some systematic deviations form the line that are worth capturing.  We can see that if we forecast out five days or so, the line will continue to increase but it appears that the points are increasing at a slower rate.
+
+```{r}
+#similarly for michigan
+midf <- allstates.long %>% filter(state.abb == "Michigan")
+pred <- data.frame(midf, predictInterval(out.lmer, midf))
+pred
+
+ggplot(pred) + 
+  geom_line(aes(day.numeric, fit)) +
+  geom_ribbon(aes(day.numeric, ymin = lwr, ymax = upr), alpha = .2) +
+  geom_point(aes(day.numeric, y = log10(percap100))) + ggtitle("Michigan")
+```
+
+
+Now that we understand the slopes and intercepts, let's make some predictions.  I'll go 5 days out.  The first plot will be on the log scale.
 
 ```{r fig.cap="Log scale predictions 5 days out"}
 max.day.numeric <- max(allstates.long$day.numeric)
@@ -76,11 +121,11 @@ predmat %>% mutate(label = if_else(day.numeric == max(day.numeric), as.character
    geom_label_repel(aes(label= label), nudge_x=2, na.rm=T,segment.color = 'grey50', label.size=.01, size=2.5, show.legend=F) +
 coord_cartesian(clip = 'off') +  scale_x_continuous(limits=c(0,max.day.numeric+ days.ahead+3)) +
     theme(legend.position="none", plot.margin = margin(0.1, 1, 0.1, 0.1, "cm")) + geom_vline(xintercept=max.day.numeric+.5,color="red") +
-  annotate(geom="text",x=max.day.numeric-2,y=-5, label="Days with observations", color="red") +
-  annotate(geom="text",x=max.day.numeric+2,y=-5, label="Predictions", color="red") 
+  annotate(geom="text",x=max.day.numeric-4,y=-5, label="Days with observations", color="red") +
+  annotate(geom="text",x=max.day.numeric+4,y=-5, label="Predictions", color="red") 
 ```
 
-Taking the same data I  take the exponential of those predictions to see the percentages with their predicted curves.  The Y axis is on the percentage scale (count/population * 100).
+Using the same data I  take the exponential of those predictions to see the percentages with their predicted curves.  The Y axis is on the percentage scale (count/population * 100).
 
 ```{r fig.cap="Predictions of percentages 5 days out"}
 #plot of same predictions as 10^prediction to put back on original percentage scale
@@ -89,8 +134,8 @@ ggplot( aes(day.numeric,10^prediction,group=prettyval, color=prettyval )) +  geo
    geom_label_repel(aes(label= label), nudge_x=2, na.rm=T,segment.color = 'grey50', label.size=.01, size=2.5, show.legend=F) +
 coord_cartesian(clip = 'off') +  scale_x_continuous(limits=c(0,max.day.numeric+ days.ahead+3)) +
     theme(legend.position="none", plot.margin = margin(0.1, 1, 0.1, 0.1, "cm")) + geom_vline(xintercept=max.day.numeric+.5,color="red") +
-  annotate(geom="text",x=max.day.numeric-2,y=2.5, label="Days with observations", color="red") +
-  annotate(geom="text",x=max.day.numeric+2,y=2.5, label="Predictions", color="red") 
+  annotate(geom="text",x=max.day.numeric-4,y=4, label="Days with observations", color="red") +
+  annotate(geom="text",x=max.day.numeric+4,y=4, label="Predictions", color="red") 
 ```
 
 <!-- Those curves look interesting, but let's pick out specific states and look at some numbers. I'll show the current date, tomorrow and 5 days out for New York state.  -->
@@ -168,9 +213,9 @@ temp %>%   ggplot(aes(x=day.numeric, y=fit)) + geom_point(data=subset(temp,day.n
 
 In the previous model I showed that the linear mixed model (allowing for each state to have their own slope and intercept) on the log of the state-level percentages did a reasonable job of fitting the data.  Here I want to do a little tangent and illustrate how well a polynomial can mimic the exponential pattern we see in the data.  
 
-Let's take the case that in a particular locale the rate of covid-19 follows this general curve. I made up the data so I know the curve does follow exponential growth with an additive error term (the plus $\epsilon$) because I added random normally distributed noise with mean 0 and standard deviation .25.
+Let's take the case that in a particular locale the rate of covid-19 follows this general curve. In this subsection I made up the data so I know the curve follows exponential growth with an additive error term (the plus $\epsilon$) because I added random normally distributed noise with mean 0 and standard deviation .25.
 
-I'll run several regressions in order and produce one plot at the end.  The points on the graph are the observed data points, the colored curves emerge from different regression models.    The first regression is  a linear regression with just x (days 1-25) as a linear predictor. I added a violet straight line to indicate the best fitting straight line--not a good fit.  The second regression adds a quadratic term and will appear as a red curve. This is an improvement, but it is nonmonotonic and shows a decrease in the first few days (which is not a pattern displayed in the raw data).  The third regression adds a cubic term and fits the points very well.
+Overview of what follows in the remainder of this subsection: I'll run several regressions in order and produce one plot at the end.  The points on the graph are the observed data points, the colored curves emerge from different regression models.    The first regression is  a linear regression with just x (days 1-25) as a linear predictor. I added a violet straight line to indicate the best fitting straight line--not a good fit.  The second regression adds a quadratic term and will appear as a red curve. This is an improvement, but it is nonmonotonic and shows a decrease in the first few days (which is not a pattern displayed in the raw data).  The third regression adds a cubic term and fits the points very well.
 
 Next, I estimate the exponential directly using nonlinear regression. Instead of the parameter being a multiplier of the predictor (like in linear regression), the parameter serves as the growth factor. The green curve follows the data very closely. Here only one parameter was estimated and it was .1502, very close to the actual .15 I used to estimate the data.  The polynomial did quite well but needed 4 parameters (intercept and three slopes); those parameters are not easy to interpret. The single parameter of the exponential yields a very good fit with only one _interpretable_ parameter.  Note that here I am using the nls() command, which estimates a nonlinear regression.
 
@@ -181,7 +226,8 @@ Finally, just for comparison, I run a linear regression through these data after
 #set random seed to results appear the same each run
 set.seed(0101202019)
 x <- 1:25
-y <- exp(.15*x) + rnorm(length(x),0,.25)
+#here is the true model that generated the data
+y <- 1*exp(.15*x) + rnorm(length(x),0,.25)
 plot(x,y)
 
 #linear regression with one predictor, draw violet curve
@@ -211,7 +257,9 @@ summary(out)
 lines(x,exp(predict(out)), col="black")
 ```
 
-As we learned last semester, polynomials can do a good job at capturing functions but they are not always easy to interpret. I found this website that uses a [4th order polynomial to model data from Spain, Italy and US](https://www.mmogollon.com/corona-virus-2). This page also focuses on the daily incidence rate, a topic I mentioned earlier.
+As we learned last semester, polynomials can do a good job at capturing functions but they are not always easy to interpret. The third order polynomial got the pattern relatively closely. The quadratic though while it was close predicts that the counts in the early days will drop (the red curves is descreasing from day 1 to day 4) so that's not good because the data points don't see to be showing that pattern.  The nonlinear model (nls) estimated the paramters quite closely (the true multiplier was .15 and that is what we estimated; the standard eror of the residuals was .25 and it was estimated as .29). The other highlight is that the linear model on the log data (black curve) was almost indistinghisable from the true exponential pattern as estimated by the fits of the green line.  The estimates from the linear model (lm) on the log transformed data are also quite close to the true value. The intercept in the log linear model should correspond to the multiplier in the true model, which is 1, and the exponential of the intercept is .98 (exp(-.0183)). The value of the multiplier in the log linear model (.1512) is close to the true multiplier in the model I created .15.
+
+I found this website that uses a [4th order polynomial to model data from Spain, Italy and US](https://www.mmogollon.com/corona-virus-2). This page also focuses on the daily incidence rate, a topic I mentioned earlier.
 
 ### Thoughts on the log transformation
 
@@ -223,7 +271,11 @@ We now turn to modeling the curvature directly, in a form that permits the count
 
 In the previous section I illustrated how to run a nonlinear regression using the nls() command to estimate the growth factor of an exponential.
 
+### Exponential Background
+
 For a good explanation of exponential growth and logistic growth (next subsection) see this [video](https://www.youtube.com/watch?v=Kas0tIxDvrg). 
+
+You can think of this model as being similar to a balance in a savings account that builds with compound interest. At each time step, a percentage is added to the current principlem thus increasing the principle. At the subsequent time step, the principle is now higher so the interest that day will also be higher.  In the case of the covid-19 counts, each day the total grows by some percentage, like the principle in the savings account.
 
 ```{r messages=F, warnings=F}
 allstates.long.new <- groupedData(count ~ day.numeric | state.abb, data=allstates.long)
@@ -235,11 +287,35 @@ ifelse(d<l,0,y*rate^(b1*(d-l)))
 }
 
 #example exponential growth model
-plot(0:max.day.numeric, richfu(0:max.day.numeric, 0, 1.23 , .000555 , 1)*19500000/100,type="l",xlab="days",ylab="counts",main="Hypothetical plot of counts following an exponential growth (tied to population of New York)")
+plot(0:max.day.numeric, richfu(0:max.day.numeric, 0, 1.23 , .000555 , 1)*19500000/100,type="l",xlab="days",ylab="counts",main="Hypothetical plot of counts following an exponential growth \n(tied to population of New York)")
 ```
 
+### Exponential: The Liftoff Parameter
 
-Now let's estimate an exponential growth model using a nonlinear mixed model regression. This mimics the LMER model we ran earlier in these notes but rather than transforming with a log to convert the data into straight lines we model the curvature direction with an exponential function.
+The exponential function can vary in terms of liftoff, where the curve breaks away from 0. Liftoff is the parameter "l" I included in the richfu function in the previous code chunk.   Here I plot two hypothetical states that have the identical set of parameters except that one state (black) has a liftoff of 0 and the other state (blue) has a liftoff of 4.  It looks like the counts in the state depicted by the black curve is shooting up and by the end of the sequence almost double the count than the state represented by the blue curve.
+
+```{r}
+plot(0:max.day.numeric, richfu(0:max.day.numeric, 1, 1.23 , .000555 , 1)*19500000/100,type="l",xlab="days",ylab="counts",main="Hypothetical plot of counts for two states\n with different liftoffs")
+lines(0:max.day.numeric, richfu(0:max.day.numeric, 4, 1.23 , .000555 , 1)*19500000/100, col="blue")
+```
+
+To illustrate how time locking can show structure, let me use the previous plot, where the two states look to have different patterns.  Time locking the two states to the first day when they each have nonzero cases shows that both states have identical trajectories. It is just that one state started earlier than the other state and so the patterns in the previous plot look (dramatically) different, and just by a delay of 4 days!
+
+
+
+```{r}
+#very kludgy code to impose time locking
+plot(c(0:max.day.numeric)[-1], richfu(c(0:max.day.numeric)[-1], 1, 1.23 , .000555 , 1)*19500000/100,type="l",xlab="days",ylab="counts",main="Hypothetical plot of counts for two states \n with different liftoffs but time locked")
+lines(c(0:max.day.numeric)[-1*c(1:6)]-5, richfu(c(0:max.day.numeric)[-1*c(1:6)]-2, 4, 1.23 , .000555 , 1)*19500000/100, col="blue")
+```
+
+There are better ways to time lock using specific tools written for time series data, but those involve much more explanation that I want to go into just for illustrating the usefulness of time locking time series.   For additional information see R packages written for time series data such as functional data analysis R packages.
+
+A good [example](https://www.ft.com/coronavirus-latest) of controlling for different liftoff patterns is by John Burn-Murdoch of the Financial Times. These visualization are unique from the ones I have seen on the web in that their curves are not plotted on calendar time but in terms of when the country hit X cases (sometimes X is 3 or 10 depending on the graph). This normalizes the onset and allows us to compare across units that had different starting points. A common phrase for this is "time locking" to a particular event, in this case time locking to when a country hit, say, 10 cases.
+
+### Estimating the exponential with the  nonlinear mixed model
+
+Now let's estimate an exponential growth model using a nonlinear mixed model regression. This mimics the LMER model we ran earlier in these notes but rather than transforming with a log to convert the data into straight lines we model the curvature direction with an exponential function. To simplify things I constrain the liftoff parameter to 0 and the multiplier b1 to 1.  To estimate all four parameters simultaneously we need to move to a different R package that uses a stochastic EM algorithm to estiamte this nonlinear mixed model because nlme can't handle very complex models like this one.
 
 ```{r}
 out <- nlme(percent ~ richfu(day.numeric, l=0, rate,y,b1=1), fixed = rate+y~1,
@@ -251,6 +327,15 @@ intervals(out.exponential)
 #idea for boostrapping to get predicted interval but be careful about the time aspect; maybe better to simulate data 
 #https://stackoverflow.com/questions/55552080/how-to-obtain-confidence-intervals-for-non-linear-mixed-model-logistic-growth-c
 ```
+
+Checking residuals for assumptions
+
+```{r}
+plot(resid(out.exponential))
+qqnorm(resid(out.exponential))
+qqline(resid(out.exponential))
+```
+
 
 ```{r fig.cap="Exponential Function Estimated through Nonlinear Mixed Model Regression"}
 
@@ -290,6 +375,7 @@ temp %>%   ggplot(aes(x=day.numeric, y=fit)) + geom_point(data=subset(temp,day.n
 ```
 
 
+
 ## Logistic (Nonlinear) Regression 
 
 Now let's switch to a logistic growth model (not the same as logistic regression we covered earlier for binary data).  The nlme has some additional routines ways to simplify the fitting logistic growth models (e.g., SSlogis), which make it easier to set up starting values. I'll avoid that so as to be more transparent with the code I'm writing.  In other work I've seen more efficient estimation (and less fussiness around starting values with the stochastic EM approach to fitting nonlinear regression models such as in the package saemix).
@@ -312,12 +398,14 @@ Let's fit the logistic function to the data.
 ```{r}
 
 out <- nlme(count ~ richfu.logistic(day.numeric, l,y,b1), fixed = l+y+b1~1,
-            random =  l+y~1, data=na.omit(allstates.long.new),start=c( l=15000,y=800,b1=-.65), verbose=T, control=nlmeControl(msMaxIter=1000,opt="nlminb",pnlsTol=.02,msVerbose=T,minScale=.02, maxIter=1000) )
+            random =  l+y~1, data=na.omit(allstates.long.new),start=c( l=5100,y=800,b1=-.33), verbose=T, control=nlmeControl(msMaxIter=1000,opt="nlminb",pnlsTol=.01,msVerbose=T,minScale=.01, maxIter=1000, eval.mas=1000) )
 AIC(out)
 out.logistic <- out
 summary(out.logistic)
 #confidence intervals of the parameters
-intervals(out.logistic)
+
+#commented out due to varcov issues; need to check
+#intervals(out.logistic)
 
 #example of another version that had higher AIC so I discarded this model
 #out2 <- nlme(count ~ richfu.logistic(day.numeric, l,y,b1), fixed = l+y+b1~1,
@@ -330,10 +418,30 @@ intervals(out.logistic)
 #            random = xmid + Asym ~ 1, data=na.omit(allstates.long.new),start=c(Asym=starts[1], xmid=starts[2],scal=starts[3]), verbose=T, #control=nlmeControl(msMaxIter=500))
 #AIC(out3)
 
+
+
+# Asym/(1+exp((xmid-input)/scal))
+out.logistic.nlmer <- nlmer(percent ~ SSlogis(day.numeric, l, y,b1) ~ l + y + b1| state.abb, data=na.omit(allstates.long.new), start=c( l=5300, y=20, b1=3.5), 
+                            control=nlmerControl(tolPwrss=.05, optCtrl=list(maxiter=500)))
+plot(0:26, .1157/(1+exp((19.2 - 0:26)/3.5)), type="l")
+dp <- data.frame(na.omit(allstates.long.new), res=resid(out.logistic.nlmer), fitted=fitted(out.logistic.nlmer))
+diagplot <- ggplot(dp,aes(x=fitted,y=res,colour=state.abb))+geom_point()+
+#  geom_smooth(aes(group=1),colour="black",method="loess")+
+  geom_hline(yintercept=0,lty=2) + scale_x_continuous(limits=c(0, .1))
+diagplot
 ```
 
 Notice that the fits for some states taper off according to this model, but for the previous exponential growth model all the states showed exponential increase but to different degrees.  One could examine these differences to see which model performs better in predictive accuracy (i.e., see if the actual data for the state tapers off or continues to grow exponentially). Such patterns are testable and the ideal way to compare models and decide which one provides a better representation of the data.
 
+
+
+Checking residuals for assumptions
+
+```{r}
+plot(resid(out.logistic))
+qqnorm(resid(out.logistic))
+qqline(resid(out.logistic))
+```
 
 
 ```{r fig.cap="Logistic Growth Model"}
