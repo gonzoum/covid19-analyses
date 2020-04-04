@@ -55,7 +55,7 @@ datacov.long$day.numeric <- as.numeric(datacov.long$day)-18283
 
 Now the animated plot by day. I rewrote the original parts of the plotting program to make it more efficient for the animation (e.g., I use the ggthemes in the maps package). This animation uses the package gganimate to reproduce the plot for each day and then overlays the plots one on top of the other to produce the animation.
 
-```{r cache=T, warning=FALSE, message=FALSE,fig.cap="World Count of Positive Cases"}
+```{r cache=cache, warning=FALSE, message=FALSE,fig.cap="World Count of Positive Cases"}
 ggplot(datacov.long) +  borders("world", colour = "gray90", fill = "gray85") +
   theme_map() + 
   geom_point(aes(x=Long, y=Lat, size=count, color=count),stroke=F, alpha=0.7) +
@@ -251,7 +251,7 @@ This pattern is quite remarkable. The states appear to have similar slopes on th
 
 Here is the animation for the US.  Not much to look at since it has only been about 2 weeks of data.  This map needs work as Alaska and Hawaii outlines are not printed (their data points appear on the left side roughly where the states would be on the map).  I'll need to do some coding to create an inset for Alaska and Hawaii (possible clue to inset: https://stackoverflow.com/questions/49523375/graphing-lat-long-data-points-on-us-map-50-states-including-alaska-hawaii
 
-```{r warning=F, message=F, cache=T,fig.cap="US Count of Positive Cases"}
+```{r warning=F, message=F, cache=cache,fig.cap="US Count of Positive Cases"}
 mybreaks <- c(1, 20, 100, 500, 1000, 2000, 10000)
 mylabels <- c("1-19", "20-99", "100-499", "500-999", "1,000-1,999", "2,000-9,999","10,000+")
 
@@ -274,7 +274,7 @@ ggplot(allstates.long) +  borders("usa", colour = "gray90", fill = "gray85") +
 
 Because I have the state-level population sizes I can redo the animation using a per capita normalization out of 100.  I modified the breaks and labels manually but there may be a way to do that automatically with ggplot2 features.
 
-```{r warning=F, message=F, cache=T, fig.cap="US Per Cap (100)"}
+```{r warning=F, message=F, cache=cache, fig.cap="US Per Cap (100)"}
 temp <- cut2(allstates.long$percap100, g=5, m=5)
 mylabels <- levels(temp)
 #onlycuts = T saves the numeric break points, drop first element which is 0
@@ -301,35 +301,32 @@ ggplot(allstates.long) +  borders("usa", colour = "gray90", fill = "gray85") +
 
 It is common with these type of time series data to work with what are called first order differences. Rather than look at cumulative counts you look at day to day differences in the cumulative counts, or equivalently, the number of new cases each day.  This is what give rise to the "curves" when people talk about "flattening the curve". Think of this as daily counts and we merely compute histograms.  This section was adapted from [Tim Chruches Blog](https://timchurches.github.io/blog/posts/2020-02-18-analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1/)
 
-Here is the daily incidence rate using the same US data.   The curve does not appear to be flattening yet.
+Here is the daily incidence rate using the same US data (starting on 3/10/20 and not including DC and the territories).   The curve does not appear to be flattening yet.
 
-```{r}
+```{r incplot, warning=F, message=F}
 allstates.temp <- allstates[,c(1:4,52:(ncol(allstates)-2))]
-temp <- t(apply(allstates.temp[,-c(1:4)], 1, function(i) diff(unlist(i))))
-#as least one negative, set to NA
-temp[temp<0] <- NA
 allstates.temp <- allstates.temp[,-5]
-allstates.temp[,5:(ncol(temp)+4)] <- temp
 
-temp <- apply(allstates.temp[,-c(1:4)],2,sum,na.rm=T)
-allstates.temp[1,5:(length(temp)+4)] <- temp
-allstates.temp <- allstates.temp[1,]
-temp.long <- gather(allstates.temp, day, count, `3/10/20`:ncol(allstates.temp))
-temp.long$day <- as.Date(temp.long$day, "%m/%d/%y")
-temp.long %>%
-  ggplot(aes(x=day, y=count))  + 
-    geom_bar(stat="identity") + 
+#create new data frame with differences of total counts which equals daily totals
+day.sums <- dplyr::select(allstates.temp, `3/10/20`:ncol(allstates.temp)) %>% colSums(na.rm=T)
+day.sums <- data.frame(day = as.Date(names(day.sums),"%m/%d/%y"), count = day.sums)
+#this is the line that computes differences
+day.sums$daily <- c(NA,diff(day.sums$count))
+
+#make plot with nice labels
+#5th bar looks almost empty; the data show 61 cases that day 
+ggplot( day.sums, aes(x=day,y=daily)) +  geom_bar(stat="identity") +
     scale_x_date(date_breaks="1 week", date_labels = "%d %b") +
     labs(y="Daily incremental incidence",
                                    title="Positive US Covid-19 Cases")  +
-    theme(legend.position = "none", 
+    theme(legend.position = "none",
           strip.text.y = element_text(size=11))
 ```
 
 
 ## Use of PCA to check for outliers
 
-Here is yet another use for PCA.  We can use it to detect outliers in a complicated data set. Let's take the 50 states and the time series from 3/09/20 to present, to create a 50 by day data matrix of positive counts.  Then compute a PCA of the correlation matrix between states. This correlation matrix is 50 x 50 and represents how similar each state's cumulative trajectory is to another state's cumulative trajectory for all possible pairs of states.  Plot the factor scores of the 50 states on the first two PCs.  The majority of the states will cluster together. The outlier states, those with very different trajectories, appear far away from the primary cluster suggesting they have a very different trajectory. The three candidate outliers are the 3 states early in the news:  NY, WA and CA. Worth checking why MA and NJ are slightly away from the cluster. Recall the numbers in front of the state abbreviation correspond to the state population in millions.  This type of PCA is commonly done in biological modeling to check for outliers, sometimes not on the raw data but the set of parameters that are estimated for each unit (e.g., if you run regressions for each state, gather the betas from those regressions as data such as 8 betas per state, then compute a correlation matrix acorss states, then run a PCA on that correlation matrix to detect outliers). 
+Here is yet another use for PCA.  We can use it to detect outliers in a complicated data set. Let's take the 50 states and the time series from 3/09/20 to present, to create a 50 by day data matrix of positive counts.  Then compute a PCA of the correlation matrix between states. This correlation matrix is 50 x 50 and represents how similar each state's cumulative trajectory is to another state's cumulative trajectory for all possible pairs of states.  Plot the factor scores of the 50 states on the first two PCs.  The majority of the states will cluster together. The outlier states, those with very different trajectories, appear far away from the primary cluster suggesting they have a very different trajectory. The three candidate outliers are the 3 states early in the news:  NY, WA and CA. Worth checking why MA and NJ are slightly away from the cluster. Recall the numbers in front of the state abbreviation correspond to the state population in millions.  This type of PCA is commonly done in biological modeling to check for outliers, sometimes not on the raw data but the set of parameters that are estimated for each unit (e.g., if you run regressions for each state, gather the betas from those regressions as data such as 8 betas per state, then compute a correlation matrix across states, then run a PCA on that correlation matrix to detect outliers). 
 
 ```{r fig.cap="PCA to identify states with candidate outliers", warning=F}
 temporal.data <- allstates[,53:(ncol(allstates)-2)]
