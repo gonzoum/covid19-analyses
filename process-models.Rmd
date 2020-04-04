@@ -26,3 +26,14 @@ song lab slides https://github.com/lilywang1988/eSIR
 ## Public Policy Models
 
 ## Summary
+
+The process models I've reviewed in this chapter have a strong public health and epidemiological perspective. We model the data of yesterday to help us understand what is going on and  evaluate potential changes that could be used to intervene on the spread.
+
+Overall, there is a sense that these models are not very satisfying. They operate at one level of analysis: counts on aggregate geographic areas such as countries and states.  They don't get into levels of specific human behavior nor evaluation of policies, contextual factors, health disparities and other aspects that wouldn't be too difficult to gather even more relevant data and build more complex models.   
+
+But there are also other levels that these notes have been quite silent about---the biological level. The SARS-CoV-2 virus itself has many levels of analysis such as molecular, cellular, and genetic as well as complex interactions that we are just beginning to understand in how the virus interacts with its environment (e.g., how it travels in air, how long it can live on a surface, how it interacts with the host).
+[Here](https://www.youtube.com/watch?v=vPtH42Lnt_Y) is a wonderful video on some relevant biology including what the SARS-CoV-2 virus does to the lungs and how in some people it causes [Acute Respitory Distress Syndrome](https://www.thoracic.org/patients/patient-resources/breathing-in-america/resources/chapter-2-acute-respiratory-distress-syndrome.pdf) (ARDS).  ARDS is a common cause of death among individuals with covid-19, which occurs because of the massive inflammatory reaction that covid-19 patients experience. 
+
+I would love to see deeper models that integrate the biological, behavioral, social and epidemiological factors.  No single level of analysis will help us figure out how to best respond to all aspects of the current pandemic.  
+
+
