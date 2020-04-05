@@ -1,11 +1,11 @@
 # Process Models
 
-Entire chapter is pending
 
 Process models are models where we model mechanisms. A use of such models is that they allow us to model "what if" scenarios, such as what would be expected to happen to the spread of covid-19 cases if a state imposes a shelter-in-place order.  The models in the previous chapters don't allow us do such analyses.  The material in the earlier chapters allow us to justify some of the assumptions we may need in process models.  Sometimes process models can be estimated directly from data, sometimes data merely provide ways of justifying assumptions one needs to make.
 
 For a basic example of how we can use basic data along with sum assumptions to estimate the "actual number of cases" check out this [video](https://www.youtube.com/watch?v=mCa0JXEwDEk).
 
+A readable tutorial on process models in understanding pandemics is the book [Charting the Next Pandemic by Pastore y Piontti et al](file:///Users/gonzo/Dropbox/transfer/mac%20transfer/Ana%20Pastore%20y%20Piontti,%20Nicola%20Perra,%20Luca%20Rossi,%20Nicole%20Samay,%20Alessandro%20Vespignani%20-%20Charting%20the%20Next%20Pandemic_%20Modeling%20Infectious%20Disease%20Spreading%20in%20the%20Data%20Science%20Age-Springer%20International%20.pdf). It was published prior to the current covid-19 pandemic.
 
 ## SIR Models
 
