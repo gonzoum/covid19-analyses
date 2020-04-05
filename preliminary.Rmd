@@ -6,7 +6,13 @@ These notes are written completely in R. They are organized across several Rmd f
 
 I can reproduce all my analyses and so can you. I put the files for this project (except for the data downloads) in a git repository that you can clone and follow along. Further, I tried to be diligent in writing commits so you can see how these notes developed, edits I made, code I edited and re-edited, turns I took in my analyses that were dead ends so I didn't pursue them, etc.  This is all part of the regular scientific process.  In the "old days" scientists maintained lab notebooks where they recorded everything they did. A git repository serves the analogous role of an electronic library. It keeps track of everything I did for this project.  You can read the final product (the notes you are currently reading) but you are free to see my thought process, see how I edited these documents, and see the order in which I actually wrote things rather than the order they are presented.  All you have to do is visit the [github site for this project](https://github.com/gonzoum/covid19-analyses).
 
-## Libraries
+## Libraries and Setup
+
+```{r setup}
+#assumes knitr is installed
+library(knitr)
+opts_chunk$set(tidy.opts=list(width.cutoff=50),tidy=TRUE)
+```
 
 I organize in one place all the R packages that are used in these notes so they can be easily installed.
 

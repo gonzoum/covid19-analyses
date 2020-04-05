@@ -305,7 +305,8 @@ To illustrate how time locking can show structure, let me use the previous plot,
 
 ```{r}
 #very kludgy code to impose time locking
-plot(c(0:max.day.numeric)[-1], richfu(c(0:max.day.numeric)[-1], 1, 1.23 , .000555 , 1)*19500000/100,type="l",xlab="days",ylab="counts",main="Hypothetical plot of counts for two states \n with different liftoffs but time locked")
+plot(c(0:max.day.numeric)[-1], richfu(c(0:max.day.numeric)[-1], 1, 1.23 , .000555 , 1)*19500000/100,type="l",xlab="days",ylab="counts",
+     main="Hypothetical plot of counts for two states \n with different liftoffs but time locked")
 lines(c(0:max.day.numeric)[-1*c(1:6)]-5, richfu(c(0:max.day.numeric)[-1*c(1:6)]-2, 4, 1.23 , .000555 , 1)*19500000/100, col="blue")
 ```
 
@@ -338,7 +339,10 @@ lines(fitted(out.exponential)[names(fitted(out.exponential))=="New York"],resid(
 
 #let's drop outliers and look at the resid plot (zoom in for fits < .08 and abs(resid) < .01)
 #this helps us see the majority of the residual plot
-plot(fitted(out.exponential)[fitted(out.exponential)<.08 & abs(resid(out.exponential)) < .01], resid(out.exponential)[fitted(out.exponential)<.08 & abs(resid(out.exponential)) < .01], xlab="fits < .08", ylab="abs(resid) < .01", main="zoom in ")
+plot(fitted(out.exponential)[
+  fitted(out.exponential)<.08 & abs(resid(out.exponential)) < .01], 
+  resid(out.exponential)[fitted(out.exponential)<.08 & abs(resid(out.exponential)) < .01], 
+  xlab="fits < .08", ylab="abs(resid) < .01", main="zoom in ")
 
 qqnorm(resid(out.exponential))
 qqline(resid(out.exponential))
@@ -396,7 +400,8 @@ l/(1+y*exp(b1*d))
 }
 
 #example logistic growth model
-plot(0:max.day.numeric, richfu.logistic(0:max.day.numeric, 3880, 133.45, -.332),type="l",xlab="days",ylab="counts",main="Hypothetical plot of counts following a logistic growth function")
+plot(0:max.day.numeric, richfu.logistic(0:max.day.numeric, 3880, 133.45, -.332),type="l",xlab="days",
+  ylab="counts",main="Hypothetical plot of counts following a logistic growth function")
 ```
 
 Let's fit the logistic function to the data.
@@ -424,9 +429,11 @@ intervals(out.logistic)
 ```
 
 
-For illustration purposes only, here is another way of fitting this model using the a different package lme4.  I'll only provide a summary and a residual plot.
 
-```{r messages=F, warning=F}
+```{r messages=F, warning=F, eval=F}
+#stopped working 4/4/20 (likely a few outliers in the data points so need to investigate)
+#For illustration purposes, here is another way of fitting this model using the a different package lme4.  
+#I'll only provide a summary and a residual plot.
 # Asym/(1+exp((xmid-input)/scal))
 out.logistic.nlmer <- nlmer(percent ~ SSlogis(day.numeric, l, y,b1) ~ l + y + b1| state.abb, data=na.omit(allstates.long.new), start=c( l=5300, y=20, b1=3.5), 
                             control=nlmerControl(tolPwrss=.05, optCtrl=list(maxiter=500)))
@@ -438,13 +445,8 @@ diagplot <- ggplot(dp,aes(x=fitted,y=res,colour=state.abb))+geom_point()+
 #  geom_smooth(aes(group=1),colour="black",method="loess")+
   geom_hline(yintercept=0,lty=2) + scale_x_continuous(limits=c(0, .1))
 diagplot
-```
 
-
-
-Checking residuals for assumptions
-
-```{r}
+#Checking residuals for assumptions
 plot(resid(out.logistic))
 qqnorm(resid(out.logistic))
 qqline(resid(out.logistic))
@@ -593,14 +595,14 @@ Yp.new <- predictr(model, Xnew)
 Yp.new <- (maxmat[7]-minmat[7])*Yp.new + minmat[7]
 Yp.new
 
-plot(data$days[-c(1:3, length(data$days))], time.series.day.counts[-c(1:3)] , col = 'red', type = 'p', main = "New York State Daily Confirmed Cases\n actual counts (red & solid blue), RNN training (green); RNN predicted (solid blue)", ylab = "Daily Counts", xlab="Day", xlim=c(0,length(data$days)), ylim=c(0,max(diff(data$counts))), cex=.7)
+plot(data$days[-c(1:3, length(data$days))], time.series.day.counts[-c(1:3)] , col = 'red', type = 'p', main = "RNN for New York State Daily Confirmed Cases\n actual counts (red & solid blue), training (green);  predicted (solid blue)", ylab = "Daily Counts", xlab="Day", xlim=c(0,length(data$days)), ylim=c(0,max(diff(data$counts))), cex.main=.7)
 points(data$days[length(data$days)], Yp.new,col = 'blue' ,pch=19)
 points(data$days[length(data$days)], diff(data$counts)[nrow(data)-1],col = 'red' , pch=19)
 lines(data$days[-c(1:3)], c(dv.Y,Yp.new),col="green")
-legend(0,max(diff(data$counts)),legend=paste("Last Day: difference between predicted  (blue) and actual  (red) counts:\n",round(Yp.new-diff(data$counts)[nrow(data)-1],0), "cases"),cex=.7)
+legend(c(0,13),c(max(diff(data$counts)),max(diff(data$counts))-2000) ,legend=paste("Last Day: \n difference between predicted  (blue) and actual  (red):",round(Yp.new-diff(data$counts)[nrow(data)-1],0)),cex=.5)
 abline(v=nrow(data)-.5)
 text(15,0,"training")
-text(nrow(data),0,"test")
+text(nrow(data)+.5,0,"test")
 
 #plot commented out; shows error decrease over iterations
 #plot(colMeans(model$error), type="l")
@@ -612,7 +614,7 @@ Part of the issue is that we don't have enough data to  allow these machine lear
 
 Just to illustrate feature extraction here is the output of the daily count variable for each of the 50 states
 
-```{r}
+```{r warning=F, message=F}
 #since this is a package I'm just using here for illustration I'll read it from github and load it here rather than in preliminary.Rmd
 #if you want to download just uncomment the next line
 #devtools::install_github("nelsonroque/tsfeaturex")
@@ -620,7 +622,7 @@ library(tsfeaturex)
 
 #create just a submatrix of the allstates.long data frame
 tsdat <- allstates.long[,c("day.numeric", "state.abb", "count")]
-out.featurex <- extract_features(tsdat, group_var="state.abb", value_var="count" , features="all")
+out.featurex <- extract_features(tsdat, group_var="state.abb", value_var="count" , features="all", verbose=F)
 
 #list of features computed by tsfeaturex for each state
 names(out.featurex)
@@ -633,9 +635,12 @@ median(allstates.long$count[allstates.long$state.abb == c("Alaska")], na.rm=T)
 
 ```
 
-As you can see tsfeaturex computes 82 different measures on the count data for each state. Those measures could then be included as state-level predictors in a machine learning algorithm.
+As you can see tsfeaturex computes 82 different measures on the count data for each state. Those measures could then be included as state-level predictors in a machine learning algorithm using a type of regularizer that introduces sparseness (similar to what we did with sparsePCA or lasso/ridge regression).
 
 A more appropriate machine learning strategy would be to take the time trajectory data for every country reported in the Johns Hopkins site (about 140 countries) and see if we can learn  patterns about the nature of the trajectories, given various aspects of the country's demographics, dates they instituted various policies (shelter at home), information about their health care system, etc.  One could use the principles developed here about web scraping and gathering these other sources of data, merging them into a single file, and running RNNs to find patterns.
+
+
+An interesting use of machine learning methods (specifically computer vision) is the development of a physical distancing index by a group at UM.  Physical movement of humans and social distancing is detected in major cities. This [website](https://pdi.voxel51.com/) has some live cameras and charts to illustrate their index.
 
 I'll continue adding to this section and improving the quality of the machine learning example as time frees up from completing other sections.
 

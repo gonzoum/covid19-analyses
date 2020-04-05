@@ -29,8 +29,9 @@ ggplot() +
  scale_size_continuous(name="Cases", trans="log", range=c(1,7),  breaks=mybreaks, labels = mylabels) +
     scale_color_viridis_c(option="inferno",name="Cases", trans="log",breaks=mybreaks, labels = mylabels) +
     theme_void() + 
-    guides( colour = guide_legend()) +
-    labs(caption = "Data Repository provided by Johns Hopkins CSSE. Visualization by DataScience+ ") +
+    guides( colour = guide_legend()) + 
+  labs(caption = 
+  "Data Repository by Johns Hopkins CSSE. Visualization by DataScience+ ") +
     theme(
       legend.position = "bottom",
       text = element_text(color = "#22211d"),
@@ -122,7 +123,8 @@ allstates$population <- state.population$value[order(match(state.population$NAME
 cadded <- 2
 #counts by dates are in columns starting with `1/22/20` and ending in ncol(allstates)-2 because
 #we appended two columns at the end
-allstates.long <- gather(allstates, day, count, `1/22/20`:(names(allstates)[ncol(allstates)-cadded]))
+allstates.long <- gather(allstates, day, count, 
+                         `1/22/20`:(names(allstates)[ncol(allstates)-cadded]))
 
 #reformat the day column to be Dates that R can understand
 allstates.long$day <- as.Date(allstates.long$day, "%m/%d/%y")

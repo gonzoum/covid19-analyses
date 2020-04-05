@@ -38,6 +38,10 @@ This script will switch to the folder I'm keeping the git repository, execute th
 #assuming git has been installed on your machine (e.g., Xcode in mac)
 #this is mac and linux specific; pc may be different unless unix commands have been installed
 #I haven't done any testing of this code on a PC
+#
+#may be good to save the output messages into a text file with date/time stamp to monitor if issues with later code
+#are tied to new data that were read in (to be completed; if I was writing production code I would create an issue for
+#this idea on github so progress on this could be tracked and others on the project could comment/contribute)
 system("pushd '/Users/gonzo/Dropbox/transfer/mac transfer/COVID-19' && git pull && popd")
 ```
 
@@ -58,7 +62,8 @@ I include little notes so you can see how I adapted my code to the changing land
 #datacov <- read_csv("/Users/gonzo/Dropbox/transfer/mac transfer/COVID-19/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Confirmed.csv")
 
 #PLACE HOLDER: keep days up to and including 3/22/23; don't read file from git which is being updated.
-datacov <- read_csv("/Users/gonzo/Dropbox/transfer/mac transfer/covid19-analyses/time_series_19-covid-Confirmed.csv")
+datacov <- 
+ read_csv("/Users/gonzo/Dropbox/transfer/mac transfer/covid19-analyses/time_series_19-covid-Confirmed.csv")
 datacov <- datacov[,1:(which(names(datacov)=="3/22/20"))]
 datacov.ori <- datacov
 
@@ -111,15 +116,18 @@ new code under development 3/31/20
 
 ```{r}
 #data for World and US county/states are now in separate files
-datacov.World <- read_csv("/Users/gonzo/Dropbox/transfer/mac transfer/COVID-19/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_global.csv")
-datacov.US <- read_csv("/Users/gonzo/Dropbox/transfer/mac transfer/COVID-19/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_US.csv")
+datacov.World <- 
+  read_csv("/Users/gonzo/Dropbox/transfer/mac transfer/COVID-19/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_global.csv")
+datacov.US <- 
+  read_csv("/Users/gonzo/Dropbox/transfer/mac transfer/COVID-19/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_US.csv")
 
 #fix variable names in US to match World file and my previous code
 names(datacov.US)[7] <- names(datacov.World)[1]
 names(datacov.US)[8] <- names(datacov.World)[2]
 names(datacov.US)[10] <- "Long"
 #make column name dates in US match the date format use in world
-colnames(datacov.US)[12:ncol(datacov.US)] <- colnames(datacov.World)[5:(ncol(datacov.World))]
+colnames(datacov.US)[12:ncol(datacov.US)] <- 
+  colnames(datacov.World)[5:(ncol(datacov.World))]
 
 ```
 
@@ -197,7 +205,7 @@ This code makes use of the library tidycensus (and also functions in tidyverse).
 census_api_key(key="9fdfc1d46398c3a9e30971df2850174583db8a48", install=T)
 ```
 
-```{r}
+```{r warning=F, message=F}
 #uncomment this line and enter your key inside the quotes
 #census_api_key(key="YOUR.KEY.GOES.HERE", install=T)
 
