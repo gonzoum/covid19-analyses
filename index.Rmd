@@ -37,8 +37,11 @@ The Wiki page on [sensitivity and specificity](https://en.wikipedia.org/wiki/Sen
 
 We can still learn useful information from studying counts of confirmed cases of disease.  The most famous example of examining the patterns of counts comes from the cholera outbreak in London in the mid 1800s, before the germ theory of disease was developed. Cholera produces severe diarrhea, it is caused by a bacteria and can lead to death.  The residents of London where experiencing a severe outbreak leading to about 500 deaths in 10 days.  Now we know that clean drinking water (free from sewage) and non-contaminated foods are the best way to control cholera, but back then they didn't understand much about the cause or spread of this disease. John Snow's contribution was to collect data on where the cholera deaths occurred.  He noticed that the deaths tended to be clustered in houses near particular water pumps. In those days, you would walk to the nearest water pump to fill up your jugs with the daily supply of water for your household. People tend to go to the same water pump every day, so households would drink water from the same water pump. Snow started keeping track of which households developed cholera, where there were deaths and he found clustering near particular water pumps.  His observations led to the handle from one water pump, the Broad Street Pump, being removed to stop water usage at that location (an early form of a public health intervention). Cholera cases began to decrease as people would source water from other pumps. Later it was discovered that this particular pump was contaminated by the sanitation waste from a nearby home. We do not have additional information, such as the number of residents around each water pump, making it difficult to evaluate the clustering of deaths around specific locations (i.e.,  those may have been the locations where more people lived).
 
-![Snow's Cholera Map of London](figures/snow-cholera.jpg)
+<!-- ![Snow's Cholera Map of London](figures/snow-cholera.jpg) -->
 
+```{r, out.width='95%', fig.align='center', fig.cap="Snows Cholera Map of London", echo=F}
+knitr::include_graphics('figures/snow-cholera.jpg')
+```
 
 ## Additional Sources  {-}
 

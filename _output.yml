@@ -18,5 +18,6 @@ bookdown::pdf_book:
   citation_package: natbib
   keep_tex: yes
   pandoc_args: [--wrap=none]
+  extra_dependencies: animate
 #commented epub_book because messing up index.html
 #bookdown::epub_book: default
