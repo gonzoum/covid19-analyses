@@ -45,6 +45,8 @@ This script will switch to the folder I'm keeping the git repository, execute th
 system("pushd '/Users/gonzo/Dropbox/transfer/mac transfer/COVID-19' && git pull && popd")
 ```
 
+I prefer not to have data files be in the git repository as a matter of habit (e.g., data may private information yet the repository may be public).
+
 Now read the file that has the cumulative counts of confirmed covid-19 cases by country and, if relevant, state or province. I'll save it into an object called datacov; I list the first 6 rows of datacov.
 
 **NOTE:** On 3/23/20 this site reorganized the data structure.  Now US is in a separate file from the rest of the world, and the files are completely restructured where the US is now by county rather than state. This is more granular data but the change means much work will need to be done to reformat these files. I'm going to freeze uploading new data until this gets resolved or I have time to rewrite the code.  So data in these notes are analyzed  just through 3/22, the day before the change.  Changing data is very common occurrence in the world of downloads and web scraping. What works today may break tomorrow during a system update.  One just needs to be flexible and write robust code that can be easily modified as needed.  I think employment prospects for people working in data science will be very good.
@@ -62,6 +64,7 @@ I include little notes so you can see how I adapted my code to the changing land
 #datacov <- read_csv("/Users/gonzo/Dropbox/transfer/mac transfer/COVID-19/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Confirmed.csv")
 
 #PLACE HOLDER: keep days up to and including 3/22/23; don't read file from git which is being updated.
+#use datacov.ori in descript-plots.Rmd to get state lat long as not available any more since reported by county
 datacov <- 
  read_csv("/Users/gonzo/Dropbox/transfer/mac transfer/covid19-analyses/time_series_19-covid-Confirmed.csv")
 datacov <- datacov[,1:(which(names(datacov)=="3/22/20"))]

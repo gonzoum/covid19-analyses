@@ -61,6 +61,8 @@ Here are some interesting covid-19 related sites:
 
 7. [Another covid-19 data scraper](https://github.com/covidatlas/coronadatascraper)
 
+8. [Fighting the Covid-19 Pandemic with Data Science--UM](https://midas.umich.edu/data-science-and-covid-19/) (some of this work is linked specifically in various chapters)
+
 ## Postscript {-}
 
 I am not the [Richard Gonzalez](https://www.fiercepharma.com/pharma/abbvie-ceo-gonzalez-nabbed-21-6b-pay-package-year-marked-by-megamerger-humira-decline) who is the CEO of the biopharma company [AbbVie](https://www.abbvie.com/our-company.html?utm_campaign=cc_herenow_2020_rep&utm_medium=psearch&utm_source=google&utm_content=brand%20core&utm_term=abbvie), nor am I the salsa dancer and choreographer [Richard Gonzalez](https://gibneydance.org/event/mixed-flava-contemporary-caribbean-dance/2018-12-02/). 
