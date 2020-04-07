@@ -1,7 +1,7 @@
 # Descriptive Modeling
 
 The previous chapter presented several descriptive plots of raw data.  What I'd like to do in this chapter is show some simple modeling using methods we learned this year along with some extensions. 
-By no means is any of the modeling presented here considered breakthrough modeling. I call this descriptive modeling because all I do is describe the patterns using statistical methods. In the next chapter I'll give some examples of models that attempt to capture mechanism. Another way of explaining the difference between descriptive models and explanatory models is that the former are good summaries of the data and can be used to forecast, but they do not provide  understanding of the underling mechanisms so they do not give any insight into what would happen if a change was imposed on the system.  Descriptive models don't tell us the effect social distancing may have, for example, on the rate of covid-19. I sometimes refer to descriptive modeling as "models of data", which actually characterizes many of the structural models we've covered this year.
+By no means is any of the modeling presented here considered breakthrough modeling. I call this descriptive modeling because all I do is describe the patterns using statistical methods. In the next chapter I'll give some examples of models that attempt to capture mechanism. Another way of explaining the difference between descriptive models and explanatory models is that the former are good summaries of the data and can be used to forecast, but they do not provide  understanding of the underling mechanisms so they do not give any insight into what would happen if a change was imposed on the system.  Descriptive models don't tell us the effect social distancing may have, for example, on the rate of covid-19. I sometimes refer to descriptive modeling as "models of data," which characterizes many of the structural models we've covered this year.
 
 I'll try to use only the R features necessary to make the points. There are more complicated approaches using time series packages that format the data differently (e.g., they use time series objects). There are benefits of doing this because there are automatic plotting and estimation routines that can take time series objects and do relevant computations. But I think as you are learning this it makes more sense to learn how to do some of the programming and then you are in a better position to learn the value of more advanced approaches like those for time series data.
 
@@ -209,6 +209,9 @@ temp %>%   ggplot(aes(x=day.numeric, y=fit)) + geom_point(data=subset(temp,day.n
 
 <!-- Of course, this forecast is just based on the pattern shown by the observations during the first 14 days.  This does not take into account actions, like social distancing, that may affect the forecasts.  As I said earlier, this model is very simple. The only thing it has are the days, the rates (i.e., count/population), and ability to model heterogeneity across the 50 states. I have not added anything else to this, like information about the state policies or timing of when states started issuing shelter at home orders, etc.  All of that could be included as additional predictors and likely lead to better predictions. -->
 
+
+
+
 ### Comparison with polynomial regression
 
 In the previous model I showed that the linear mixed model (allowing for each state to have their own slope and intercept) on the log of the state-level percentages did a reasonable job of fitting the data.  Here I want to do a little tangent and illustrate how well a polynomial can mimic the exponential pattern we see in the data.  
@@ -316,13 +319,13 @@ There are better ways to time lock using specific tools written for time series 
 
 A good [example](https://www.ft.com/coronavirus-latest) of controlling for different liftoff patterns is by John Burn-Murdoch of the Financial Times. These visualization are unique from the ones I have seen on the web in that their curves are not plotted on calendar time but in terms of when the country hit X cases (sometimes X is 3 or 10 depending on the graph). This normalizes the onset and allows us to compare across units that had different starting points. A common phrase for this is "time locking" to a particular event, in this case time locking to when a country hit, say, 10 cases.
 
-### Estimating the exponential with the  nonlinear mixed model
+### Estimating the exponential with the nonlinear mixed model
 
 Now let's estimate an exponential growth model using a nonlinear mixed model regression. This mimics the LMER model we ran earlier in these notes but rather than transforming with a log to convert the data into straight lines we model the curvature direction with an exponential function. To simplify things I constrain the liftoff parameter to 0 and the multiplier b1 to 1.  To estimate all four parameters simultaneously we need to move to a different R package [saemix](https://cran.r-project.org/web/packages/saemix/saemix.pdf) that uses a stochastic EM algorithm to estimate this nonlinear mixed model because nlme can't handle very complex models like this one without doing more ground work in setting up a self-starting function that has information about the gradient of the function.
 
 ```{r message=F, warning=F}
 out <- nlme(percent ~ richfu(day.numeric, l=0, rate,y,b1=1), fixed = rate+y~1,
-            random =  rate+y ~1, data=na.omit(allstates.long.new),start=c( rate=1.4,y=.001), verbose=T, control=nlmeControl(msMaxIter=500,opt="nlminb",pnlsTol=.02,msVerbose=T,minScale=.02) )
+            random =  rate+y ~1, data=na.omit(allstates.long.new),start=c( rate=1.2,y=.001), verbose=T, control=nlmeControl(msMaxIter=500,opt="nlminb",pnlsTol=.01,msVerbose=T,minScale=.01) )
 out.exponential <- out
 summary(out.exponential)
 #confidence intervals of the parameters
@@ -416,7 +419,25 @@ out.logistic <- out
 summary(out.logistic)
 
 #confidence intervals of the parameters
-intervals(out.logistic)
+#had issues with random effect intervals on 4/6/20 so for now set CI for only fixed
+intervals(out.logistic, which="fixed")
+
+#Checking residuals for assumptions
+plot(fitted(out.logistic), resid(out.logistic), main="New York in blue")
+#suspect weird points are new york; so put NY in blue points and connected dots with a curve
+points(fitted(out.logistic)[names(fitted(out.logistic))=="New York"],resid(out.logistic)[names(resid(out.logistic))=="New York"],col="blue")
+lines(fitted(out.logistic)[names(fitted(out.logistic))=="New York"],resid(out.logistic)[names(resid(out.logistic))=="New York"],col="blue")
+
+#let's drop outliers and look at the resid plot (zoom in for fits < .08 and abs(resid) < .01)
+#this helps us see the majority of the residual plot
+plot(fitted(out.logistic)[
+  fitted(out.logistic)<20000 & abs(resid(out.logistic)) < 1000], 
+  resid(out.logistic)[fitted(out.logistic)<20000 & abs(resid(out.logistic)) < 1000], 
+  xlab="fits < 20000", ylab="abs(resid) < 1000", main="zoom in ")
+
+
+qqnorm(resid(out.logistic))
+qqline(resid(out.logistic))
 
 #example of another version that had higher AIC so I discarded this model
 #out2 <- nlme(count ~ richfu.logistic(day.numeric, l,y,b1), fixed = l+y+b1~1,
@@ -432,7 +453,7 @@ intervals(out.logistic)
 
 
 
-```{r messages=F, warning=F, eval=F}
+```{r messages=F, warning=F, eval=F, echo=F}
 #stopped working 4/4/20 (likely a few outliers in the data points so need to investigate)
 #For illustration purposes, here is another way of fitting this model using the a different package lme4.  
 #I'll only provide a summary and a residual plot.
@@ -448,10 +469,7 @@ diagplot <- ggplot(dp,aes(x=fitted,y=res,colour=state.abb))+geom_point()+
   geom_hline(yintercept=0,lty=2) + scale_x_continuous(limits=c(0, .1))
 diagplot
 
-#Checking residuals for assumptions
-plot(resid(out.logistic))
-qqnorm(resid(out.logistic))
-qqline(resid(out.logistic))
+
 ```
 
 
@@ -460,10 +478,19 @@ Notice that the fits for some states taper off according to this model, but for 
 
 
 ```{r fig.cap="Logistic Growth Model"}
-predmatnonlin <- data.frame(day.numeric=rep(c(0:max.day.numeric),50),state.abb=rep(rownames(coef(out)),each=max.day.numeric+1))
+predmatnonlin <- data.frame(day.numeric=rep(c(0:max.day.numeric),50),state.abb=rep(rownames(coef(out.logistic)),each=max.day.numeric+1))
 predmatnonlin$prediction <- predict(out.logistic, list(day.numeric=predmatnonlin$day.numeric, state.abb=predmatnonlin$state.abb),level=1)
 nonlinreg.logistic <- ggplot(predmatnonlin, aes(day.numeric,prediction,group=state.abb, color=state.abb )) +  geom_line()   
 nonlinreg.logistic
+```
+
+Here is the predicted curve for New York. We know the residuals suggest the model is 'off' for NY (systematically under and over predicting), but this plots suggests a logistic is a reasonable fit, and most of the part that is off is that it didnt' chapter the liftoff and sharp increase once the curve started to increase.
+
+```{r}
+nydf <- predmatnonlin[predmatnonlin$state.abb=="New York",]
+
+nydf$count <- allstates.long$count[allstates.long$state.abb=="New York"]
+ggplot(nydf, aes(day.numeric,prediction,group=state.abb, color=state.abb )) + geom_line() + geom_point(aes(x=day.numeric, y=count), col="blue") + ggtitle("New York: Actual counts in blue; logistic growth in red")
 ```
 
 Another way to compare across models is to use an index such as the AIC, which is a measure based on information theory and akin to R^2 adjusted that can be used to compare regression models that vary in the number of parameters. One needs to be careful when using AIC across models where the dependent variable is on different scales as in these notes. For example, my log transform of percentage cases (count/population) in the linear mixed model is on a different scale than the exponential nonlinear regression model I computed above.  R provides such information-based criteria measures such as AIC() and alternative called BIC(). Here I give AIC and BIC for the logistic growth models. When comparing models on comparable dependent variables the model with the lower AIC (or BIC) value is selected as the best model.
@@ -651,4 +678,4 @@ I'll continue adding to this section and improving the quality of the machine le
 
 We covered a lot of material in this chapter. We started with a simple linear mixed model on log transformed data that did a reasonable job of accounting for the patterns across states. The finding that the linear relation in the log scale holds fairly well suggests that there is exponential growth. The ability to make a statement about the underlying process, in this case exponential growth, is far more valuable than finding a good fit to a data set.  But there was a suggestion that the exponential may not be the ideal fit as there was some systematic deviation from a growth curve. The rest of these notes covered a more direct way of fitting exponential growth models through nonlinear regression, a different type of growth model based on the logistic curve and a toy example using a standard machine learning example. 
 
-A key idea I tried to follow in this chapter is not to have a single pattern that represents all states but to use models that simultaneously tell us something about the overall pattern across states (the fixed effect portion of the output) and the variability across the states (the random effect portion of the model).  We could get fancier with this idea where, for example, we could weight the results based on population size of each state, so counts from more populous states receive more weight.  There are with several generalizations of these notions from different perspectives such as statistics and machine learning that you can follow in papers ([Hastie and Tibshirani](https://www.jstor.org/stable/2345993?seq=1)) as well as books ([Hastie et al](https://web.stanford.edu/~hastie/Papers/ESLII.pdf);  [Ramsey & Silverman](https://www.amazon.com/Functional-Data-Analysis-Springer-Statistics/dp/038740080X/ref=sr_1_2?crid=11G4FU2BDD4JU&dchild=1&keywords=functional+data+analysis&qid=1586107101&sprefix=fnctional+data+analysi%2Caps%2C158&sr=8-2)).
+A key idea I tried to follow in this chapter is not to have a single pattern that represents all states but to use models that simultaneously tell us something about the overall pattern across states (the fixed effect portion of the output) and the variability across the states (the random effect portion of the model).  We could get fancier with this idea where, for example, we could weight the results based on population size of each state, so counts from more populous states receive more weight.  There are with several generalizations of these notions from different perspectives such as statistics and machine learning that you can follow in papers (e.g., varying coefficient models such as one by [Hastie and Tibshirani](https://www.jstor.org/stable/2345993?seq=1) and extensions of tree-based methods like CART in the [R package vcrpart](https://cran.r-project.org/web/packages/vcrpart/index.html)) as well as books ([Hastie et al](https://web.stanford.edu/~hastie/Papers/ESLII.pdf);  [Ramsey & Silverman](https://www.amazon.com/Functional-Data-Analysis-Springer-Statistics/dp/038740080X/ref=sr_1_2?crid=11G4FU2BDD4JU&dchild=1&keywords=functional+data+analysis&qid=1586107101&sprefix=fnctional+data+analysi%2Caps%2C158&sr=8-2)).
