@@ -42,7 +42,11 @@ ggplot() +
 
 ```
 
-Even more sophisticated is the  [interactive map](https://www.arcgis.com/apps/opsdashboard/index.html#/bda7594740fd40299423467b48e9ecf6) developed at Johns Hopkins (same group that provides the key data we downloaded in Chapter \@ref(intro)), where you can zoom in and out, click on different countries (left panel) and see data for that country on the right panel, etc.
+Even more sophisticated is the  [interactive map](https://www.arcgis.com/apps/opsdashboard/index.html#/bda7594740fd40299423467b48e9ecf6) developed at Johns Hopkins (same group that provides the key data we downloaded in Chapter \@ref(intro)), where you can zoom in and out, click on different countries (left panel) and see data for that country on the right panel, etc. A small interactive display of that website is displayed below.
+
+```{r echo=F}
+knitr::include_url("https://www.arcgis.com/apps/opsdashboard/index.html#/bda7594740fd40299423467b48e9ecf6", height="600px")
+```
 
 ### World Map with Time Animation
 
@@ -83,10 +87,6 @@ While counts are useful (see [Preface](#preface) for a discussion of London's ch
 It would be helpful to see the pattern over time of the world counts of confirmed covid-19 cases relative to the US counts.  Here I create a subset of the datacov data.frame that includes just the 50 states (I dropped DC and the US territories for this analysis).
 
 ```{r}
-#keep this to make this code chunk work (i.e. temporarily revert to the datacov.ori file)
-#revert back to old datacov
-datacov <- datacov.ori
-
 #new code with datacov.US 3/31/20 edits
 datacov.temp <- datacov.US
 allstates.temp <- subset(datacov.temp, `Province/State`%in% states)
@@ -102,6 +102,7 @@ allstates.temp2 <- allstates.temp2[order(match(allstates.temp2$`Province/State`,
 #double check ordering of rows
 head(cbind(allstates$`Province/State`, allstates.temp2$`Province/State`))
 
+#use state level long and lat from datacov.ori
 allstates.temp2$Lat <- allstates$Lat
 allstates.temp2$Long <- allstates$Long
 allstates.temp2$`Country/Region` <- allstates.ori$`Country/Region`
