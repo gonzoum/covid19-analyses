@@ -9,9 +9,24 @@ A readable tutorial on process models in understanding pandemics is the book [Ch
 
 ## SIR Models
 
-SIR models refer to a modeling approach that uses differential equations, which are equations that govern how a process changes over time.  The basic model starts by having three kinds of people:  Susceptible, Infectious and Recovered (SIR).  In various versions of these models one could change assumptions such as "once an individual recovers they will not get the disease again because they develop antibodies" to "an individual who recovers has a p chance of being reinfected if they come in contact with an infected person" (where p is a probability between 0 and 1 and could be varied to study the implications). 
+SIR models refer to a modeling approach that uses differential equations, which are equations that govern how a process changes over time.  The basic model starts by having three kinds of people:  Susceptible, Infectious and Recovered (SIR).  In various versions of these models one could change assumptions such as "once an individual recovers they will not get the disease again because they develop antibodies" to "an individual who recovers has a p chance of being reinfected if they come in contact with an infected person" (where p is a probability between 0 and 1 and could be varied to study the implications). The [wiki page](https://en.wikipedia.org/wiki/Compartmental_models_in_epidemiology) on such models is not bad.
 
-[Here](https://mail.google.com/mail/u/0/#inbox/QgrcJHrhwzzjMlbFSsGcwGcnZcVmwGkBHMl?projector=1) is a 20min video on SIR models geared for the pandemic with examples around social distancing and [Washington Post article](https://www.washingtonpost.com/graphics/2020/world/corona-simulator/) using an SIR approach to illustrate the effects of social distancing.
+[Here](https://mail.google.com/mail/u/0/#inbox/QgrcJHrhwzzjMlbFSsGcwGcnZcVmwGkBHMl?projector=1) is a 20min video on SIR models geared for the pandemic with examples around social distancing and [Washington Post article](https://www.washingtonpost.com/graphics/2020/world/corona-simulator/) using an SIR approach to illustrate the effects of social distancing. The latter page appear below in small interactive window (the cool web page within a web page trick).
+
+
+```{r echo=F}
+knitr::include_url("https://www.washingtonpost.com/graphics/2020/world/corona-simulator/", height="600px")
+
+```
+
+Some UM researchers have started analyzing the covid-19 pandemic using SIR models, these include [Peter Song](https://sph.umich.edu/faculty-profiles/song-peter.html) ([slides1](http://www.umich.edu/~songlab/COVID-19.pdf)), [Qianying Lin](https://midas.umich.edu/faculty-member/qianying-lin/) ([using data from Wuhan](https://www.ijidonline.com/article/S1201-9712(20)30117-X/fulltext), [Marisa Eisenberg](https://sph.umich.edu/faculty-profiles/eisenberg-marisa.html) (prediction dashboard](https://epimath.github.io/covid-19-modeling/#current-forecasts)))
+
+There are several R packages for SIR modeling, including [EpiModel](https://www.epimodel.org/), [tsiR](https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0185528)
+
+```{r echo=F}
+knitr::include_url("https://www.washingtonpost.com/graphics/2020/world/corona-simulator/", height="600px")
+
+```
 
 <!-- eSIR site: http://www.socr.umich.edu/people/dinov/courses/DSPA_notes/18_BigLongitudinalDataAnalysis_RNN.html
 
