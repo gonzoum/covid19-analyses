@@ -42,6 +42,8 @@ ggplot() +
 
 ```
 
+You'll notice that some countries like Canada, UK, Australia have multiple points but most countries are represented by only 1 point. This is because the data set we are using shows some inconsistencies in reporting either country totals or by state/province. This would require further cleaning (e.g., computing country totals for those countries) but I left this in here as a teaching moment of how one needs to be careful working with data sets and consistently double check your assumptions about the structure of the data set you are using. The structure may also change over time so one needs to monitor carefully.
+
 Even more sophisticated is the  [interactive map](https://www.arcgis.com/apps/opsdashboard/index.html#/bda7594740fd40299423467b48e9ecf6) developed at Johns Hopkins (same group that provides the key data we downloaded in Chapter \@ref(intro)), where you can zoom in and out, click on different countries (left panel) and see data for that country on the right panel, etc. A small interactive display of that website is displayed below.
 
 ```{r echo=F}
@@ -172,9 +174,15 @@ comparesums
 #seems coding was by US then by state at about 3/08
 #here is a command to produce total US counts for all days in the data set starting with 1/22/20 but it has lots of 0s
 #data.frame(count=apply(allstates[,5:(ncol(allstates)-cadded)],2,sum,na.rm=T))
+```
 
-#I want to draw a horizontal line in the cumulative plot that corresponds to the 
-#US fraction of the world population
+
+
+It will be helpful to place a horizontal line in the cumulative US plot that corresponds to the 
+US fraction of the world population. If covid-19 cases were randomly distributed throughout the world, we would expect a country to have a fraction of cases consistent with the fraction of that country's population relative to the world population.  The US isn't doing very well.
+
+```{r}
+#assume 7.8 billion people in the world, the US has about 330 million
 uspopfrac <- 330/7800
 cv10frac <- uspopfrac*sum.world[nrow(sum.world),1]
 
