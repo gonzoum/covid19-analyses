@@ -1,54 +1,80 @@
 # Process Models
 
 
-Process models are models where we model mechanisms. A use of such models is that they allow us to model "what if" scenarios, such as what would be expected to happen to the spread of covid-19 cases if a state imposes a shelter-in-place order.  The models in the previous chapters don't allow us do such analyses.  The material in the earlier chapters allow us to justify some of the assumptions we may need in process models.  Sometimes process models can be estimated directly from data, sometimes data merely provide ways of justifying assumptions one needs to make.
+Process models focus on mechanisms. A use of such models is that they allow us to model "what if" scenarios, such as what would be expected to happen to the spread of covid-19 cases if a state imposes a shelter-in-place order.  The models in the previous chapters don't allow us do such analyses.  The material in the earlier chapters allow us to justify some of the assumptions we may need in process models.  Sometimes process models can be estimated directly from data, sometimes data merely provide ways of justifying assumptions one needs to make.
 
-For a basic example of how we can use basic data along with sum assumptions to estimate the "actual number of cases" check out this [video](https://www.youtube.com/watch?v=mCa0JXEwDEk).
+For an example of how we can use basic data along with some assumptions to estimate the "actual number of cases" check out this [video](https://www.youtube.com/watch?v=mCa0JXEwDEk).
 
 A readable tutorial on process models in understanding pandemics is the book [Charting the Next Pandemic by Pastore y Piontti et al](file:///Users/gonzo/Dropbox/transfer/mac%20transfer/Ana%20Pastore%20y%20Piontti,%20Nicola%20Perra,%20Luca%20Rossi,%20Nicole%20Samay,%20Alessandro%20Vespignani%20-%20Charting%20the%20Next%20Pandemic_%20Modeling%20Infectious%20Disease%20Spreading%20in%20the%20Data%20Science%20Age-Springer%20International%20.pdf). It was published prior to the current covid-19 pandemic.
 
 ## SIR Models
 
-SIR models refer to a modeling approach that uses differential equations, which are equations that govern how a process changes over time.  The basic model starts by having three kinds of people:  Susceptible, Infectious and Recovered (SIR).  In various versions of these models one could change assumptions such as "once an individual recovers they will not get the disease again because they develop antibodies" to "an individual who recovers has a p chance of being reinfected if they come in contact with an infected person" (where p is a probability between 0 and 1 and could be varied to study the implications). The [wiki page](https://en.wikipedia.org/wiki/Compartmental_models_in_epidemiology) on such models is not bad.
+SIR models refer to a modeling approach that uses differential equations, which are equations that govern how a process changes over time.  The basic model starts by having three kinds of people:  Susceptible, Infectious and Recovered (SIR).  In various versions of these models one could change assumptions such as "once an individual recovers they will not get the disease again because they develop antibodies" to "an individual who recovers has a p chance of being reinfected if they come in contact with an infected person" (where p is a probability between 0 and 1 and could be varied to study the implications). The [wiki page](https://en.wikipedia.org/wiki/Compartmental_models_in_epidemiology) on such models is not bad and provides a solid introduction.
 
 [Here](https://mail.google.com/mail/u/0/#inbox/QgrcJHrhwzzjMlbFSsGcwGcnZcVmwGkBHMl?projector=1) is a 20min video on SIR models geared for the pandemic with examples around social distancing and [Washington Post article](https://www.washingtonpost.com/graphics/2020/world/corona-simulator/) using an SIR approach to illustrate the effects of social distancing. The latter page appear below in small interactive window (the cool web page within a web page trick).
 
+There are several R packages for SIR modeling, including [EpiModel](https://www.epimodel.org/), [EpiDynamics](https://cran.r-project.org/web/packages/EpiDynamics/index.html), and  [tsiR](https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0185528).
 
 ```{r echo=F}
 knitr::include_url("https://www.washingtonpost.com/graphics/2020/world/corona-simulator/", height="600px")
-
 ```
 
-Some UM researchers have started analyzing the covid-19 pandemic using SIR models, these include [Peter Song](https://sph.umich.edu/faculty-profiles/song-peter.html) ([slides1](http://www.umich.edu/~songlab/COVID-19.pdf)), [Qianying Lin](https://midas.umich.edu/faculty-member/qianying-lin/) ([using data from Wuhan](https://www.ijidonline.com/article/S1201-9712(20)30117-X/fulltext), [Marisa Eisenberg](https://sph.umich.edu/faculty-profiles/eisenberg-marisa.html) (prediction dashboard](https://epimath.github.io/covid-19-modeling/#current-forecasts)))
+Some UM researchers have started analyzing the covid-19 pandemic using SIR models, these include 
 
-There are several R packages for SIR modeling, including [EpiModel](https://www.epimodel.org/), [tsiR](https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0185528)
+1. [Peter Song](https://sph.umich.edu/faculty-profiles/song-peter.html) ([slides1](http://www.umich.edu/~songlab/COVID-19.pdf), [eSIR R package](https://github.com/lilywang1988/eSIR)) 
 
-```{r echo=F}
-knitr::include_url("https://www.washingtonpost.com/graphics/2020/world/corona-simulator/", height="600px")
+2. [Qianying Lin](https://midas.umich.edu/faculty-member/qianying-lin/) ([using data from Wuhan](https://www.ijidonline.com/article/S1201-9712(20)30117-X/fulltext))
 
+3. [Marisa Eisenberg](https://sph.umich.edu/faculty-profiles/eisenberg-marisa.html) ([prediction dashboard](https://epimath.github.io/covid-19-modeling/#current-forecasts))
+
+
+Here I present a simple description of a basic and standard SIR model.  Consider a population of size N that has S susceptible people, I infectious people and R recovered people such that N=S+I+R.
+
+The model consists of three structural models, one for each of the changes in S, I and R.  These equations are
+
+$$
+\begin{aligned}
+\mbox{change S} &=  \beta_1 \frac{ I S}{N}\\
+\mbox{change I} &= \beta_1 \frac{ I S}{N} - \beta_2 I \\
+\mbox{change R} &= \beta_2 I 
+\end{aligned}
+$$
+
+I'm abusing notation here because "change S" refers to the differential $\frac{dS}{dt}$, which means the change in S for a small change in time.  Without getting into the details of  differential equations, for our purposes we can think of these like regression equations (the right hand side) modeling how much each of S, I and R change per unit time.
+
+The ratio of the two $\beta$s provides an interesting number. It is called the basic reproduction number and it is used so frequently that the ratio is given its own symbol $R_0$ = $\frac{\beta_1}{\beta_2}$. Intuitively, if we have a system where $R_0$, say, equals 3, that means that 3 people get infected for every one person who is infected.  Given the enrollment in this class of 70, my $R_0$ as the instructor is 70 because I infected 70 people this year with my views on regression and multivariate statistics. The $R_0$ establishes a criterion for whether an epidemic occurs, based on whether it is greater than or less than the proportion of susceptible people in the population at the start.
+
+This particular SIR model makes predictions about the underlying process that can be tested (and that also lead to ideas for how to intervene in a pandemic).  For example, in this model a pandemic stops because there are few infected individuals rather than a lack of susceptible people.  Of course, that may not be the case in reality, but these are the kinds of testable implications a model can give and the kinds of ideas for interventions that grow out of such models (i.e., under this particular SIR the key intervention is to reduce the number of infected individuals, say, through interventions such as social distancing and stay-at-home orders).
+
+There is a lot that has been written about SIR models and there are many variants. 
+
+A simple interactive demo in R is provided by the shinySIR package.  I print the instructions here but it needs to be run locally on your computer because it opens up a browser that allows you to interact.
+
+```{r eval=F}
+library(shinySIR)
+run_shiny(model="SIR")
 ```
 
-<!-- eSIR site: http://www.socr.umich.edu/people/dinov/courses/DSPA_notes/18_BigLongitudinalDataAnalysis_RNN.html
+## Network-based SIR Models
 
-song lab slides https://github.com/lilywang1988/eSIR
--->
+A different version of SIR models focuses along movements in a network.  These types of models are not based on differential equations as those we saw in the previous section.
 
-
-## Network-based Models
+```{r eval=F}
+library(shiny)
+runGitHub("shiny-SimNetwork","alisonswu")
+```
 
 ## Agent-based Models
 
+[Netlogo](https://ccl.northwestern.edu/netlogo/) demo on virus spread.  These represent  a different type of model endows individual agents with particular properties, sets up the rules for how these agents "interact" and then simulates the end result.  These are powerful modeling approaches. A relatively simple way to program using the logo language, originally developed to teach children how to program (e.g., moving a turtle around a space and the turtle follows particular rules when interacting with the environment).
+
 ## Public Policy Models
+
+Pending
 
 ## Summary
 
-The process models I've reviewed in this chapter have a strong public health and epidemiological perspective. We model the data of yesterday to help us understand what is going on and  evaluate potential changes that could be used to intervene on the spread.
+The process models I've reviewed in this chapter have a strong public health and epidemiological perspective. Most don't work with data directly but take as input parameters that may be based on other data you collect (e.g., determining the contagious period of a virus). They are not like the models we considered this semester where we data are used to estimate the model parameters using goodness of fit measures where "optimal" parameters are computed. Instead, these models are more like "human-in-the-loop" because they require the analyst to make assumptions, run the simulation, perform gut checks on the results, and tinker with the assumptions to improve the model.
 
-Overall, there is a sense that these models are not very satisfying. They operate at one level of analysis: counts on aggregate geographic areas such as countries and states.  They don't get into levels of specific human behavior nor evaluation of policies, contextual factors, health disparities and other aspects that wouldn't be too difficult to gather even more relevant data and build more complex models.   
-
-But there are also other levels that these notes have been quite silent about---the biological level. The SARS-CoV-2 virus itself has many levels of analysis such as molecular, cellular, and genetic as well as complex interactions that we are just beginning to understand in how the virus interacts with its environment (e.g., how it travels in air, how long it can live on a surface, how it interacts with the host).
-[Here](https://www.youtube.com/watch?v=vPtH42Lnt_Y) is a wonderful video on some relevant biology including what the SARS-CoV-2 virus does to the lungs and how in some people it causes [Acute Respitory Distress Syndrome](https://www.thoracic.org/patients/patient-resources/breathing-in-america/resources/chapter-2-acute-respiratory-distress-syndrome.pdf) (ARDS).  ARDS is a common cause of death among individuals with covid-19, which occurs because of the massive inflammatory reaction that covid-19 patients experience. 
-
-I would love to see deeper models that integrate the biological, behavioral, social and epidemiological factors.  No single level of analysis will help us figure out how to best respond to all aspects of the current pandemic.  
 
 
