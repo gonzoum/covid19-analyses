@@ -1,17 +1,15 @@
-# Appendix {-}
+# (APPENDIX) Appendix {-}
 
-## Using Git
-
-**EDITED 3/31/20**
+# Appendix A: Using Git
 
 Git is a version control system that can be used to deliver software, program code, data files, and other useful files. It is also facilitates updating code. For example, if I make a change to a file, I push it to the repository, and then users of the repository can download the changes to their working copy. The system will keep track of versions and manage mergers without conflicts. If it can't resolve conflicts across versions, then the program let's you know about the conflicts and you can choose to keep the conflicts as is or update to the newer version.
 
-### Installing git
+## Installing git
 
 Here I separate installing on PC and Mac.  There are some issues that occur on each platform. For more information on RStudio and git see the webpage [Using git from RStudio](https://nceas.github.io/oss-lessons/version-control/4-getting-started-with-git-in-RStudio.html),
 
 
-#### Git on a PC
+### Git on a PC
 
 
 Git doesn't usually come installed on a PC.  You can download it at http://git-scm.com/downloads.  
@@ -19,7 +17,7 @@ Git doesn't usually come installed on a PC.  You can download it at http://git-s
 There may be an issue of RStudio finding the path to the git executable, so within RStudio you may need to go to Tools/Global Options/Git and select the path to the git.exe file (likely c:\\Program Files\\Git\\bin).
 
 
-#### Git on Mac
+### Git on Mac
 
 
 If you already have xcode installed, then you are ok because git comes with xcode.  If you don't have xcode installed, then you can either download and install xcode from the apple website or go to http://git-scm.com/downloads and  download/install the git package directly. One way to check if git is already installed, is to open a terminal window (Applications/Utilities/Terminal). At the prompt type
@@ -36,7 +34,7 @@ Another student reported success using SSH instead of https. This involved setti
 
 I wish I had a simpler set of instructions for Mac users. I'm a Mac user too and I've never had these problems so I'm going mostly with what I'm hearing from students.
 
-### Once Installed Run these Commands (both PC and Mac)
+## Once Installed Run these Commands (both PC and Mac)
 
 Some things to check include running git config -l to see your local configuration. These commands are typed in the "terminal" section of RStudio (not the R console where you type R commands). You could also type them into the terminal window on your Mac or PC.
 
@@ -56,12 +54,12 @@ You would need to be in the folder where you want to save this repository becaus
 
 
 
-### Brief Git Explanation
+## Brief Git Explanation
 
 
 The idea is simple.  I push (copy) my changes to the repository and you pull (download) the repository to your computer. The software keeps track of all changes that are pushed to the git server, who made those changes, and any notes that the person wants to attach to those changes.  The software keeps track of what version you have installed locally on your machine and lets you know if there are more recent versions on the server.  If there are conflicts, such as you may have edited a line of a file that another person working on the same file may have also edited (assuming they commited their edits and pushed them to the server), then the software points to the two versions and asks you want you want to do such as accept their edits, accept your edits, etc.
 
-### Using Git beyond this course
+## Using Git beyond this course
 
 
 I strongly recommend that you use Git as part of your code writing, especially if you collaborate with others including your advisors. You can use git with any text files not just with R. For example, if you write SAS syntax, SPSS syntax, Stata code, whatever, you can use git to keep track of all the files.   
@@ -74,7 +72,7 @@ There are several interfaces available to work with Git with many more features 
 
 You can create your own repositories using the popular GitHub or BitBucket websites. BitBucket has more options for free private repositories, and academics with an edu in their email get special free academic upgrades (see the BitBucket website for details).
 
-## Reporting on Git and Session Info in R
+# Appendix B: Reporting on Git and Session Info in R
 
 This code lists the versions of R and all the R packages I'm using, tells me which computer and operating system processed these files, and connects this output to its git commit.
 ```{r cache=FALSE}
@@ -82,14 +80,20 @@ This code lists the versions of R and all the R packages I'm using, tells me whi
 print(system("hostname",intern=T))
 print(system("git log -1",intern=T)[1:3])
 print(sessionInfo(),locale=F)
-#save sessioninfo to file
+```
+
+It is good to save this information to a separate file so that it can be added to the git repo and current versions of packages are listed.
+
+```{r}
 writeLines(capture.output(sessionInfo()), "sessioninfo.txt")
 ```
 
-## Save Workspace
+There are more systematic approaches to creating self-contained environments with the packae [renv](https://rstudio.github.io/renv/articles/renv.html) or solutions outside R such as [docker containers](https://www.docker.com/?utm_source=google&utm_medium=cpc&utm_campaign=dockerhomepage&utm_content=namer&utm_term=dockerhomepage&utm_budget=growth&gclid=CjwKCAjw7LX0BRBiEiwA__gNwx4_6mBagzF3TIvDIHw-BJixzj6KQAHgr5conMNwazJc-JI_uNeLqBoC-ZEQAvD_BwE).
+
+# Appendix C: Saving Workspace
 
 Save workspace 
-so data can be retrieved at later time.  Normally not something I do but given data are changing so often might as well keep a snapshot of the data according to each release. I may decide to stop saving the data.  File name will change when I change the version number on git (e.g., v0.9).
+so data and objects can be retrieved at later time. This is helpful for debugging. Normally not something I do but given data are changing so often might as well keep a snapshot of the data according to each release. I may decide to stop saving the data.  File name will change when I change the version number on git (e.g., v0.9). This code assumes you have a folder called data-archive to place these saved workspaces.
 
 ```{r}
 #version was defined at the beginning of the the index.Rmd file
@@ -98,3 +102,10 @@ currentversion <- system("git describe --tags",intern=T)
 save.image(file=paste0("data-archive/",currentversion,"-dataworkspace.RData"))
 print(paste0("File name associated with this run is ", currentversion, "-dataworkspace.RData"))
 ```
+
+# Appendix D: The bookdown package
+
+This entire html site was built using the bookdown R package. It has advanced features for building reports around analysis as you can see. The [bookdown manual](https://bookdown.org/yihui/bookdown/) was written with the bookdown package.  I uploaded the entire file structure to my git repository so you can build this bookdown website yourself.  To do production builds I click on Build/Build All, which starts up a new R session compiles all the R code and converts to both html and pdf version.  
+
+While working, writing code and debugging I build the code with the R command bookdown::serve_book(in_session=T), which runs all the Rmd files locally in my session so I have all the R objects available in my R session, and can display the new version on a browser every time I save the Rmd file I'm working on.  Sometimest to debug I may have to run R chunks manually to get the data set to the point at which the error occurs. To help quickly running Rmd files earlier in the sequence to get me to the place where the error occurs, I can run the command xaringan::inf_mr() for each Rmd file (make the Rmd file active in the RStudio editor before running inf_mr()) and be careful with multiple serve sessions.
+
