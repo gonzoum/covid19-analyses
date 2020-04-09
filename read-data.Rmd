@@ -26,7 +26,7 @@ Sometimes these present conflicts such as writing robust code may not be code th
 
 ## Pulling from a git repository
 
-I'll use the [data base that Johns Hopkins](https://github.com/CSSEGISandData/COVID-19) has been maintaining on github, which is also used by news outlets such as CNN.  I already cloned the git repository on my local computer so each day I merely have to issue a "git pull" command to get all new files that have been edited.  This is a better process than conducting a completely new download every day of the entire repository.
+I'll use the [data base that Johns Hopkins](https://github.com/CSSEGISandData/COVID-19) has been maintaining on github, which is also used by news outlets such as CNN.  I already cloned the git repository on my local computer so each day I merely have to issue a "git pull" command to get all new files that have been edited.  This is a better process than conducting a completely new download every day of the entire repository. You can see the Johns Hopkins github site for a complete listing of sources of their data.
 
 If you want to learn more about working with git repositories, you can do a Google search for how to clone a repository.  Rstudio also has features to help clone and manage a git repository. 
 
@@ -37,12 +37,13 @@ This script will switch to the folder I'm keeping the git repository, execute th
 ```{r}
 #assuming git has been installed on your machine (e.g., Xcode in mac)
 #this is mac and linux specific; pc may be different unless unix commands have been installed
-#I haven't done any testing of this code on a PC
+#I haven't done any testing of this code on a PC; check the appendix for git installation instructions
 #
 #may be good to save the output messages into a text file with date/time stamp to monitor if issues with later code
 #are tied to new data that were read in (to be completed; if I was writing production code I would create an issue for
 #this idea on github so progress on this could be tracked and others on the project could comment/contribute)
-system("pushd '/Users/gonzo/Dropbox/transfer/mac transfer/COVID-19' && git pull && popd")
+#intern and cat are to print the output of the system command in this html document
+cat(system("pushd '/Users/gonzo/Dropbox/transfer/mac transfer/COVID-19' && git pull && popd", intern=T), sep="\n")
 ```
 
 I prefer not to have data files be in the git repository as a matter of habit (e.g., data may private information yet the repository may be public).
@@ -71,36 +72,6 @@ datacov <- datacov[,1:(which(names(datacov)=="3/22/20"))]
 datacov.ori <- datacov
 
 head(datacov)
-
-###THE LINES ARE TEMPORARY UNTIL I FIND TIME TO REWRITE CODE TO ADDRESS NEW DATA STRUCTURE STARTING ON 3.23
-#includes DC and territories so need further cleaning and put in proper order when merging later with allstates
-temp <- read_csv("/Users/gonzo/Dropbox/transfer/mac transfer/COVID-19/csse_covid_19_data/csse_covid_19_daily_reports/03-23-2020.csv")
-m3.23.sum <- temp[temp$Country_Region=="US",c("Province_State","Confirmed")] %>% group_by(Province_State) %>% summarise(daysum = sum(Confirmed))
-temp<- read_csv("/Users/gonzo/Dropbox/transfer/mac transfer/COVID-19/csse_covid_19_data/csse_covid_19_daily_reports/03-24-2020.csv")
-m3.24.sum <- temp[temp$Country_Region=="US",c("Province_State","Confirmed")] %>% group_by(Province_State) %>% summarise(daysum = sum(Confirmed))
-temp<- read_csv("/Users/gonzo/Dropbox/transfer/mac transfer/COVID-19/csse_covid_19_data/csse_covid_19_daily_reports/03-25-2020.csv")
-m3.25.sum <- temp[temp$Country_Region=="US",c("Province_State","Confirmed")] %>% group_by(Province_State) %>% summarise(daysum = sum(Confirmed))
-temp<- read_csv("/Users/gonzo/Dropbox/transfer/mac transfer/COVID-19/csse_covid_19_data/csse_covid_19_daily_reports/03-26-2020.csv")
-m3.26.sum <- temp[temp$Country_Region=="US",c("Province_State","Confirmed")] %>% group_by(Province_State) %>% summarise(daysum = sum(Confirmed))
-temp<- read_csv("/Users/gonzo/Dropbox/transfer/mac transfer/COVID-19/csse_covid_19_data/csse_covid_19_daily_reports/03-27-2020.csv")
-m3.27.sum <- temp[temp$Country_Region=="US",c("Province_State","Confirmed")] %>% group_by(Province_State) %>% summarise(daysum = sum(Confirmed))
-temp<- read_csv("/Users/gonzo/Dropbox/transfer/mac transfer/COVID-19/csse_covid_19_data/csse_covid_19_daily_reports/03-28-2020.csv")
-m3.28.sum <- temp[temp$Country_Region=="US",c("Province_State","Confirmed")] %>% group_by(Province_State) %>% summarise(daysum = sum(Confirmed))
-temp<- read_csv("/Users/gonzo/Dropbox/transfer/mac transfer/COVID-19/csse_covid_19_data/csse_covid_19_daily_reports/03-29-2020.csv")
-m3.29.sum <- temp[temp$Country_Region=="US",c("Province_State","Confirmed")] %>% group_by(Province_State) %>% summarise(daysum = sum(Confirmed))
-temp<- read_csv("/Users/gonzo/Dropbox/transfer/mac transfer/COVID-19/csse_covid_19_data/csse_covid_19_daily_reports/03-30-2020.csv")
-m3.30.sum <- temp[temp$Country_Region=="US",c("Province_State","Confirmed")] %>% group_by(Province_State) %>% summarise(daysum = sum(Confirmed))
-temp<- read_csv("/Users/gonzo/Dropbox/transfer/mac transfer/COVID-19/csse_covid_19_data/csse_covid_19_daily_reports/03-31-2020.csv")
-m3.31.sum <- temp[temp$Country_Region=="US",c("Province_State","Confirmed")] %>% group_by(Province_State) %>% summarise(daysum = sum(Confirmed))
-temp<- read_csv("/Users/gonzo/Dropbox/transfer/mac transfer/COVID-19/csse_covid_19_data/csse_covid_19_daily_reports/04-01-2020.csv")
-m4.01.sum <- temp[temp$Country_Region=="US",c("Province_State","Confirmed")] %>% group_by(Province_State) %>% summarise(daysum = sum(Confirmed))
-
-#most recent day totals for NY and MI to fill in numbers in later notes 
-#better to do this through coding but will wait until  format of JH data is final
-ny <- subset(temp, `Province_State`=="New York")
-apply(ny[8:11],2,sum)
-mi <- subset(temp, `Province_State`=="Michigan")
-apply(mi[8:11],2,sum)
 ```
 
 <!-- Had trouble getting backticks to display across multipe displays (r viewers, pdf, web browsers so went with html code) -->
