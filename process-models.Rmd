@@ -46,7 +46,7 @@ The ratio of the two $\beta$s provides an interesting number. It is called the b
 
 This particular SIR model makes predictions about the underlying process that can be tested (and that also lead to ideas for how to intervene in a pandemic).  For example, in this model a pandemic stops because there are few infected individuals rather than a lack of susceptible people.  Of course, that may not be the case in reality, but these are the kinds of testable implications a model can give and the kinds of ideas for interventions that grow out of such models (i.e., under this particular SIR the key intervention is to reduce the number of infected individuals, say, through interventions such as social distancing and stay-at-home orders).
 
-There is a lot that has been written about SIR models and there are many variants. 
+There is a lot that has been written about SIR models and there are many variants. These include the population size increasing/decreasing due to births, migration, deaths, which end up affecting the overall dynamics of S, I and R proportions (e.g., are there new "susceptible" people recruited into the system or are people "leaving" the system, say, due to death).
 
 A simple interactive demo in R is provided by the shinySIR package.  I print the instructions here but it needs to be run locally on your computer because it opens up a browser that allows you to interact.
 
@@ -54,6 +54,28 @@ A simple interactive demo in R is provided by the shinySIR package.  I print the
 library(shinySIR)
 run_shiny(model="SIR")
 ```
+
+### Exponential and Logistic Growth Models
+
+In the previous chapter I fitted both exponential and logistic growth models.  It is useful to consider the change processes that these two simple models imply.  We can use differential equations machinery, as is done for SIR models, to understand these two types of growth models.  We consider the equations that govern change. In the first case, if change is related to the current value times a constant (much like a savings account that has  today's change in balance as the principle times the interest rate):
+
+$$
+\begin{aligned}
+\mbox{change C} &=  \beta_1 t\\
+\end{aligned}
+$$
+where the "change C" refers to the differential $\frac{dC}{dt}$, which means the change in the count C for a small change in time. The solution to this change equation has the form  $\beta_2 \exp{\beta_1 t}$, meaning this is the most general function that produces that type of change. Note that the SIR model has three such change equations, similar in form to this one, so the SIR model has an exponential growth aspect but there is also the given-and-take between the three compartments (the number of people in each of the three categories) that provides additional constraints on the nature of the exponential growth.
+
+A different type of change follows this equation
+
+$$
+\begin{aligned}
+\mbox{change C} &=  \beta_1 f(t)*(1-f(t))
+\end{aligned}
+$$
+Let's consider the case where f(t) is constrained to be between 0 and 1, so behaves like a proportion. Under this condition, change is  maximal when f(t)=.5  and change decreases as f(t) moves away from .5.  We can ask a similar question as before, what is the most general function f that satisfies this change equation?  It turns out that f(t) is the logistic growth equation.  In principle one could build SIR-like models that follow different change equations, and then the resulting model would exhibit different behavior.
+
+This gives you a flavor of how to go about building this kind of process model. Work with models of how a system and its variables change over time, figure out those properties, then derive the underlying functions that give rise to those change equations.  This style of modeling places emphasis on the underlying process, and data are used to estimate parameters and adjudicate between different possible change models, rather than using the models to play a curve fitting game.
 
 ## Network-based SIR Models
 
