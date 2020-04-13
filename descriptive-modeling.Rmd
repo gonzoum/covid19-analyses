@@ -119,8 +119,9 @@ ggplot(pred) +
   geom_point(aes(day.numeric, y = log10(percap100))) + ggtitle("Michigan")
 ```
 
+So there seems to be a major issue with these plots. The observation that the trajectories do not display a straight line in the log scale suggests these data do not follow an exponential growth model. It is more complicated than that.  We see similar violations of straight lines in the death data (e.g., see the New York Times [graphs on the number of deaths](https://www.nytimes.com/interactive/2020/03/21/upshot/coronavirus-deaths-by-country.html?action=click&module=moreIn&pgtype=Article&region=Footer&fbclid=IwAR3y14SlV9sBtQcAyugUc0LPU-mrIVJbTrzOi4t7rWuISt8A-xizCMEk_7Y) for a similar curvature away from a straight line).  The violation of the exponential could be due to many factors, such as interventions of social distancing, diseases tend to follow an exponential curve early but then switch to a different process (see below for logistic growth curves), etc.
 
-Now that we understand the slopes and intercepts, let's make some predictions.  I'll go 5 days out.  The first plot will be on the log scale.
+Now that we understand the slopes and intercepts, let's make some predictions.  I'll go 5 days out.  The first plot will be on the log scale, but be mindful that these predictions are based on an exponential model that we just saw evidence that it may not hold for these data.
 
 ```{r fig.cap="Log scale predictions 5 days out"}
 max.day.numeric <- max(allstates.long$day.numeric)
@@ -231,7 +232,7 @@ In the previous section I illustrated how to run a nonlinear regression using th
 
 For a good explanation of exponential growth and logistic growth (next subsection) see this [video](https://www.youtube.com/watch?v=Kas0tIxDvrg). 
 
-You can think of this model as being similar to a balance in a savings account that builds with compound interest. At each time step, a percentage is added to the current principle thus increasing the principle. At the subsequent time step, the principle is now higher so the interest that day will also be higher.  In the case of the covid-19 counts, each day the total grows by some percentage, like the principle in the savings account.
+You can think of this model as being similar to a balance in a savings account that builds with compound interest. At each time step, a percentage is added to the current principal thus increasing the balance in the savings account. At the subsequent time step, the principal is now higher so the interest amount earned on that day will also be higher.  In the case of the covid-19 counts, each day the total grows by some percentage, analogous to the principal in the savings account.
 
 ```{r messages=F, warnings=F}
 allstates.long.new <- groupedData(count ~ day.numeric | state.abb, data=allstates.long)
@@ -245,6 +246,9 @@ ifelse(d<l,0,y*rate^(b1*(d-l)))
 #example exponential growth model
 plot(0:max.day.numeric, richfu(0:max.day.numeric, 0, 1.23 , .000555 , 1)*19500000/100,type="l",xlab="days",ylab="counts",main="Hypothetical plot of counts following an exponential growth \n(tied to population of New York)")
 ```
+
+I'm using one form of the exponential where the "rate" parameter is the base and it is raised to the power t.  I did this to maintain connection to the savings account analogy where the principal grows at rate x (where, say, a 5% interest rate has x = 1.05). There are other forms of the expontial that are equivalent, just on a different scale.  For example, in the natural log scale, the form I'm using yr^t is equivalently expressed as $y*\exp{(log(r)t)}$ and in base 10 it is equivalently expressed as $y*10^{log10(r)t}$. These are all equivalent formulations, one just needs to keep track of the scale of the rate across these different choices of the base.
+
 
 ### Exponential: The Liftoff Parameter
 
@@ -274,7 +278,7 @@ There is a sense in which we didn't have to worry about liftoff in the linear mi
 
 ### Estimating the exponential with the nonlinear mixed model
 
-Let's estimate an exponential growth model using a nonlinear mixed model regression. This mimics the LMER model we ran earlier in these notes but rather than transforming with a log to convert the data into straight lines we model the curvature direction with an exponential function. To simplify things I constrain the liftoff parameter to 0 and the multiplier b1 to 1.  To estimate all four parameters simultaneously we need to move to a different R package [saemix](https://cran.r-project.org/web/packages/saemix/saemix.pdf) that uses a stochastic EM algorithm to estimate this nonlinear mixed model because nlme can't handle very complex models like this one without doing more ground work in setting up a self-starting function that has information about the gradient of the function.
+Let's estimate an exponential growth model using a nonlinear mixed model regression. This mimics the LMER model we ran earlier in these notes but rather than transforming with a log to convert the data into straight lines we model the curvature direction with an exponential function. To simplify things I constrain the liftoff parameter to 0 and the multiplier b1 to 1.  To estimate all four parameters simultaneously we need to move to a different R package [saemix](https://cran.r-project.org/web/packages/saemix/saemix.pdf) that uses a stochastic EM algorithm to estimate this nonlinear mixed model because nlme can't handle very complex models like this one without doing more ground work in setting up a self-starting function that has information about the gradient of the function.  But, if you do that be careful that the function I'm proposing can even be estimated. There may be a redundancy with the rate and the b1 parameters (related to the base of the exponent that I described earlier in the Exponential Growth Backgroud subsection when moving to different bases like base 10 or $\exp$).
 
 ```{r message=F, warning=F}
 out <- nlme(percent ~ richfu(day.numeric, l=0, rate,y,b1=1), fixed = rate+y~1,
@@ -635,7 +639,7 @@ As you can see tsfeaturex computes 82 different measures on the count data for e
 A more appropriate machine learning strategy would be to take the time trajectory data for every country reported in the Johns Hopkins site (about 140 countries) and see if we can learn  patterns about the nature of the trajectories, given various aspects of the country's demographics, dates they instituted various policies (shelter at home), information about their health care system, etc.  One could use the principles developed here about web scraping and gathering these other sources of data, merging them into a single file, and running RNNs to find patterns.
 
 
-An interesting use of machine learning methods (specifically computer vision) is the development of a physical distancing index by a group at UM.  Physical movement of humans and social distancing is detected in major cities. This [website](https://pdi.voxel51.com/) has some live cameras and charts to illustrate their index.
+An interesting use of machine learning methods (specifically computer vision) is the development of a physical distancing index by a [group at UM](https://voxel51.com/ourstory/).  Physical movement of humans and social distancing is detected in major cities. This [website](https://pdi.voxel51.com/) has some live cameras and charts to illustrate their index.
 
 ```{r echo=F}
 knitr::include_url("https://pdi.voxel51.com/", height="600px")

@@ -1,17 +1,17 @@
 # Process Models
 
 
-Process models focus on mechanisms. A use of such models is that they allow us to model "what if" scenarios, such as what would be expected to happen to the spread of covid-19 cases if a state imposes a shelter-in-place order.  The models in the previous chapters don't allow us do such analyses.  The material in the earlier chapters allow us to justify some of the assumptions we may need in process models.  Sometimes process models can be estimated directly from data, sometimes data merely provide ways of justifying assumptions one needs to make.
+Process models focus on mechanisms. A use of such models is that they allow us to model "what if" scenarios, such as what would be expected to happen to the spread of covid-19 cases if a state imposes a shelter-in-place order.  The models in the previous chapters don't allow us do such "what if" analyses in any reasonable manner.  The material in the earlier chapters, however, allow us to justify some of the assumptions we may need in process models.  Sometimes process models can be estimated directly from data, sometimes data merely provide ways of justifying assumptions one needs to make.  Sometimes there is an "analyst-in-the-loop" aspect to these models because they may not be able to be estimated from data directly, so require the analyst to systematically modify a particular aspect of the model (e.g., an unknown parameter) to see how varying that aspect would affect the model's outcome in a type of sensitivity or robustness analysis. 
 
 For an example of how we can use basic data along with some assumptions to estimate the "actual number of cases" check out this [video](https://www.youtube.com/watch?v=mCa0JXEwDEk).
 
-A readable tutorial on process models in understanding pandemics is the book [Charting the Next Pandemic by Pastore y Piontti et al](file:///Users/gonzo/Dropbox/transfer/mac%20transfer/Ana%20Pastore%20y%20Piontti,%20Nicola%20Perra,%20Luca%20Rossi,%20Nicole%20Samay,%20Alessandro%20Vespignani%20-%20Charting%20the%20Next%20Pandemic_%20Modeling%20Infectious%20Disease%20Spreading%20in%20the%20Data%20Science%20Age-Springer%20International%20.pdf). It was published prior to the current covid-19 pandemic.
+A readable tutorial on process models in understanding pandemics is the book [Charting the Next Pandemic by Pastore y Piontti et al](file:///Users/gonzo/Dropbox/transfer/mac%20transfer/Ana%20Pastore%20y%20Piontti,%20Nicola%20Perra,%20Luca%20Rossi,%20Nicole%20Samay,%20Alessandro%20Vespignani%20-%20Charting%20the%20Next%20Pandemic_%20Modeling%20Infectious%20Disease%20Spreading%20in%20the%20Data%20Science%20Age-Springer%20International%20.pdf). It was published prior to the current covid-19 pandemic.  A more advanced treatment of some of these models using the statistical programming language R can be found in the book by Bj&#248;rnstad, [Epidemics: Models and Data Using R](https://www.amazon.com/Epidemics-Models-Data-using-Use/dp/3319974866/ref=sr_1_1?dchild=1&keywords=epidemics+R&qid=1586705382&sr=8-1), which is also available as a pdf through the UM library.
 
 ## SIR Models
 
 SIR models refer to a modeling approach that uses differential equations, which are equations that govern how a process changes over time.  The basic model starts by having three kinds of people:  Susceptible, Infectious and Recovered (SIR).  In various versions of these models one could change assumptions such as "once an individual recovers they will not get the disease again because they develop antibodies" to "an individual who recovers has a p chance of being reinfected if they come in contact with an infected person" (where p is a probability between 0 and 1 and could be varied to study the implications). The [wiki page](https://en.wikipedia.org/wiki/Compartmental_models_in_epidemiology) on such models is not bad and provides a solid introduction.
 
-[Here](https://mail.google.com/mail/u/0/#inbox/QgrcJHrhwzzjMlbFSsGcwGcnZcVmwGkBHMl?projector=1) is a 20min video on SIR models geared for the pandemic with examples around social distancing and [Washington Post article](https://www.washingtonpost.com/graphics/2020/world/corona-simulator/) using an SIR approach to illustrate the effects of social distancing. The latter page appear below in small interactive window (the cool web page within a web page trick).
+[Here](https://www.youtube.com/watch?v=gxAaO2rsdIs) is a 20min video on SIR models geared for the pandemic with examples around social distancing and [Washington Post article](https://www.washingtonpost.com/graphics/2020/world/corona-simulator/) using an SIR approach to illustrate the effects of social distancing. The latter page appear below in small interactive window (the cool web page within a web page trick).
 
 There are several R packages for SIR modeling, including [EpiModel](https://www.epimodel.org/), [EpiDynamics](https://cran.r-project.org/web/packages/EpiDynamics/index.html), and  [tsiR](https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0185528).
 
@@ -28,9 +28,9 @@ Some UM researchers have started analyzing the covid-19 pandemic using SIR model
 3. [Marisa Eisenberg](https://sph.umich.edu/faculty-profiles/eisenberg-marisa.html) ([prediction dashboard](https://epimath.github.io/covid-19-modeling/#current-forecasts))
 
 
-Here I present a simple description of a basic and standard SIR model.  Consider a population of size N that has S susceptible people, I infectious people and R recovered people such that N=S+I+R.
+Here I present a simple description of a basic and standard SIR model.  Consider a population of size N that has S susceptible people, I infectious people and R recovered people such that the entire population size N must follow this restriction: N=S+I+R.
 
-The model consists of three structural models, one for each of the changes in S, I and R.  These equations are
+The model consists of three structural models, one for each of the changes in S, I and R.  These equations, which look a lot like regression structural models with predictors such as $\frac{IS}{N}$ multiplied by a $\beta$, are
 
 $$
 \begin{aligned}
@@ -40,9 +40,13 @@ $$
 \end{aligned}
 $$
 
-I'm abusing notation here because "change S" refers to the differential $\frac{dS}{dt}$, which means the change in S for a small change in time.  Without getting into the details of  differential equations, for our purposes we can think of these like regression equations (the right hand side) modeling how much each of S, I and R change per unit time.
+I'm abusing notation here because "change S" refers to the differential $\frac{dS}{dt}$, which means the change in S for a small change in time.  Without getting into the details of  differential equations, for our purposes we can think of these like regression equations (the right hand side) modeling how much each of S, I and R change per unit time (the left hand side), but we have a system of three regression models that are further constrained by N=S+I+R.
 
-The ratio of the two $\beta$s provides an interesting number. It is called the basic reproduction number and it is used so frequently that the ratio is given its own symbol $R_0$ = $\frac{\beta_1}{\beta_2}$. Intuitively, if we have a system where $R_0$, say, equals 3, that means that 3 people get infected for every one person who is infected.  Given the enrollment in this class of 70, my $R_0$ as the instructor is 70 because I infected 70 people this year with my views on regression and multivariate statistics. The $R_0$ establishes a criterion for whether an epidemic occurs, based on whether it is greater than or less than the proportion of susceptible people in the population at the start.
+The ratio of the two $\beta$s provides an interesting number. It is called the basic reproduction number and it is used so frequently that the ratio is given its own symbol $R_0$ = $\frac{\beta_1}{\beta_2}$. Intuitively, if we have a system where $R_0$, say, equals 3, that means that on average 3 people get infected for every one person who is infected.  Given the enrollment in this class of 70, my $R_0$ as the instructor is 70 because I infected 70 people this year with my views on regression and multivariate statistics. The $R_0$ establishes a criterion for whether an epidemic occurs, based on whether it is greater than or less than the proportion of susceptible people in the population at the start.
+
+$R_0$ provides ways of modeling various interventions such as the role of vaccinations (see Bj&#248;rnstad's book referenced earlier in this chapter).  Under several assumptions, one can show that for diseases like measles (which has an $R_0$ between [12 and 18](https://blogs.scientificamerican.com/roots-of-unity/understand-the-measles-outbreak-with-this-one-weird-number/) or as high as [20](https://www.amazon.com/Epidemics-Models-Data-using-Use/dp/3319974866/ref=sr_1_1?dchild=1&keywords=epidemics+R&qid=1586705382&sr=8-1)), if 95% of the population is vaccinated, the effective reproductive rate becomes less than 1 so the disease can be contained.  
+
+The value of $R_0$ is not easy to estimate outside the model, though several methods have been proposed (see Bj&#248;rnstad's book referenced earlier in this chapter).  I won't go into them here because they are all not on strong footing. For example, one approach requires using the regression on the log transform of the cumulative counts (what I presented in Chapter 5). But we saw there that this log linear model had some systematic violations of the assumptions including a poor fitting curve. Using parameters of that suspect models to plug into other formulas leads to answers that are also suspect.  Current estimates we are hearing from the US government is that $R_0$ for covid-19 is between 2-3 (by comparison the usual influenza has an $R_0$ of about 1.3), but it isn't clear how those estimates are made.
 
 This particular SIR model makes predictions about the underlying process that can be tested (and that also lead to ideas for how to intervene in a pandemic).  For example, in this model a pandemic stops because there are few infected individuals rather than a lack of susceptible people.  Of course, that may not be the case in reality, but these are the kinds of testable implications a model can give and the kinds of ideas for interventions that grow out of such models (i.e., under this particular SIR the key intervention is to reduce the number of infected individuals, say, through interventions such as social distancing and stay-at-home orders).
 
@@ -55,16 +59,19 @@ library(shinySIR)
 run_shiny(model="SIR")
 ```
 
+We aren't in a position to use SIR in a more data-driven way because we don't have complete numbers. For example, the recovered numbers are no longer reported in the US because the data are suspect (e.g., the Johns Hopkins repository).  Without complete data it makes it difficult to work with estimating SIR models. Though see efforts by [Peter Song and colleagues](https://www.medrxiv.org/content/10.1101/2020.02.29.20029421v1?__cf_chl_jschl_tk__=9e68f1d740e5a4705f8fb6b5201cab99c4c8e735-1586711672-0-ATwHYrde3Xemeolpuixxbt-1tdA73OP0XJgzh60iD6Eqtcl6tKpFCNijT4eteZf1mIYRzhqUbkGj4ewelDu--A1iaGTdY18cG0s6YsQM9-VkWVaOb8Rbe3snsI_I0BhjBIs-AK4grt_wDqA2cihX8TgulFobNCUZpm3qHInc6gqYBz4z0DmyCGnh9cuuWZHcaprdfT6jIkkG0F1Sz0zWGWbiNUYyJID9qHZjwEdvs3UkpOcG3ESD557B6cJGzxvKu9MdKX08dekynXiy0oi5xRVkhUD6714NChuj86gFulrap5dz9V1ffJqvrwT4QjOG5A) to model data from China.
+
+
 ### Exponential and Logistic Growth Models
 
-In the previous chapter I fitted both exponential and logistic growth models.  It is useful to consider the change processes that these two simple models imply.  We can use differential equations machinery, as is done for SIR models, to understand these two types of growth models.  We consider the equations that govern change. In the first case, if change is related to the current value times a constant (much like a savings account that has  today's change in balance as the principle times the interest rate):
+In the previous chapter I fitted both exponential and logistic growth models.  It is useful to consider the change processes that these two simple models imply.  We can use differential equations machinery, as is done for SIR models, to understand these two types of growth models.  We consider the equations that govern change. In the first case, if change is related to the current value times a constant (much like a savings account that has  today's change in balance as the principal times the interest rate):
 
 $$
 \begin{aligned}
 \mbox{change C} &=  \beta_1 t\\
 \end{aligned}
 $$
-where the "change C" refers to the differential $\frac{dC}{dt}$, which means the change in the count C for a small change in time. The solution to this change equation has the form  $\beta_2 \exp{\beta_1 t}$, meaning this is the most general function that produces that type of change. Note that the SIR model has three such change equations, similar in form to this one, so the SIR model has an exponential growth aspect but there is also the given-and-take between the three compartments (the number of people in each of the three categories) that provides additional constraints on the nature of the exponential growth.
+where the "change C" refers to the differential $\frac{dC}{dt}$, which means the change in the count C for a small change in time. The solution to this change equation has the form  $\beta_2 \exp{\beta_1 t}$, meaning this is the most general function that produces that type of change. Note that the SIR model has three such change equations, similar in form to this one, so the SIR model has an exponential growth aspect but there is also the given-and-take between the three compartments (the number of people in each of the three categories S, I and R) that provides additional constraints on the nature of the exponential growth.
 
 A different type of change follows this equation
 
@@ -73,9 +80,11 @@ $$
 \mbox{change C} &=  \beta_1 f(t)*(1-f(t))
 \end{aligned}
 $$
-Let's consider the case where f(t) is constrained to be between 0 and 1, so behaves like a proportion. Under this condition, change is  maximal when f(t)=.5  and change decreases as f(t) moves away from .5.  We can ask a similar question as before, what is the most general function f that satisfies this change equation?  It turns out that f(t) is the logistic growth equation.  In principle one could build SIR-like models that follow different change equations, and then the resulting model would exhibit different behavior.
+Let's consider the case where f(t) is constrained to be between 0 and 1, so behaves like a proportion. Under this condition, change is  maximal when f(t)=.5  and change decreases as f(t) moves away from .5.  We can ask a similar question as before, what is the most general function f that satisfies this change equation?  It turns out that f(t) is the logistic growth equation.  In principle one could build SIR-like models that follow different change equations, and then the resulting model could exhibit different behavior.
 
-This gives you a flavor of how to go about building this kind of process model. Work with models of how a system and its variables change over time, figure out those properties, then derive the underlying functions that give rise to those change equations.  This style of modeling places emphasis on the underlying process, and data are used to estimate parameters and adjudicate between different possible change models, rather than using the models to play a curve fitting game.
+### SIR summary
+
+This gives you a flavor of how to go about building this kind of process model. Work with models of how a system and its variables change over time involves figuring out those change properties and deriving the underlying functions that give rise to those change equations.  This style of modeling places emphasis on the underlying process, and data are used to estimate parameters and adjudicate between different possible change models, rather than using the models to play a curve fitting game.  There are many extensions of SIR models that have additional "compartments" like Death or Exposed or Birth, so in addition to S, I and R some people die so they are out of the system and that changes the number N, which places constraints on S, I and R, or new individuals enter the system say through birth, which also affects N and hence the number of individuals who are susceptible.
 
 ## Network-based SIR Models
 
@@ -86,9 +95,15 @@ library(shiny)
 runGitHub("shiny-SimNetwork","alisonswu")
 ```
 
+In lecture I'll play with this interactive demo Twitch-style (game streaming).
+
 ## Agent-based Models
 
 [Netlogo](https://ccl.northwestern.edu/netlogo/) demo on virus spread.  These represent  a different type of model endows individual agents with particular properties, sets up the rules for how these agents "interact" and then simulates the end result.  These are powerful modeling approaches. A relatively simple way to program using the logo language, originally developed to teach children how to program (e.g., moving a turtle around a space and the turtle follows particular rules when interacting with the environment).
+
+Network-based models (previous subsection) and agent-based models share similarities with more equation-based SIR models in that they work on observed variables and try to model behaviors at multiple levels of analysis in hopes of understanding the underlying dynamics of the system.  There are also differences between these approaches. For example, equation-based models tend to tackle the system more directly (e.g., in the SIR models the equations involve interconnected variables, seen, for instance, in how the three standard SIR equations involve terms from the other equations) whereas agent-based and network models tend to focus just on the behavior of individuals and possibly their immediate neighbors without much information about processes operating at other levels.  For more on these distinctions see a paper by [Van Dyke Parunak, Savit and Riolo](https://www.researchgate.net/profile/Robert_Savit/publication/2628179_Agent-Based_Modeling_vs_Equation-Based_Modeling_A_Case_Study_and_Users'_Guide/links/54e4c4bf0cf276cec1722e24.pdf).
+
+One could work with netlogo directly but it is probably better to use a workflow that includes R so you can make use of data and other R resources such as graphics.  There is an R package nlrx that creates an R interface to netlogo. It requires some work in setting things up, which vary depending on whether you have a mac or a pc.  There is another package RNetLogo that provides a different interface but it doesn't look like it has been updated since 2017 so use with caution. There is also a way [to call R commands within netlogo](https://ccl.northwestern.edu/netlogo/docs/r.html) rather than the nlrx approach, which is to call netlogo from R.
 
 ## Public Policy Models
 
@@ -96,7 +111,7 @@ Pending
 
 ## Summary
 
-The process models I've reviewed in this chapter have a strong public health and epidemiological perspective. Most don't work with data directly but take as input parameters that may be based on other data you collect (e.g., determining the contagious period of a virus). They are not like the models we considered this semester where we data are used to estimate the model parameters using goodness of fit measures where "optimal" parameters are computed. Instead, these models are more like "human-in-the-loop" because they require the analyst to make assumptions, run the simulation, perform gut checks on the results, and tinker with the assumptions to improve the model.
+The process models I've reviewed in this chapter have a strong public health and epidemiological perspective. Most don't work with data directly but take as input parameters that may be based on other data you collect (e.g., determining the contagious period of a virus). They are not like the models we considered this semester where we data are used to estimate the model parameters using goodness of fit measures where "optimal" parameters are computed. Instead, these models are more like "analyst-in-the-loop" because they require the analyst to make assumptions, run the simulation, perform gut checks on the results, and tinker with the assumptions to improve the model.
 
 
 

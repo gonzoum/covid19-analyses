@@ -64,7 +64,7 @@ When building these files there are some functions that take a long time to comp
 By putting it here I just have to change the value (T vs F) in one place and elsewhere in the code the cache will be set. This way I don't have to hunt several files for where I need to set cache.
 
 ```{r}
-cache <- T
+cache <- F
 ```
 
 ## Utility functions

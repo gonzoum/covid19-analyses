@@ -63,7 +63,7 @@ Here are some interesting covid-19 related sites:
 
 8. [Fighting the Covid-19 Pandemic with Data Science--UM](https://midas.umich.edu/data-science-and-covid-19/) (some of this work is linked specifically in various chapters)
 
-9. [Coronavirus disease 2019 (COVID-19) from UpToDate](https://www.uptodate.com/contents/coronavirus-disease-2019-covid-19?search=coronavirus&source=search_result&selectedTitle=1~97&usage_type=default&display_rank=1) (this is an excellent peer-reviewed resource for medical professionals and their patients may be behind a paywall)
+9. [Coronavirus disease 2019 (COVID-19) from UpToDate](https://www.uptodate.com/contents/coronavirus-disease-2019-covid-19?search=coronavirus&source=search_result&selectedTitle=1~97&usage_type=default&display_rank=1) (this is an excellent peer-reviewed resource for medical professionals and their patients; may be behind a paywall)
 
 10. [Penn States Epidemics Course](https://www.coursera.org/learn/epidemics)
 
@@ -86,6 +86,8 @@ knitr::write_bib(c(
   .packages(), 'bookdown', 'knitr', 'rmarkdown'
 ), 'packages.bib')
 ```
+
+<img src="http://counter.www.umich.edu/counter?link=http://www.umich.edu/~gonzo/covid-19/+book/index.html">
 
 
 <!--  To stop the server, run servr::daemon_stop(1) or restart your R session -->
