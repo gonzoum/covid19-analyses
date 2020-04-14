@@ -280,15 +280,19 @@ There is a sense in which we didn't have to worry about liftoff in the linear mi
 
 Let's estimate an exponential growth model using a nonlinear mixed model regression. This mimics the LMER model we ran earlier in these notes but rather than transforming with a log to convert the data into straight lines we model the curvature direction with an exponential function. To simplify things I constrain the liftoff parameter to 0 and the multiplier b1 to 1.  To estimate all four parameters simultaneously we need to move to a different R package [saemix](https://cran.r-project.org/web/packages/saemix/saemix.pdf) that uses a stochastic EM algorithm to estimate this nonlinear mixed model because nlme can't handle very complex models like this one without doing more ground work in setting up a self-starting function that has information about the gradient of the function.  But, if you do that be careful that the function I'm proposing can even be estimated. There may be a redundancy with the rate and the b1 parameters (related to the base of the exponent that I described earlier in the Exponential Growth Backgroud subsection when moving to different bases like base 10 or $\exp$).
 
-```{r message=F, warning=F}
+```{r message=F, warning=F, results="hide"}
 out <- nlme(percent ~ richfu(day.numeric, l=0, rate,y,b1=1), fixed = rate+y~1,
-            random =  rate+y ~1, data=na.omit(allstates.long.new),start=c( rate=1.2,y=.001), verbose=T, control=nlmeControl(msMaxIter=500,opt="nlminb",pnlsTol=.01,msVerbose=T,minScale=.01) )
+            random =  rate+y ~1, data=na.omit(allstates.long.new),start=c( rate=1.2,y=.001), verbose=T, control=nlmeControl(msMaxIter=500,opt="nlminb",pnlsTol=.0001,msVerbose=T,minScale=.0001) )
+```
+
+```{r message=F, warning=F}
 out.exponential <- out
 summary(out.exponential)
 
-#XXX 4/13/20 data error intervals causes error (need to fix)
+#XXX 4/13/20 data error intervals causes error (need to fix); no variance on the rate parameter
 #confidence intervals of the parameters
-#intervals(out.exponential)
+intervals(out.exponential, which="fixed")
+
 #idea for boostrapping to get predicted interval but be careful about the time aspect; maybe better to simulate data 
 #https://stackoverflow.com/questions/55552080/how-to-obtain-confidence-intervals-for-non-linear-mixed-model-logistic-growth-c
 ```
@@ -370,10 +374,12 @@ plot(0:max.day.numeric, richfu.logistic(0:max.day.numeric, 3880, 133.45, -.332),
 
 Let's fit the logistic function to the data.  Note that I do not use state population size in this model.  I could incorporate it by including a weight parameter (weights=varIdent(form= ~1|state.abb)), which allows each state to have its own residual variance, or change the dependent variable from raw counts to, say, per capita counts.  I'll leave that as an exercise to see whether it changes the results. If you go the unequal residual variance route, you can use the anova command to compare the fits, which is essentially an increment in fit test comparing the reduced model (e.g., one residual variance for all states) to a full model (e.g., each state has its own residual variance). The command would be anova(reduced, full) where you replace reduced and full with the name of the object you saved the nlme (e.g., reduced = out.logistic in the example below).
 
-```{r messages=F, warnings=F}
-
+```{r messages=F, warnings=F, results="hide"}
 out <- nlme(count ~ richfu.logistic(day.numeric, l,y,b1), fixed = l+y+b1~1,
             random =  l+y~1, data=na.omit(allstates.long.new),start=c( l=5100,y=800,b1=-.33), verbose=T, control=nlmeControl(msMaxIter=1000,opt="nlminb",pnlsTol=.01,msVerbose=T,minScale=.01, maxIter=1000, eval.mas=1000) )
+```
+
+```{r  messages=F, warnings=F}
 AIC(out)
 out.logistic <- out
 summary(out.logistic)
@@ -530,7 +536,7 @@ The underlying common element of a neural network is that they take inputs, weig
 
 Here is a graphical representation of what I mean.  This example has four inputs (i.e., four variables or features), one hidden layer with 8 units, and one output layer that is a single number prediction (like our counts of positive tests).  The hidden layer is essentially a set of 8 PCAs (though they have gone through a nonlinear transformation using the logistic form). The two B terms are the "bias" or the intercepts that feed into the weighted sums.  The think black lines refer to higher positive weights and the thicker gray refer to smaller negative.  You can think of these as loadings where we take absolute values.  Example adapted from the NeuralNetTools R package.
 
-```{r echo=F}
+```{r echo=F, results="hide"}
 library(NeuralNetTools)
 library(nnet)
 
@@ -539,7 +545,9 @@ data(neuraldat)
 neuraldat$X4 <- neuraldat$X1* neuraldat$X2
 
 mod <- nnet(Y1 ~ X1 + X2 + X3 + X4, data = neuraldat, size = 8)
+```
 
+```{r echo=F}
 # plot
 par(mar = numeric(4))
 plotnet(mod)
