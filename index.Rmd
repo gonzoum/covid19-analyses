@@ -19,6 +19,10 @@ github-repo: rstudio/bookdown-demo
 description: "Pages to make remote teaching of statistics more interesting during the covid-19 pandemic."
 ---
 
+```{r echo=F}
+longform <- F
+```
+
 # Preface {-}
 
 These notes have three primary goals: 
@@ -87,6 +91,7 @@ knitr::write_bib(c(
 ), 'packages.bib')
 ```
 
+<!-- UM counter script -->
 
 <img src="http://counter.www.umich.edu/counter?link=http://www.umich.edu/~gonzo/covid-19/+book/index.html">
 
