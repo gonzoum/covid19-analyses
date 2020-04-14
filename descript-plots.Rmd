@@ -62,7 +62,10 @@ datacov.long$day.numeric <- as.numeric(datacov.long$day)-18283
 
 Now the animated plot by day. I rewrote the original parts of the plotting program to make it more efficient for the animation (e.g., I use the ggthemes in the maps package). This animation uses the package gganimate to reproduce the plot for each day and then overlays the plots one on top of the other to produce the animation.
 
-```{r cache=cache, warning=FALSE, message=FALSE,fig.cap="World Count of Positive Cases"}
+<!-- trying two different versions for html and latex -->
+
+```{r cache=cache, warning=FALSE, message=FALSE,fig.cap="World Count of Positive Cases", eval=knitr::is_html_output()}
+
 ggplot(datacov.long) +  borders("world", colour = "gray90", fill = "gray85") +
   theme_map() + 
   geom_point(aes(x=Long, y=Lat, size=count, color=count),stroke=F, alpha=0.7) +
@@ -80,6 +83,23 @@ ggplot(datacov.long) +  borders("world", colour = "gray90", fill = "gray85") +
   transition_time(day) + ease_aes('linear')
 ```
 
+```{r cache=cache, warning=FALSE, message=FALSE,fig.cap="World Count of Positive Cases", fig.show="animate", aniopts=c("autoplay", "controls", "loop"),  eval=knitr::is_latex_output()}
+ggplot(datacov.long) +  borders("world", colour = "gray90", fill = "gray85") +
+  theme_map() + 
+  geom_point(aes(x=Long, y=Lat, size=count, color=count),stroke=F, alpha=0.7) +
+ scale_size_continuous(name="Cases", trans="log", range=c(1,7),  breaks=mybreaks, labels = mylabels) +
+    scale_color_viridis_c(option="inferno",name="Cases", trans="log",breaks=mybreaks, labels = mylabels) +
+    theme_void() + 
+    guides( colour = guide_legend()) +
+    theme(
+      legend.position = "bottom",
+      text = element_text(color = "#22211d"),
+      plot.background = element_rect(fill = "#ffffff", color = NA), 
+      panel.background = element_rect(fill = "#ffffff", color = NA), 
+      legend.background = element_rect(fill = "#ffffff", color = NA)) + 
+  labs(title="Date: {frame_time}", caption = "Data Repository provided by Johns Hopkins CSSE") +
+  transition_time(day) + ease_aes('linear')
+```
 
 While counts are useful (see [Preface](#preface) for a discussion of London's cholera epidemic) they have their limitations. Does a country have a relatively high number of positive cases because it has a large population?  In this field it is common to normalize counts by the population and report numbers per capita (e.g., 62 cases out of 100,000).  I'll have to track down the populations of each country and merge that information into this animation.  Later in this chapter, I develop this animation for the US and I do have the state populations so will illustrate the difference in this animation in counts versus per capita there.  However, raw counts still have a role in helping to inform the impact of covid-19.  If a city has 1500 available hospital beds (and presumably the staff and supplies to provide care for  those  beds), but there are 2000 people in need of hospitalization, then there is a public health issue and the 'per capita" concern becomes moot.
 
@@ -262,7 +282,28 @@ This pattern is quite remarkable. The states appear to have similar slopes on th
 
 Here is the animation for the US.  Not much to look at since it has only been about 2 weeks of data.  This map needs work as Alaska and Hawaii outlines are not printed (their data points appear on the left side roughly where the states would be on the map).  I'll need to do some coding to create an inset for Alaska and Hawaii (possible clue to inset: https://stackoverflow.com/questions/49523375/graphing-lat-long-data-points-on-us-map-50-states-including-alaska-hawaii
 
-```{r warning=F, message=F, cache=cache,fig.cap="US Count of Positive Cases"}
+```{r warning=F, message=F, cache=cache,fig.cap="US Count of Positive Cases", eval=knitr::is_html_output()}
+mybreaks <- c(1, 20, 100, 500, 1000, 2000, 10000)
+mylabels <- c("1-19", "20-99", "100-499", "500-999", "1,000-1,999", "2,000-9,999","10,000+")
+
+ggplot(allstates.long) +  borders("usa", colour = "gray90", fill = "gray85") +
+ theme_map() + 
+  geom_point(aes(x=Long, y=Lat, size=count, color=count),stroke=F, alpha=0.7) +
+ scale_size_continuous(name="Cases", trans="log", range=c(1,7),  breaks=mybreaks, labels = mylabels) +
+    scale_color_viridis_c(option="inferno",name="Cases", trans="log",breaks=mybreaks, labels = mylabels) +
+    theme_void() + 
+    guides( colour = guide_legend()) +
+    theme(
+      legend.position = "bottom",
+      text = element_text(color = "#22211d"),
+      plot.background = element_rect(fill = "#ffffff", color = NA), 
+      panel.background = element_rect(fill = "#ffffff", color = NA), 
+      legend.background = element_rect(fill = "#ffffff", color = NA)) + 
+  labs(title="Date: {frame_time}", caption = "Data Repository provided by Johns Hopkins CSSE") +
+  transition_time(day) + ease_aes('linear')
+```
+
+```{r warning=F, message=F, cache=cache,fig.cap="US Count of Positive Cases", fig.show="animate", aniopts=c("autoplay", "controls", "loop"),  eval=knitr::is_latex_output()}
 mybreaks <- c(1, 20, 100, 500, 1000, 2000, 10000)
 mylabels <- c("1-19", "20-99", "100-499", "500-999", "1,000-1,999", "2,000-9,999","10,000+")
 
@@ -285,7 +326,30 @@ ggplot(allstates.long) +  borders("usa", colour = "gray90", fill = "gray85") +
 
 Because I have the state-level population sizes I can redo the animation using a per capita normalization out of 100.  I modified the breaks and labels manually but there may be a way to do that automatically with ggplot2 features.
 
-```{r warning=F, message=F, cache=cache, fig.cap="US Per Cap (100)"}
+```{r warning=F, message=F, cache=cache, fig.cap="US Per Cap (100)", eval=knitr::is_html_output()}
+temp <- cut2(allstates.long$percap100, g=5, m=5)
+mylabels <- levels(temp)
+#onlycuts = T saves the numeric break points, drop first element which is 0
+mybreaks <- cut2(allstates.long$percap100, g=5, m=5, onlycuts=T)[-1]
+
+ggplot(allstates.long) +  borders("usa", colour = "gray90", fill = "gray85") +
+ theme_map() + 
+  geom_point(aes(x=Long, y=Lat, size=percap100, color=percap100),stroke=F, alpha=0.7) +
+ scale_size_continuous(name="Cases", trans="log", range=c(1,7),  breaks=mybreaks, labels = mylabels) +
+    scale_color_viridis_c(option="inferno",name="Cases", trans="log",breaks=mybreaks, labels = mylabels) +
+    theme_void() + 
+    guides( colour = guide_legend()) +
+    theme(
+      legend.position = "bottom",
+      text = element_text(color = "#22211d"),
+      plot.background = element_rect(fill = "#ffffff", color = NA), 
+      panel.background = element_rect(fill = "#ffffff", color = NA), 
+      legend.background = element_rect(fill = "#ffffff", color = NA)) + 
+  labs(title="Date: {frame_time}", caption = "Data Repository provided by Johns Hopkins CSSE") +
+  transition_time(day) + ease_aes('linear')
+```
+
+```{r warning=F, message=F, cache=cache, fig.cap="US Per Cap (100)", fig.show="animate", aniopts=c("autoplay", "controls", "loop"),  eval=knitr::is_latex_output()}
 temp <- cut2(allstates.long$percap100, g=5, m=5)
 mylabels <- levels(temp)
 #onlycuts = T saves the numeric break points, drop first element which is 0
