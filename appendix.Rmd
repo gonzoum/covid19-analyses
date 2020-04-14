@@ -75,7 +75,7 @@ You can create your own repositories using the popular GitHub or BitBucket websi
 # Appendix B: Reporting on Git and Session Info in R
 
 This code lists the versions of R and all the R packages I'm using, tells me which computer and operating system processed these files, and connects this output to its git commit.
-```{r cache=FALSE}
+```{r}
 #don't cache this otherwise it won't update
 print(system("hostname",intern=T))
 print(system("git log -1",intern=T)[1:3])

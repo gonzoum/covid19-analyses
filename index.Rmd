@@ -87,6 +87,7 @@ knitr::write_bib(c(
 ), 'packages.bib')
 ```
 
+
 <img src="http://counter.www.umich.edu/counter?link=http://www.umich.edu/~gonzo/covid-19/+book/index.html">
 
 
