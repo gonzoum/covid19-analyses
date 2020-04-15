@@ -19,11 +19,42 @@ github-repo: rstudio/bookdown-demo
 description: "Pages to make remote teaching of statistics more interesting during the covid-19 pandemic."
 ---
 
+<!-- I decided to produce two versions of these documents. One for the R audience with all the R code and some statistical issues like checking assumptions and one for a broader audience without interest in the R details.  I use echo=longform to select which R chunks to print and asis echo=longform for conditional definition of text. -->
+
+
 ```{r echo=F}
+#longform = T means print everything; longform=F means print just the pieces for public consumption
+#in hindsight I should have used the knitr global definition for echo (for r chunks) and "asis" (for text) but when I started I had 
+#in mind more nuanced use of chunks across the two versions and it seemed separate chunk by chunk definition
+#was more efficient
 longform <- F
 ```
 
+
 # Preface {-}
+
+
+```{asis echo=longform}
+::: {.infobox .caution data-latex="{caution}"}
+
+**Note**
+
+I have an [abbreviated version](http://www-personal.umich.edu/~gonzo/covid19/public/) of these notes with limited R code displayed. That version may be easier to follow if you want to see the final results rather than the detailed code presented here.
+
+:::
+  
+```
+
+```{asis echo=!longform}
+::: {.infobox .caution data-latex="{caution}"}
+
+**Note**
+
+I have a more [detailed version](http://www-personal.umich.edu/~gonzo/covid19/_book/) of these notes with complete R code.  That version may be more appropriate if you want to follow the R code used to produce this document.
+:::
+  
+```
+
 
 These notes have three primary goals: 
 
@@ -77,7 +108,7 @@ I am not the [Richard Gonzalez](https://www.fiercepharma.com/pharma/abbvie-ceo-g
 
 ::: {.infobox .caution data-latex="{caution}"}
 
-**Caution**
+**Note**
 
 Throughout these notes I adapted existing code and examples. Where I borrowed from other people I provide appropriate citation.  I wrote these notes relatively quickly and have not double checked all the code nor have edited the text carefully. I also worked on this in small pieces so there may be inconsistencies or redundancies across pieces, which will eventually be fixed and written in more elegant flowing code.
 

@@ -1,6 +1,16 @@
 
 # Reading Data into R {#intro}
 
+```{asis echo=!longform}
+::: {.infobox .caution data-latex="{caution}"}
+
+**This Chapter May Be Skipped**
+
+This chapter has details on where the data came from and how to garther these data.  If you are not interested in these details, it is fine to skip this chapter.
+
+:::
+  
+```
 
 This chapter will cover three different ways to read data into R: 
 
@@ -47,7 +57,7 @@ This script will switch to the folder I'm keeping the git repository, execute th
 cat(system("pushd '/Users/gonzo/Dropbox/transfer/mac transfer/COVID-19' && git pull && popd", intern=T), sep="\n")
 ```
 
-I prefer not to have data files be in the git repository as a matter of habit (e.g., data may private information yet the repository may be public).
+I prefer not to have data files be in the git repository as a matter of habit (e.g., data may contain private information yet the repository may be public).
 
 Now read the file that has the cumulative counts of confirmed covid-19 cases by country and, if relevant, state or province. I'll save it into an object called datacov; I list the first 6 rows of datacov.
 
@@ -57,9 +67,9 @@ Here is the notice of the change to the data structure: [link](https://github.co
 
 **NOTE:** On 3/30/20 the repository now lists the updated files. The new files changed in small ways that require some rewriting of the code. These changes include separating the US into a different file from the world (though the total US counts appear in the world data set), changing the names of a few columns but these are not consistent between the different data files that are downloaded (e.g., the US file has slightly different column names than the world data file), US data file ends one day behind the world data file (i.e., 3/30 and 3/31 respectively), and for the US data providing county-level counts rather than state-level counts so I need to create sums by states. These aren't big deals but can create lots of problems catching all the edits needed in  later code. For example, originally the longitude variable was called Long but now it is called Long_, and in the US data column names are given with dates as 2020 but in the world data file they are given as 20. There are several ways to address such changes. I'll go the route of changing the variable names here so that I don't need to make many changes throughout the rest of the code.  Another possible way to address these changes is to adopt the new variable names and then carefully go through all the lines of code to make the necessary changes.  I suspect there may be more changes in the comming days so I don't want to make the minimal changes now in a way that let's me adapt to future changes.
 
-I include little notes so you can see how I adapted my code to the changing landscape and evaluate the decisions I made along the way.  As much as possible I will document my edits and use clear commit messages in git so that one could go back to earlier versions as needed. Such documentation is an important part of conducting reproducible science.  The approach I've taken here still makes the code readable yet my historical changes can be examined without a bunch of clutter of obsolete code commented out with unhelpful statements such as "DO NOT USE THIS" (see below for a silly example).
+I include little notes so you can see how I adapted my code to the changing landscape and evaluate the decisions I made along the way.  As much as possible I will document my edits and use clear commit messages in git so that one could go back to earlier versions as needed. Such documentation is an important part of conducting reproducible science.  The approach I've taken here still makes the code readable yet my changes can be examined without a bunch of clutter of obsolete code commented out with unhelpful statements such as "DO NOT USE THIS" (see below for a silly example).
 
-```{r}
+```{r eval=F}
 #DO NOT USE THIS (SILLY EXAMPLE)
 #OLD CODE PRIOR TO 3/23/20
 #imagine how difficult it would be to figure out my code with a lot of these obsolete lines with ignore messages; git version control is much better approach
@@ -69,25 +79,9 @@ I include little notes so you can see how I adapted my code to the changing land
 #use datacov.ori in descript-plots.Rmd to get state lat long as not available any more since reported by county
 datacov <- 
  read_csv("/Users/gonzo/Dropbox/transfer/mac transfer/covid19-analyses/time_series_19-covid-Confirmed.csv")
-datacov <- datacov[,1:(which(names(datacov)=="3/22/20"))]
-datacov.ori <- datacov
-
-head(datacov)
 ```
 
-<!-- Had trouble getting backticks to display across multipe displays (r viewers, pdf, web browsers so went with html code) -->
-
-The column labels of the object datacov are ordered by date starting in column 5. The column names are special string variables because they start with numbers and R doesn't like variable names to start with numbers. For example, <code>&grave;1/22/20&grave;</code> (backticks), and you'll see in later syntax where I need to refer to these columns using the backwards apostrophes.  The other columns contain province/state and county/region labels as well as latitude and longitude of each geographic unit.
-
-The column names though get converted by R to regular strings when treated as names.  You can also check data pulls each day to see if yesterday's date is the last entry (otherwise there is a problem). The data base seems to be updated late in the evening so if these commands are run late in the evening you may see today's date as the most recent date.
-
-```{r}
-colnames(datacov)
-```
-
-The behavior of the variable names I am showing here follows the default of R on a Mac.  It seems that R on a PC follows a different convention: rather than using backticks it adds an X to the beginning of the column name that starts with a nonstandard character a number. To make the PC behave like a Mac on this issue, just add check.names=FALSE in the call to read.csv when the data are read.   This way my notes will run on both PC and Mac/linux.
-
-new code under development 3/31/20
+We read in the two files with world and US cumulative data.
 
 ```{r}
 #data for World and US county/states are now in separate files
@@ -95,7 +89,22 @@ datacov.World <-
   read_csv("/Users/gonzo/Dropbox/transfer/mac transfer/COVID-19/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_global.csv")
 datacov.US <- 
   read_csv("/Users/gonzo/Dropbox/transfer/mac transfer/COVID-19/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_US.csv")
+```
 
+<!-- Had trouble getting backticks to display across multipe displays (r viewers, pdf, web browsers so went with html code) -->
+
+The column labels of the object datacov.World, for example, are ordered by date starting in column 5. The column names are special string variables because they start with numbers and R doesn't like variable names to start with numbers. For example, <code>&grave;1/22/20&grave;</code> (backticks), and you'll see in later syntax where I need to refer to these columns using the backwards apostrophes.  The other columns contain province/state and county/region labels as well as latitude and longitude of each geographic unit.
+
+The column names though get converted by R to regular strings when treated as names.  You can also check data pulls each day to see if yesterday's date is the last entry (otherwise there is a problem). The data base seems to be updated late in the evening so if these commands are run late in the evening you may see today's date as the most recent date.
+
+The behavior of the variable names I am showing here follows the default of R on a Mac.  It seems that R on a PC follows a different convention: rather than using backticks it adds an X to the beginning of the column name that starts with a nonstandard character a number. To make the PC behave like a Mac on this issue, just add check.names=FALSE in the call to read.csv when the data are read.   This way my notes will run on both PC and Mac/linux.
+
+
+```{r}
+colnames(datacov.US)
+```
+
+```{r}
 #fix variable names in US to match World file and my previous code
 names(datacov.US)[7] <- names(datacov.World)[1]
 names(datacov.US)[8] <- names(datacov.World)[2]
@@ -106,7 +115,7 @@ colnames(datacov.US)[12:ncol(datacov.US)] <-
 
 ```
 
-Now I have two datacov files, World and US, and I can use each as need in the subsequent code.  The main thing left to "fix" is that the new datacov.US is broken down by county and my code is currently written for state.  I'll sum over county later to get state counts, but will keep the county level information for possible use in later examples using more granular county-level information.
+Now I have two datacov files, World and US, and I can use each as need in the subsequent code.  The main thing left to "fix" is that the new datacov.US is broken down by county and my code is currently written for state.  Later, I'll sum over county to get state counts, but will keep the county level information for possible use in later examples using more granular county-level information.
 
 ### Issues around dealing with downloaded data
 
@@ -314,5 +323,4 @@ A lot of code was presented in this chapter, but the code is in service of downl
 In some workflows  I save my workspace at this stage when all the data have been read in and processed, so that subsequent files can just load the workspace and pick up from here. This saves time because the same operations don't have to be redone.  But because these covid-19 data downloads happen often it is better to recreate the workspace to avoid issues with newer data being available.  The R functions save.image() and load() usually work well when data remain static, such as after data collection is completed and no further data cleaning is needed.
 
 :::
-
 

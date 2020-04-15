@@ -1,6 +1,6 @@
 # Descriptive Plots {#descplot}
 
-This chapter  presents some descriptive plots of the raw data. No analyses, no standard errors, no parameters to estimate, no hypotheses to test. Just raw data presented in different forms to gain insight into the patterns that are in the data.  I'll create a few plots at the world level, and then switch to the state level for US data.  You are free to take my code and edit it to produce additional plots for other countries and their states or provinces (up to the degree of resolution provided by the data sets we downloaded, which as of 3/23/20 is at the US county level).  Throughout these notes I'll focus on the counts and rates of testing positive. I'll defer death counts and rates until the chapter on process models. 
+This chapter  presents some descriptive plots of the raw data. No analyses, no standard errors, no parameters to estimate, no hypotheses to test. Just raw data presented in different forms to gain insight into the patterns that are in the data.  I'll create a few plots at the world level, and then switch to the state level for US data.  You are free to take my code and edit it to produce additional plots for other countries and their states or provinces.  Throughout these notes I'll focus on the counts and rates of  positive tests. I'll defer death counts until the chapter on process models. 
 
 ## World Map
 
@@ -11,7 +11,7 @@ I make use of the datacov file I read in from the Johns Hopkins git repository.
 
 
 
-```{r warning=F, message=F}
+```{r warning=F, message=F, echo=longform}
 #for these code chunks I use the datacov.World data file
 #coding trick; by switching the definition of datacov I can keep my original code post the 3/23/20 change and just swap 
 #out which file, world or us, to drop into datacov.  Rest of code should remain the same as prior to the change.
@@ -42,7 +42,7 @@ ggplot() +
 
 ```
 
-You'll notice that some countries like Canada, UK, Australia have multiple points but most countries are represented by only 1 point. This is because the data set we are using shows some inconsistencies in reporting either country totals or by state/province. This would require further cleaning (e.g., computing country totals for those countries) but I left this in here as a teaching moment of how one needs to be careful working with data sets and consistently double check your assumptions about the structure of the data set you are using. The structure may also change over time so one needs to monitor carefully.
+You'll notice that some countries like Canada, UK, Australia have multiple points but most countries are represented by only 1 point. This is because the data set we are using has some inconsistencies in reporting either country totals or  state/province totals. This would require further cleaning (e.g., computing country totals for those countries) but I left this in here as a teaching moment of how one needs to be careful working with data sets and consistently double check your assumptions about the structure of the data set you are using. The structure may also change over time so one needs to monitor carefully.
 
 Even more sophisticated is the  [interactive map](https://www.arcgis.com/apps/opsdashboard/index.html#/bda7594740fd40299423467b48e9ecf6) developed at Johns Hopkins (same group that provides the key data we downloaded in Chapter \@ref(intro)), where you can zoom in and out, click on different countries (left panel) and see data for that country on the right panel, etc. A small interactive display of that website is displayed below.
 
@@ -52,19 +52,24 @@ knitr::include_url("https://www.arcgis.com/apps/opsdashboard/index.html#/bda7594
 
 ### World Map with Time Animation
 
-I'll expand the example I just did in R to make an animation so we can see the total cases in the world map change by day.  We need to reformat the data file datacov into long format in order to be used by the animation function in the package gganimate.  That is, rather than using the datacov data.frame that is in wide format, I need to reformat the data.frame into long format and create a day column and a count column.  The gather() function in dplyr does this very efficiently.  To help in later analyses I also create a day.numeric variable that is 0 on 3/08/20 and increments by one each day after.  I'll explain later why I set 3/08/20 as day 0.
+I'll expand this example to make an animation so we can see the total cases in the world map change by day.  
+```{asis echo=longform}
+We need to reformat the data file datacov into long format in order to be used by the animation function in the package gganimate.  That is, rather than using the datacov data.frame that is in wide format, I need to reformat the data.frame into long format and create a day column and a count column.  The gather() function in dplyr does this very efficiently.  To help in later analyses I also create a day.numeric variable that is 0 on 3/08/20 and increments by one each day after.  I'll explain later why I set 3/08/20 as day 0.
+```
 
-```{r}
+```{r echo=longform}
 datacov.long <- gather(datacov, day, count, `1/22/20`:(names(datacov)[ncol(datacov)]))
 datacov.long$day <- as.Date(datacov.long$day, "%m/%d/%y")
 datacov.long$day.numeric <- as.numeric(datacov.long$day)-18283
 ```
 
-Now the animated plot by day. I rewrote the original parts of the plotting program to make it more efficient for the animation (e.g., I use the ggthemes in the maps package). This animation uses the package gganimate to reproduce the plot for each day and then overlays the plots one on top of the other to produce the animation.
+```{asis echo=longform}
+I rewrote the original parts of the plotting program to make it more efficient for the animation (e.g., I use the ggthemes in the maps package). This animation uses the package gganimate to reproduce the plot for each day and then overlays the plots one on top of the other to produce the animation.
+```
 
 <!-- trying two different versions for html and latex -->
 
-```{r cache=cache, warning=FALSE, message=FALSE,fig.cap="World Count of Positive Cases", eval=knitr::is_html_output()}
+```{r cache=cache, warning=FALSE, message=FALSE,fig.cap="World Count of Positive Cases", eval=knitr::is_html_output(), echo=longform&knitr::is_html_output()}
 
 ggplot(datacov.long) +  borders("world", colour = "gray90", fill = "gray85") +
   theme_map() + 
@@ -83,7 +88,7 @@ ggplot(datacov.long) +  borders("world", colour = "gray90", fill = "gray85") +
   transition_time(day) + ease_aes('linear')
 ```
 
-```{r cache=cache, warning=FALSE, message=FALSE,fig.cap="World Count of Positive Cases", fig.show="animate", aniopts=c("autoplay", "controls", "loop"),  eval=knitr::is_latex_output()}
+```{r cache=cache, warning=FALSE, message=FALSE,fig.cap="World Count of Positive Cases", fig.show="animate", aniopts=c("autoplay", "controls", "loop"),  eval=knitr::is_latex_output(), echo=longform&knitr::is_latex_output()}
 ggplot(datacov.long) +  borders("world", colour = "gray90", fill = "gray85") +
   theme_map() + 
   geom_point(aes(x=Long, y=Lat, size=count, color=count),stroke=F, alpha=0.7) +
@@ -108,14 +113,16 @@ While counts are useful (see [Preface](#preface) for a discussion of London's ch
 
 It would be helpful to see the pattern over time of the world counts of confirmed covid-19 cases relative to the US counts.  Here I create a subset of the datacov data.frame that includes just the 50 states (I dropped DC and the US territories for this analysis).
 
-```{r}
-#new code with datacov.US 3/31/20 edits
+```{r message=F, warning=F, echo=longform}
 datacov.temp <- datacov.US
 allstates.temp <- subset(datacov.temp, `Province/State`%in% states)
 allstates.temp2 <- allstates.temp %>% group_by(`Province/State`) %>%  summarize_at(vars(`1/22/20`:(names(allstates.temp)[ncol(allstates.temp)])), sum,na.rm=T)
 #need state level long and lat (these are county) so just replace these sums with the ones in the old allstates
 
 #create subset of 50 states from original datacov in order to have the correct long and lat by state (rather than county)
+#this is a check that new code from 3/31/20 works with the older format
+datacov.ori <- 
+ read_csv("/Users/gonzo/Dropbox/transfer/mac transfer/covid19-analyses/time_series_19-covid-Confirmed.csv")
 allstates <- subset(datacov.ori, `Province/State`%in% states)
 allstates.ori <- allstates
 
@@ -157,9 +164,11 @@ allstates.long$day <- as.Date(allstates.long$day, "%m/%d/%y")
 #allstates.long$count.diff <- c(0,diff(allstates.long$count))
 ```
 
+```{asis echo=longform}
 More data manipulation needed.  Turns out that the Johns Hopkins data did not report state-level data prior to 3/08/2020 (just US totals apparently).  So for state-level analyses it may be helpful I only keep dates after 03/08/2020.  Also, in the comments I explain how R handles dates with a reference date of 01/01/1970. 
+```
 
-```{r}
+```{r warning=F, message=F, echo=longform}
 allstates.long <- subset(allstates.long, day > "2020-03-08")
 
 #in case we need the last dates for each state
@@ -176,10 +185,11 @@ allstates.long$state.abb <- factor(allstates.long$`Province/State`)
 #create per capita (out of 100)
 allstates.long$percap100 <- allstates.long$count/allstates$population * 100
 ```
-
+```{asis echo=longform}
 Now that we have allstates.long created we can compare cumulative counts in the World to the US cumulative counts.  For a definition of the multiplot() function see the [Preliminaries chapter](#multiplot).
+```
 
-```{r,fig.cap="Cumulative Counts of Positive Cases" }
+```{r warning=F, message=F, fig.cap="Cumulative Counts of Positive Cases" , echo=longform}
 #compute sums for the entire world by day and store plot in object p1
 sum.world <- data.frame(count=apply(datacov.World[,5:ncol(datacov.World)],2,sum,na.rm=T))
 sum.world$day <- as.Date(rownames(sum.world), "%m/%d/%y")
@@ -201,7 +211,7 @@ comparesums
 It will be helpful to place a horizontal line in the cumulative US plot that corresponds to the 
 US fraction of the world population. If covid-19 cases were randomly distributed throughout the world, we would expect a country to have a fraction of cases consistent with the fraction of that country's population relative to the world population.  The US isn't doing very well.
 
-```{r}
+```{r echo=longform}
 #assume 7.8 billion people in the world, the US has about 330 million
 uspopfrac <- 330/7800
 cv10frac <- uspopfrac*sum.world[nrow(sum.world),1]
@@ -225,7 +235,7 @@ multiplot(p1,p2,cols=1)
 
 I decided to plot percentage relative to population (i.e., counts/population * 100).  The numbers are small. I've seen people report this as cases per 100,000, but I decided to stick with cases per 100 to maintain the percentage interpretation.  This is just a scale issue and doesn't affect the plots or the analyses.   The labels in the plots, like "7.5 WA" means Washington state with a population of 7.5 million. These labels are the prettyval labels I created earlier.
 
-```{r fig.cap="Per Cap Positive Cases by State"}
+```{r fig.cap="Per Cap Positive Cases by State", echo=longform}
 #most recent date in file
 max.day.numeric <- max(allstates.long$day.numeric)
 max.day <- max(allstates.long$day)
@@ -242,7 +252,7 @@ coord_cartesian(clip = 'off') + scale_x_date(limits=as.Date(c("2020-03-09", as.c
 
 Same plot but now putting the vertical axis on the log (base 10) scale.  An exponential process becomes linear when taking logs so we would expect to see a pattern that closely resembles straight lines if the count of confirmed cases follows an exponential form.  Each state can have a different growth rate, which will show up as different slopes.  A straight line representation makes sense though there is some heterogeneity across states in the intercept and maybe some slight differences in the slope, which translates into the growth rate. West Virginia (WV) didn't show its first case until 3/17/20 so that is why the green curve (lowest) looks different than the rest.
 
-```{r warning=F, message=F, fig.cap="Per Cap Positive Cases by State (log10 scale)"}
+```{r warning=F, message=F, fig.cap="Per Cap Positive Cases by State (log10 scale)", echo=longform}
 subset(allstates.long, day.numeric!=0) %>%mutate(label = if_else(day == max(day), as.character(prettyval), NA_character_)) %>%
 ggplot( aes(x=day, y=count/population*100,group=prettyval, color=prettyval)) + geom_line() +
  geom_label_repel(aes(label= label), nudge_x=2, na.rm=T,segment.color = 'grey50', label.size=.01, size=2.5, show.legend=F) +
@@ -253,7 +263,7 @@ coord_cartesian(clip = 'off') + scale_x_date(limits=as.Date(c("2020-03-09", as.c
 
 To help see the state by state structure in these curves (e.g., whether or not they are linear in the log scale), I partitioned the 50 states by population (sample sizes in each panel are 12 or 13 states). The states with larger populations (two lower panels) show relatively linear patterns.  The smaller in population states (two upper panels) show some curvature but that could be due to several states not showing cases until a few days later.  
 
-```{r warning=F, message=F, fig.cap="Per Cap Positive Cases by State (log10 scale); Panels are based on Population"}
+```{r warning=F, message=F, fig.cap="Per Cap Positive Cases by State (log10 scale); Panels are based on Population", echo=longform}
 subset(allstates.long, day.numeric!=0) %>%mutate(label = if_else(day == max(day), as.character(prettyval), NA_character_)) %>%
 ggplot( aes(x=day, y=count/population*100,group=prettyval, color=prettyval)) + geom_line() +
  geom_label_repel(aes(label= label), nudge_x=2, na.rm=T,segment.color = 'grey50', label.size=.01, size=2.5, show.legend=F) +
@@ -264,7 +274,7 @@ coord_cartesian(clip = 'off') + scale_x_date(limits=as.Date(c("2020-03-09", as.c
 
 Here is another version of the plot where I set 0 to missing value (NA) so that the curves begin where there are nonzero points. The only difference is the 2nd line with the mutate() and na_if() command. This modification to the plot makes it easier to detect linearity as we don't have the artificial jump in the curve from 0. But, while it makes the plots a little easier to understand, it drops the important information about _liftoff_, the point at which the count moves from zero to nonzero.  This is something that could be modeled with a parameter in the structural model and so, in principle, one could see what factors affect the liftoff.  Another issue is that log(0) is undefined so you'll see many sites are preparing such graphs will set a minimum number of cases (e.g., the day at which the state reached 10 cases) before they start plotting the curve for that state.
 
-```{r warning=F, message=F, fig.cap="Per Cap Positive Cases by State (log10 scale); Panels are based on Population; Os dropped"}
+```{r warning=F, message=F, fig.cap="Per Cap Positive Cases by State (log10 scale); Panels are based on Population; Os dropped", echo=longform}
 subset(allstates.long, day.numeric!=0) %>%mutate(label = if_else(day == max(day), as.character(prettyval), NA_character_)) %>%
   mutate(count = na_if(count, "0")) %>%
 ggplot( aes(x=day, y=count/population*100,group=prettyval, color=prettyval)) + geom_line() +
@@ -282,7 +292,7 @@ This pattern is quite remarkable. The states appear to have similar slopes on th
 
 Here is the animation for the US.  Not much to look at since it has only been about 2 weeks of data.  This map needs work as Alaska and Hawaii outlines are not printed (their data points appear on the left side roughly where the states would be on the map).  I'll need to do some coding to create an inset for Alaska and Hawaii (possible clue to inset: https://stackoverflow.com/questions/49523375/graphing-lat-long-data-points-on-us-map-50-states-including-alaska-hawaii
 
-```{r warning=F, message=F, cache=cache,fig.cap="US Count of Positive Cases", eval=knitr::is_html_output()}
+```{r warning=F, message=F, cache=cache,fig.cap="US Count of Positive Cases", eval=knitr::is_html_output(), echo=longform&knitr::is_html_output()}
 mybreaks <- c(1, 20, 100, 500, 1000, 2000, 10000)
 mylabels <- c("1-19", "20-99", "100-499", "500-999", "1,000-1,999", "2,000-9,999","10,000+")
 
@@ -303,7 +313,7 @@ ggplot(allstates.long) +  borders("usa", colour = "gray90", fill = "gray85") +
   transition_time(day) + ease_aes('linear')
 ```
 
-```{r warning=F, message=F, cache=cache,fig.cap="US Count of Positive Cases", fig.show="animate", aniopts=c("autoplay", "controls", "loop"),  eval=knitr::is_latex_output()}
+```{r warning=F, message=F, cache=cache,fig.cap="US Count of Positive Cases", fig.show="animate", aniopts=c("autoplay", "controls", "loop"),   echo=longform&knitr::is_latex_output(), eval=knitr::is_latex_output()}
 mybreaks <- c(1, 20, 100, 500, 1000, 2000, 10000)
 mylabels <- c("1-19", "20-99", "100-499", "500-999", "1,000-1,999", "2,000-9,999","10,000+")
 
@@ -326,7 +336,7 @@ ggplot(allstates.long) +  borders("usa", colour = "gray90", fill = "gray85") +
 
 Because I have the state-level population sizes I can redo the animation using a per capita normalization out of 100.  I modified the breaks and labels manually but there may be a way to do that automatically with ggplot2 features.
 
-```{r warning=F, message=F, cache=cache, fig.cap="US Per Cap (100)", eval=knitr::is_html_output()}
+```{r warning=F, message=F, cache=cache, fig.cap="US Per Cap (100)", eval=knitr::is_html_output(), echo=longform&knitr::is_html_output()}
 temp <- cut2(allstates.long$percap100, g=5, m=5)
 mylabels <- levels(temp)
 #onlycuts = T saves the numeric break points, drop first element which is 0
@@ -349,7 +359,7 @@ ggplot(allstates.long) +  borders("usa", colour = "gray90", fill = "gray85") +
   transition_time(day) + ease_aes('linear')
 ```
 
-```{r warning=F, message=F, cache=cache, fig.cap="US Per Cap (100)", fig.show="animate", aniopts=c("autoplay", "controls", "loop"),  eval=knitr::is_latex_output()}
+```{r warning=F, message=F, cache=cache, fig.cap="US Per Cap (100)", fig.show="animate", aniopts=c("autoplay", "controls", "loop"), echo=longform&knitr::is_latex_output(),  eval=knitr::is_latex_output()}
 temp <- cut2(allstates.long$percap100, g=5, m=5)
 mylabels <- levels(temp)
 #onlycuts = T saves the numeric break points, drop first element which is 0
@@ -378,7 +388,7 @@ It is common with these type of time series data to work with what are called fi
 
 Here is the daily incidence rate using the same US data (starting on 3/10/20 and not including DC and the territories).   The curve does not appear to be flattening yet.
 
-```{r incplot, warning=F, message=F}
+```{r incplot, warning=F, message=F, echo=longform}
 allstates.temp <- allstates[,c(1:4,52:(ncol(allstates)-2))]
 allstates.temp <- allstates.temp[,-5]
 
@@ -403,7 +413,7 @@ ggplot( day.sums, aes(x=day,y=daily)) +  geom_bar(stat="identity") +
 
 Here is yet another use for PCA.  We can use it to detect outliers in a complicated data set. Let's take the 50 states and the time series from 3/09/20 to present, to create a 50 by day data matrix of positive counts.  Then compute a PCA of the correlation matrix between states. This correlation matrix is 50 x 50 and represents how similar each state's cumulative trajectory is to another state's cumulative trajectory for all possible pairs of states.  Plot the factor scores of the 50 states on the first two PCs.  The majority of the states will cluster together. The outlier states, those with very different trajectories, appear far away from the primary cluster suggesting they have a very different trajectory. The three candidate outliers are the 3 states early in the news:  NY, WA and CA. Worth checking why MA and NJ are slightly away from the cluster. Recall the numbers in front of the state abbreviation correspond to the state population in millions.  This type of PCA is commonly done in biological modeling to check for outliers, sometimes not on the raw data but the set of parameters that are estimated for each unit (e.g., if you run regressions for each state, gather the betas from those regressions as data such as 8 betas per state, then compute a correlation matrix across states, then run a PCA on that correlation matrix to detect outliers). 
 
-```{r fig.cap="PCA to identify states with candidate outliers", warning=F}
+```{r fig.cap="PCA to identify states with candidate outliers", warning=F, echo=longform}
 temporal.data <- allstates[,53:(ncol(allstates)-2)]
 rownames(temporal.data) <- allstates[,"prettyval"]$prettyval
 
