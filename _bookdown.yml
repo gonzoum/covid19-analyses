@@ -6,3 +6,6 @@ delete_merged_file: yes
 rmd_files:  ["index.Rmd", "preliminary.Rmd", "read-data.Rmd", "descript-plots.Rmd", "descriptive-modeling.Rmd", "process-models.Rmd", "conclusion.Rmd", "Appendix.Rmd"]
 #yes below does khit and merge
 #new_session:  yes
+output_dir: "_public"
+#output_dir: "_book"
+#bookdown:::opts$get("output_dir")

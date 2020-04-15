@@ -3,20 +3,17 @@ title: "Data Analysis Examples Around Covid-19"
 author: "Richard Gonzalez, University of Michigan (gonzo@umich.edu)"
 date: "`r Sys.Date()`"
 site: bookdown::bookdown_site
-#output:
-#    bookdown::html_book:
-#        theme: yeti
-#        highlight: espresso
-#        toc: true
-#        toc_float: true
-output: bookdown::gitbook 
-#output: bookdown::bookdown_site 
+#output: bookdown::gitbook 
 documentclass: book
 bibliography: [book.bib, packages.bib]
 biblio-style: apalike
 link-citations: yes
-github-repo: rstudio/bookdown-demo
+github-repo: https://github.com/gonzoum/covid19-analyses
 description: "Pages to make remote teaching of statistics more interesting during the covid-19 pandemic."
+params:
+  longform: FALSE
+#params$longform
+#https://bookdown.org/yihui/rmarkdown/params-use.html
 ---
 
 <!-- I decided to produce two versions of these documents. One for the R audience with all the R code and some statistical issues like checking assumptions and one for a broader audience without interest in the R details.  I use echo=longform to select which R chunks to print and asis echo=longform for conditional definition of text. -->
@@ -27,7 +24,11 @@ description: "Pages to make remote teaching of statistics more interesting durin
 #in hindsight I should have used the knitr global definition for echo (for r chunks) and "asis" (for text) but when I started I had 
 #in mind more nuanced use of chunks across the two versions and it seemed separate chunk by chunk definition
 #was more efficient
-longform <- F
+longform <- params$longform
+
+#I could get fancy and have separate render_book commands but that would require writing a script and putting the longform boolean in the script
+#nice thing about that is that separate commands and save environments can be specified
+#for now, I just build this with either longform = T or F and remember to copy _book to public when longform = F
 ```
 
 
