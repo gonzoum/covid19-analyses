@@ -42,7 +42,15 @@ out.lmer <- lmer(percent.log10 ~ 1 + day.numeric + (1+ day.numeric|state.abb), a
 
 #summary(out.lmer)
 #tab_model() produces nicer looking tables
+if (is_html_output())
 tab_model(out.lmer, show.se=T, show.stat=T)
+```
+
+<!-- tab_model doesn't work for latex/pdf so switch to stargazer for formatted table -->
+
+```{r results="asis", echo=is_latex_output(), eval=is_latex_output() }
+if (is_latex_output())
+stargazer(out.lmer, header=F, type="latex")
 ```
 
 The estimates, se(est), CI, t and pvalue for the fixed effects are printed first, then the parameters of the random effect part. In order, they are the variance of the residuals, the variance of the random effect intercept, the variance of the random effect slope, the correlation between the random intercept and the random slope, the adjusted ICC, number of states, number of observations (recall 0s have been removed from this data file so the N refers to the number of days by state for which there was a nonzero number of positive covid-19 cases), and the R$^2$ values.  For more documentation on the computation of these terms see the help page for function tab_model().
@@ -289,8 +297,11 @@ out <- nlme(percent ~ richfu(day.numeric, l=0, rate,y,b1=1), fixed = rate+y~1,
 
 ```{r message=F, warning=F, echo=longform}
 out.exponential <- out
-summary(out.exponential)
 
+if (is_html_output())
+summary(out.exponential)
+if (is_latex_output())
+  texreg(out.exponential, booktabs=T, dcolumn = T)
 
 #intervals(out.exponential, which="fixed")
 intervals(out.exponential)
@@ -384,7 +395,12 @@ out <- nlme(count ~ richfu.logistic(day.numeric, l,y,b1), fixed = l+y+b1~1,
 ```{r  messages=F, warnings=F, echo=longform}
 AIC(out)
 out.logistic <- out
+
+if (is_html_output())
 summary(out.logistic)
+
+if (is_latex_output())
+  texreg(logistic, booktabs=T, dcolumn = T)
 
 #confidence intervals of the parameters
 #had issues with random effect intervals on 4/6/20 so for now set CI for only fixed

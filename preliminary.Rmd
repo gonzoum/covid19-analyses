@@ -44,6 +44,8 @@ library(merTools)
 library(Hmisc)
 library(readxl)
 library(rnn)
+library(stargazer)
+library(texreg)
 ```
 
 ```{asis echo=longform}
@@ -56,7 +58,7 @@ if(!("pacman" %in% installed.packages()[,"Package"])) install.packages("pacman")
 library(pacman)
 #double check all the libraries listed above are listed here too
 p_load("bookdown","readr","tidyverse","rvest","magrittr","stringr","tidycensus","ggplot2","gganimate","ggeffects", "scales", 
-       "maps","ggthemes","viridis","ggrepel","sjPlot","sjmisc", "sjlabelled","lme4","nlme","merTools","Hmisc","readxl","rnn")
+       "maps","ggthemes","viridis","ggrepel","sjPlot","sjmisc", "sjlabelled","lme4","nlme","merTools","Hmisc","readxl","rnn","stargazer","texreg")
 ```
 
 ```{asis echo=longform}
