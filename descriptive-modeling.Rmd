@@ -400,11 +400,10 @@ if (is_html_output())
 summary(out.logistic)
 
 if (is_latex_output())
-  texreg(logistic, booktabs=T, dcolumn = T)
+  texreg(out.logistic, booktabs=T, dcolumn = T)
 
 #confidence intervals of the parameters
-#had issues with random effect intervals on 4/6/20 so for now set CI for only fixed
-intervals(out.logistic, which="fixed")
+intervals(out.logistic)
 
 #Checking residuals for assumptions
 plot(fitted(out.logistic), resid(out.logistic), main="New York in blue")
@@ -518,6 +517,42 @@ nydf2$count <- allstates.long$count[allstates.long$state.abb=="New York"]
 ggplot(nydf2, aes(day.numeric,prediction,group=state.abb, color=state.abb )) + geom_line() + geom_point(aes(x=day.numeric, y=count), col="blue") + ggtitle("New York: Actual counts in blue; logistic growth in red")
 ```
 
+
+Now that we have a reasonable model, let's see how we can add predictors to the model.  One way to add predictors is to see if the parameters of the logistic growth regression are influenced by the predictor, e.g. do the state rate parameters vary according to the predictor.   We can accomplish this by, say, having the rate for each state be a linear function of the predictor, as is rate = $\beta_0$ + $\beta_1$ predictor + $\epsilon$.  Our current model is merely rate = $\beta_0$ + $\epsilon$ where the intercept is the fixed effect (same value for each state) and the "$\epsilon$" is the random effect (a term associated with each state).
+
+
+For illustration, I examine whether the poverty rate is associated with the coefficient of the multiplier y we estimated in the logistic growth model. 
+
+```{r echo=longform}
+par(pty="s")
+plot(allstates$povertyperc, coef(out.logistic)[,2],xlab="State Poverty Percentage", ylab="random effect parameter y in logistic growth")
+abline(coef(lm(coef(out.logistic)[,2] ~ allstates$povertyperc)))
+par(pty="m")
+```
+
+ It looks like a slightly negative association and, in principle, I could test this regression slope through a regular regression but it is better to do it in the context of the nonlinear logistic growth regression model. The reason is that a linear regression using the coefficients from the logistic growth as though they were observed an variable doesn't take into account the error structure of these parameters---they aren't observed data but they are parameter estimtes from another model.  By including the poverty predictor simultaneously with the logistic growth model we model the uncertainty much better. It would be even better to run this as a bayesian model, which I'll add in a later version using the brm package.
+ 
+ <!-- https://cran.r-project.org/web/packages/brms/vignettes/brms_multilevel.pdf -->
+ 
+```{r messages=F, warning=F, results="hide", echo=longform}
+out <- nlme(count ~ richfu.logistic(day.numeric, l,y+b2*povertyperc,b1), fixed = l+y+b1 + b2~1,
+            random =  l+y~1, data=na.omit(allstates.long.new),start=c( l=5100,y=800,b1=-.33, b2=.01), verbose=T,  control=nlmeControl(msMaxIter=1000,opt="nlminb",pnlsTol=.02,msVerbose=T,minScale=.02, maxIter=1000, eval.mas=1000) )
+```
+
+
+```{r echo=longform}
+out.logistic.poverty <- out
+
+if (is_html_output())
+summary(out.logistic.poverty)
+
+if (is_latex_output())
+  texreg(out.logistic.poverty, booktabs=T, dcolumn = T)
+
+intervals(out.logistic.poverty)
+```
+
+The $\beta$ associated with poverty is not statistically significant so we do not have sufficient justification to argue that the y parameter in this logistic growth model is related to poverty.  Anyways, this illustrates how one goes about adding predictors to such a nonlinear model.  One could use more complicated predictors, even test differences across groups on parameter values (e.g., do states with democratic governors have different parameter values than states with republican governors).  One follows the same principles for testing predictors and groups in a standard regression model.
 
 
 <!-- I'll compare the predicted curve for New York five days out from 3/23 using this nonlinear mixed model regression to the earlier linear mixed model regression on the log scale, by superimposing the predicted curve in green from the nonlinear model on the plot for  the log linear model. -->

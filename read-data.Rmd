@@ -310,6 +310,19 @@ distancingpolicy %>% subset(StateName=="Michigan") %>% dplyr::select(DateIssued,
 
 ```
 
+### State level poverty percentage
+
+The Department of Agriculture lists percentage of state residents living in poverty. I downloaded the data and saved to a spreadsheet. It lists both percentage of all residents and percent of children in poverty.
+
+
+```{r}
+statepoverty <- read_excel("state.poverty.xlsx")
+
+#delete DC and row with "National"
+statepoverty <- statepoverty[!statepoverty$state %in% c("District of Columbia", "National"),]
+head(statepoverty)
+```
+
 ## Summary
 
 Just because data files can be created does not mean those data are meaningful.   There are differences across these  data sources and some data are difficult to compare across states or over time (e.g., reporting of testing differs across states, different types of tests are used across states, the type of testing may have changed during the time interval). The myth is that if you have a large enough data set these kinds of issues will wash out in the aggregate.  Maybe random error will wash out, but large data sets do not necessarily eliminate, by virtue of their size alone, systematic differences or biases.  The size of the data set can impress and ease one into passive acceptance of a particular data pattern and interpretation. We must exercise the same skepticism we privilege small data sets, and be aware that large data sets may have additional issues not present in small-scale studies. 

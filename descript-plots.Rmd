@@ -148,10 +148,13 @@ allstates$prettyval <- state.population$prettyval[order(match(state.population$N
 
 #likewise, save state populations from the census file to the allstates data.frame
 allstates$population <- state.population$value[order(match(state.population$NAME,allstates$`Province/State`))]
+
+#add poverty data
+allstates$povertyperc <- statepoverty$percent[order(match(statepoverty$state,allstates$`Province/State`))]
      
 #number of variables added (prettyval and population) to the allstates data.frame
-cadded <- 2
-#counts by dates are in columns starting with `1/22/20` and ending in ncol(allstates)-2 because
+cadded <- 3
+#counts by dates are in columns starting with `1/22/20` and ending in ncol(allstates)-3 because
 #we appended two columns at the end
 allstates.long <- gather(allstates, day, count, 
                          `1/22/20`:(names(allstates)[ncol(allstates)-cadded]))
@@ -389,7 +392,7 @@ It is common with these type of time series data to work with what are called fi
 Here is the daily incidence rate using the same US data (starting on 3/10/20 and not including DC and the territories).   The curve does not appear to be flattening yet.
 
 ```{r incplot, warning=F, message=F, echo=longform}
-allstates.temp <- allstates[,c(1:4,52:(ncol(allstates)-2))]
+allstates.temp <- allstates[,c(1:4,52:(ncol(allstates)-cadded))]
 allstates.temp <- allstates.temp[,-5]
 
 #create new data frame with differences of total counts which equals daily totals
@@ -414,7 +417,7 @@ ggplot( day.sums, aes(x=day,y=daily)) +  geom_bar(stat="identity") +
 Here is yet another use for PCA.  We can use it to detect outliers in a complicated data set. Let's take the 50 states and the time series from 3/09/20 to present, to create a 50 by day data matrix of positive counts.  Then compute a PCA of the correlation matrix between states. This correlation matrix is 50 x 50 and represents how similar each state's cumulative trajectory is to another state's cumulative trajectory for all possible pairs of states.  Plot the factor scores of the 50 states on the first two PCs.  The majority of the states will cluster together. The outlier states, those with very different trajectories, appear far away from the primary cluster suggesting they have a very different trajectory. The three candidate outliers are the 3 states early in the news:  NY, WA and CA. Worth checking why MA and NJ are slightly away from the cluster. Recall the numbers in front of the state abbreviation correspond to the state population in millions.  This type of PCA is commonly done in biological modeling to check for outliers, sometimes not on the raw data but the set of parameters that are estimated for each unit (e.g., if you run regressions for each state, gather the betas from those regressions as data such as 8 betas per state, then compute a correlation matrix across states, then run a PCA on that correlation matrix to detect outliers). 
 
 ```{r fig.cap="PCA to identify states with candidate outliers", warning=F, echo=longform}
-temporal.data <- allstates[,53:(ncol(allstates)-2)]
+temporal.data <- allstates[,53:(ncol(allstates)-cadded)]
 rownames(temporal.data) <- allstates[,"prettyval"]$prettyval
 
 pca.out <- prcomp(temporal.data, center=T, scale=T)
