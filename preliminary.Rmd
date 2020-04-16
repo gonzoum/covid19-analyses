@@ -1,15 +1,15 @@
 # Preliminaries
 
-I want these notes to serve as an example of how to keep your analyses organized, reproducible and well-organized.  Analysis projects have many common elements, which include gathering data, cleaning and organizing data, preparing descriptive summaries, testing hypotheses, writing reports, and dissemination.  The end product should be a complete pipeline that takes you from soup to nuts with clear documentation.   While these notes are not perfect, they provide one example of how to prepare a workflow.
+I want these notes to serve as an example of how to keep your analyses organized and reproducible.  Analysis projects have many common elements, which include gathering data, cleaning and organizing data, preparing descriptive summaries, testing hypotheses, writing reports, and dissemination.  The end product should be a complete pipeline that takes you from soup to nuts with clear documentation.   While these notes are not perfect, they provide one example of how to prepare a workflow.
 
-These notes are written completely in R. They are organized across several Rmd files (like this one) that are executed in a particular order (e.g., the file that reads the data and cleans the data is sourced before the file that produces the descriptive summaries of the data).  
+These notes are written completely in R. They are organized across several Rmd files (like this one) that are executed in a particular order. For example, the file that reads the data and cleans the data is sourced before the file that produces the descriptive summaries of the data.  
 
-I can reproduce all my analyses and so can you. I put the files for this project (except for the data downloads) in a git repository that you can clone and follow along. Further, I tried to be diligent in writing commits so you can see how these notes developed, edits I made, code I edited and re-edited, turns I took in my analyses that were dead ends so I didn't pursue them, etc.  This is all part of the regular scientific process.  In the "old days" scientists maintained lab notebooks where they recorded everything they did. A git repository serves the analogous role of an electronic library. It keeps track of everything I did for this project.  You can read the final product (the notes you are currently reading) but you are free to see my thought process, see how I edited these documents, and see the order in which I actually wrote things rather than the order they are presented.  All you have to do is visit the [github site for this project](https://github.com/gonzoum/covid19-analyses).
+I can reproduce all my analyses and so can you. I put the files for this project (except for the data downloads) in a git repository that you can clone and follow along. Further, I tried to be diligent in using git commits and writing clear comments so you can see how these notes developed; edits I made to the text; code I edited, de-bugged and re-edited; turns I took in my analyses that were dead ends so I didn't pursue them; etc.  This is all part of the regular scientific process.  In the "old days" scientists maintained lab notebooks where they recorded everything they did. A git repository serves the analogous role of an electronic library. It keeps track of everything I did for this project.  You can read the final product (the notes you are currently reading) but you are free to see my thought process, see how I edited these documents, and see the order in which I actually wrote things rather than the order they are presented.  All you have to do is visit the [github site for this project](https://github.com/gonzoum/covid19-analyses).
 
 ## Libraries and Setup
 
 ```{r setup}
-#assumes knitr is installed
+#assumes knitr is installed in R
 library(knitr)
 opts_chunk$set(tidy.opts=list(width.cutoff=50),tidy=TRUE)
 ```
@@ -71,7 +71,7 @@ By putting it here I just have to change the value (T vs F) in one place and els
 ```
 
 ```{r echo=longform}
-cache <- T
+cache <- F
 ```
 
 ```{asis echo=longform}

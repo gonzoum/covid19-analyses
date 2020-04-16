@@ -6,19 +6,21 @@
 
 **This Chapter May Be Skipped**
 
-This chapter has details on where the data came from and how to garther these data.  If you are not interested in these details, it is fine to skip this chapter.
+This chapter has details on where the data came from and how I gathered them.  If you are not interested in these details, it is fine to skip this chapter.
 
 :::
   
 ```
 
-This chapter will cover three different ways to read data into R: 
+This chapter will cover four different ways to read data into R: 
 
 1. executing a pull from a git repository, 
 
-2. scraping data from the web, and 
+2. scraping data from the web, 
 
-3. pulling data with an api from the national census.
+3. pulling data with an api from the national census, and
+
+4. reading an excel spreadsheet.
 
 ### Comments about R code {-}
 
@@ -28,7 +30,7 @@ My style of writing code is idiosyncratic as I suspect it is for everyone who wr
 
 1.  use ggplot2 as much as possible for plots rather than the original base R plotting (though sometimes I can't resist)
 
-2.  write code that is robust to possible changes in the data that are automatically read in, and
+2.  write code that is robust to possible changes in the data (especially because new data come in daily),  and
 
 3.  write code that is easy to read and follow even though it may not be efficient code.  
 
@@ -37,53 +39,49 @@ Sometimes these present conflicts such as writing robust code may not be code th
 
 ## Pulling from a git repository
 
-I'll use the [data base that Johns Hopkins](https://github.com/CSSEGISandData/COVID-19) has been maintaining on github, which is also used by news outlets such as CNN.  I already cloned the git repository on my local computer so each day I merely have to issue a "git pull" command to get all new files that have been edited.  This is a better process than conducting a completely new download every day of the entire repository. You can see the Johns Hopkins github site for a complete listing of sources of their data.
+I'll use the [data base that Johns Hopkins](https://github.com/CSSEGISandData/COVID-19) has been maintaining on github. It is used by news outlets such as CNN.  I already cloned the git repository on my local computer so each day I merely have to issue a "git pull" command to get all new files that have been edited.  This is a better process than conducting a completely new download every day of the entire repository. You can see the Johns Hopkins github site for a complete listing of sources of their data.
 
-If you want to learn more about working with git repositories, you can do a Google search for how to clone a repository.  Rstudio also has features to help clone and manage a git repository. 
+If you want to learn more about working with git repositories, you can do a Google search for how to clone a repository.  [Rstudio](https://rstudio.com/products/rstudio/) also has features to help clone and manage a git repository. 
 
-This script will switch to the folder I'm keeping the git repository, execute the command "git pull" and then bring me back to the original folder.  To keep things organized I'm keeping the git repository in a separate folder from the R files that are creating these pages. Another way of accomplishing the same thing is to pull the git repository manually each time you want to run the most updated data set. All this next line of code does is download the most recent data for me so I don't have to do it manually.
+The script below will switch to the folder I'm keeping the git repository, execute the command "git pull" and then bring me back to the original folder.  To keep things organized I'm keeping the git repository in a separate folder from the R files that are creating these pages. Another way of accomplishing the same thing is to pull the git repository manually each time you want to run the most updated data set. Basically, this next line of code downloads the most recent data for me so I don't have to do it manually.
 
 
 
 ```{r}
-#assuming git has been installed on your machine (e.g., Xcode in mac)
+#assuming git has been installed on your machine (e.g., Xcode in mac);
 #this is mac and linux specific; pc may be different unless unix commands have been installed
-#I haven't done any testing of this code on a PC; check the appendix for git installation instructions
-#
-#may be good to save the output messages into a text file with date/time stamp to monitor if issues with later code
-#are tied to new data that were read in (to be completed; if I was writing production code I would create an issue for
-#this idea on github so progress on this could be tracked and others on the project could comment/contribute)
-#intern and cat are to print the output of the system command in this html document
+
+#intern and cat print the output of the system command to this html document
 cat(system("pushd '/Users/gonzo/Dropbox/transfer/mac transfer/COVID-19' && git pull && popd", intern=T), sep="\n")
 ```
 
-I prefer not to have data files be in the git repository as a matter of habit (e.g., data may contain private information yet the repository may be public).
+I prefer not to include data files in the git repository as a matter of habit (e.g., data may contain private information yet the repository may be public).
 
 Now read the file that has the cumulative counts of confirmed covid-19 cases by country and, if relevant, state or province. I'll save it into an object called datacov; I list the first 6 rows of datacov.
 
-**NOTE:** On 3/23/20 this site reorganized the data structure.  Now US is in a separate file from the rest of the world, and the files are completely restructured where the US is now by county rather than state. This is more granular data but the change means much work will need to be done to reformat these files. I'm going to freeze uploading new data until this gets resolved or I have time to rewrite the code.  So data in these notes are analyzed  just through 3/22, the day before the change.  Changing data is very common occurrence in the world of downloads and web scraping. What works today may break tomorrow during a system update.  One just needs to be flexible and write robust code that can be easily modified as needed.  I think employment prospects for people working in data science will be very good.
+**NOTE:** On 3/23/20 this site reorganized the data structure.   US data are now in a separate file from the rest of the world data, and the files are completely restructured where the US is now at the  county level rather than the state level. This is more granular data but the change means some work will need to be done to reformat these files. I'm going to freeze uploading new data until this gets resolved or I have time to rewrite the code.  Changing data format is a very common occurrence in the world of downloads and web scraping. What works today may break tomorrow.  One just needs to be flexible and write robust code that can be easily modified as needed.  Employment prospects for people working in data science will continue to be very good.
 
 Here is the notice of the change to the data structure: [link](https://github.com/CSSEGISandData/COVID-19/issues/1250).
 
-**NOTE:** On 3/30/20 the repository now lists the updated files. The new files changed in small ways that require some rewriting of the code. These changes include separating the US into a different file from the world (though the total US counts appear in the world data set), changing the names of a few columns but these are not consistent between the different data files that are downloaded (e.g., the US file has slightly different column names than the world data file), US data file ends one day behind the world data file (i.e., 3/30 and 3/31 respectively), and for the US data providing county-level counts rather than state-level counts so I need to create sums by states. These aren't big deals but can create lots of problems catching all the edits needed in  later code. For example, originally the longitude variable was called Long but now it is called Long_, and in the US data column names are given with dates as 2020 but in the world data file they are given as 20. There are several ways to address such changes. I'll go the route of changing the variable names here so that I don't need to make many changes throughout the rest of the code.  Another possible way to address these changes is to adopt the new variable names and then carefully go through all the lines of code to make the necessary changes.  I suspect there may be more changes in the comming days so I don't want to make the minimal changes now in a way that let's me adapt to future changes.
+**NOTE:** On 3/30/20 the repository now lists the updated files. The new files changed in small ways that require some additional rewriting of the code. These changes include separating the US into a different file from the world (though the total US counts appear in the world data set), changing the names of a few columns but these are not consistent between the different data files that are downloaded (e.g., the US file has slightly different column names than the world data file), US data file ends one day behind the world data file (i.e., 3/30 and 3/31 respectively), and for the US data providing county-level counts rather than state-level counts so I need to create sums by states. These aren't big deals but can create lots of problems catching all the edits needed in  later code. For example, originally the longitude variable was called Long but now it is called Long_, and in the US data column names are given with dates as 2020 but in the world data file they are given as 20. There are several ways to address such changes. I'll go the route of changing the variable names here so that I don't need to make many changes throughout the rest of the code.  I suspect there may be more changes in the comming days so I'll make the minimal changes in a way that let's me easily adapt to future changes.
 
 I include little notes so you can see how I adapted my code to the changing landscape and evaluate the decisions I made along the way.  As much as possible I will document my edits and use clear commit messages in git so that one could go back to earlier versions as needed. Such documentation is an important part of conducting reproducible science.  The approach I've taken here still makes the code readable yet my changes can be examined without a bunch of clutter of obsolete code commented out with unhelpful statements such as "DO NOT USE THIS" (see below for a silly example).
 
 ```{r eval=F}
 #DO NOT USE THIS (SILLY EXAMPLE)
+
 #OLD CODE PRIOR TO 3/23/20
+
 #imagine how difficult it would be to figure out my code with a lot of these obsolete lines with ignore messages; git version control is much better approach
 #datacov <- read_csv("/Users/gonzo/Dropbox/transfer/mac transfer/COVID-19/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Confirmed.csv")
 
-#PLACE HOLDER: keep days up to and including 3/22/23; don't read file from git which is being updated.
-#use datacov.ori in descript-plots.Rmd to get state lat long as not available any more since reported by county
 datacov <- 
  read_csv("/Users/gonzo/Dropbox/transfer/mac transfer/covid19-analyses/time_series_19-covid-Confirmed.csv")
 ```
 
 We read in the two files with world and US cumulative data.
 
-```{r}
+```{r warning=F, message=F}
 #data for World and US county/states are now in separate files
 datacov.World <- 
   read_csv("/Users/gonzo/Dropbox/transfer/mac transfer/COVID-19/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_global.csv")
@@ -95,39 +93,42 @@ datacov.US <-
 
 The column labels of the object datacov.World, for example, are ordered by date starting in column 5. The column names are special string variables because they start with numbers and R doesn't like variable names to start with numbers. For example, <code>&grave;1/22/20&grave;</code> (backticks), and you'll see in later syntax where I need to refer to these columns using the backwards apostrophes.  The other columns contain province/state and county/region labels as well as latitude and longitude of each geographic unit.
 
-The column names though get converted by R to regular strings when treated as names.  You can also check data pulls each day to see if yesterday's date is the last entry (otherwise there is a problem). The data base seems to be updated late in the evening so if these commands are run late in the evening you may see today's date as the most recent date.
+The column names though sometimes are converted by R to regular strings as in the names() command.  The database seems to be updated late in the evening so if these commands are run late in the evening you may see today's date as the most recent date.
 
-The behavior of the variable names I am showing here follows the default of R on a Mac.  It seems that R on a PC follows a different convention: rather than using backticks it adds an X to the beginning of the column name that starts with a nonstandard character a number. To make the PC behave like a Mac on this issue, just add check.names=FALSE in the call to read.csv when the data are read.   This way my notes will run on both PC and Mac/linux.
+The behavior of the variable names I am showing here follows the default of R on a Mac.  It seems that R on a PC follows a different convention: rather than using backticks it adds an X to the beginning of the column name that starts with a nonstandard character a number. To make the PC behave like a Mac on this issue, just add check.names=FALSE in the call to read.csv when the data are read.   This way my notes will run on both PC and Mac/linux.  I bring this up because when writing code and conducting data analysis you should be mindful of reproducibility across multiple computer platforms.
 
 
 ```{r}
 colnames(datacov.US)
 ```
 
-```{r}
-#fix variable names in US to match World file and my previous code
+```{r echo=longform}
+#fix variable names in US to match World file
 names(datacov.US)[7] <- names(datacov.World)[1]
 names(datacov.US)[8] <- names(datacov.World)[2]
 names(datacov.US)[10] <- "Long"
+
 #make column name dates in US match the date format use in world
 colnames(datacov.US)[12:ncol(datacov.US)] <- 
   colnames(datacov.World)[5:(ncol(datacov.World))]
 
 ```
 
-Now I have two datacov files, World and US, and I can use each as need in the subsequent code.  The main thing left to "fix" is that the new datacov.US is broken down by county and my code is currently written for state.  Later, I'll sum over county to get state counts, but will keep the county level information for possible use in later examples using more granular county-level information.
+Now I have two datacov files, World and US, and I can use each as need in the subsequent code.  The main thing left to "fix" is that the new datacov.US file is broken down by county and my code is currently written for state.  Later, I'll sum over county to get state counts, but will keep the county level information for possible use in later examples using more granular county-level information.
 
 ### Issues around dealing with downloaded data
 
-While it is great to have an automatic routine that downloads data on a regular basis, such as daily, there is a potential risk. The data file may change as we saw in this repository on 3/23/20.  There could be more subtle issues such as an error in reading in data so a column shift, or the data for one day was entered slightly late after midnight so it shows up as being the next day's data. Just because one has automatic code one still should double check their results for any weird things.  Examples of things that happened in this repository is that data for 3/22/20 was missing when the US data was released on 3/31/20 as was the data for 3/31/20 even though 3/31/20 data were included in the World data file.
+While it is great to have an automatic routine that downloads data on a regular basis, there is a potential risk. The data file may change as we saw in this repository on 3/23/20.  There could be more subtle issues such as an error in reading in data that produces a column shift, or the data for one day was entered slightly late after midnight so it shows up as being the next day's data. Just because one has automatic code, one still should double check results for any weird aspects  An example of something that happened in these data is that data for 3/22/20 was missing when the US data was released on 3/31/20 as was the data for 3/31/20 even though 3/31/20 data were included in the World data file.
 
 ### Issues around dealing with counts
 
-A few words about these this data set from Johns Hopkins.  All we have in this file are the counts of confirmed cases. This data set does not include other important information like the number of tests conducted or the population size for each unit.  It makes it difficult to evaluate the total number of confirmed cases without knowing how many tests that unit conducted or its population size. When evaluating changes over time in counts of confirmed cases, for example, we don't know if the total counts are increasing because more people are getting sick or the unit is also increasing the number of tests they conducted. Further, it becomes difficult to compare counts of confirmed covid-19 cases across units without knowing whether the two units have different testing rates, different sample sizes, different population densities, etc.  Basically, counts of confirmed cases are quite limited in the information they provide.  Below I'll scrape testing data by US state as well as population totals by US state, and we'll use these numbers in subsequent analyses.
+A few words about this data set from Johns Hopkins.  All we have in this file are the counts of confirmed cases. This data set does not include other important information like the number of tests conducted or the population size for each unit.  It makes it difficult to evaluate the total number of confirmed cases without knowing how many tests that unit conducted or its population size. When evaluating changes in counts of confirmed cases, for example, we don't know if the total counts are increasing because more people are getting sick or the unit is also increasing the number of tests they conducted. Further, it becomes difficult to compare counts of confirmed covid-19 cases across units without knowing whether the two units have different testing rates, different sample sizes, different population densities, etc.  Basically, counts of confirmed cases are quite limited in the information they provide.  Below I'll scrape testing data by US state as well as population totals by US state, and we'll use these numbers in subsequent analyses.  Death counts also have problems and I'll add mortality rates in a later version of these notes.
 
 ## Scraping data from the web example
 
-This is a method using commands in the rvest library to read an html page and extract the table as well as the package stringr to do some string manipulations. 
+I'll illustrate by pulling a table from [this wiki page](https://en.wikipedia.org/wiki/2019%E2%80%9320_coronavirus_pandemic).
+
+This is a method using commands in the rvest library to read an html page and extract a table, followed by some string manipulations using the package stringr. 
 
 The user needs to supply the URL.
 
@@ -135,7 +136,7 @@ There is always additional manipulation needed to format the table, here I had t
 
 If the table on the wiki changes, it could very well break this code.  This already changed in that originally the table I wanted was the 4th table, then it was the 5th table in the html file, then the 6th table, and now back to the 5th.
 
-```{r}
+```{r echo=longform}
 URL <- "https://en.wikipedia.org/wiki/2019%E2%80%9320_coronavirus_pandemic"
 
 wikipage <- read_html(URL)
@@ -181,7 +182,9 @@ This code makes use of the library tidycensus (and also functions in tidyverse).
 ```{r eval=F, echo=FALSE}
 #hey, I said I'll keep this key private and I hid it from printing in the outpout
 #but guess what, this code chunk got uploaded to git so if you are looking at this file
-#you can see my code; a better way to do this is to save the code in a local file
+#you can see my code, AHHHHH;
+
+#a better way to do this is to save the code in a local file
 #and issue an R command to read that file to read the code like
 #my.key.code <- source(keycode.R)
 #where the file keycode.R merely sets the text to a name like mykey="THE.NUMBERS.LETTERS"
@@ -189,7 +192,7 @@ This code makes use of the library tidycensus (and also functions in tidyverse).
 census_api_key(key="9fdfc1d46398c3a9e30971df2850174583db8a48", install=T)
 ```
 
-```{r warning=F, message=F}
+```{r warning=F, message=F, echo=longform}
 #uncomment this line and enter your key inside the quotes
 #census_api_key(key="YOUR.KEY.GOES.HERE", install=T)
 
@@ -209,7 +212,8 @@ state.population$prettyval <- paste(format(round(state.population$value / 1e6, 1
 state.population$prettyval <- fct_reorder(state.population$prettyval, state.population$value)
 ```
 
-Here is the first 10 rows of the state.population data.frame so you can see the result of these commands. 
+Here are the first 10 rows of the state.population data.frame so you can see the result of these commands. The last column prettyval is a label I created that has the population in millions followed by the two letter state abbreviation. For example, the population of California is 39.6 million and the abbreviation is CA so the corresponding prettyval is "39.6 CA". This will help labelling plots where we want to identify curves not just by state but also by their respective population sizes.
+
 ```{r}
 head(state.population,10)
 ```
@@ -221,7 +225,7 @@ Another important piece of information we need are the number of tests that have
 As of 3/21/20 this information is spotty.  We can go to the CDC website to collect this information.  The website now lists testing data for both CDC and Public Health Labs.  After scraping the data off the CDC website I had to do some cleaning, parsing data into numbers as some cells had extra characters that are the footnote symbols appearing on the website, and had to change the format of the date column to be compatible with the date format I'm using elsewhere in these notes.
 
 
-```{r warning=F, message=F}
+```{r warning=F, message=F, echo=longform}
 URL <- "https://www.cdc.gov/coronavirus/2019-ncov/cases-updates/testing-in-us.html"
 
 wikipage <- read_html(URL)
@@ -260,10 +264,10 @@ cdc.testing$total.tests <- apply(cdc.testing[,c(2,3)],1,sum,na.rm=T)
 ```
 
 There is another site I found that reports positive and negative results by state. This is the [COVID tracking project](https://covidtracking.com).  I don't know how reputable this source is but I'll keep an eye on it. 
-It reports daily records by state on number of positive,  negative, pending, hospitalized, death, and total number of tests.  This page points out specifics about each state (e.g., Maryland stopped reporting negative cases as of 3/12, MA numbers include repeated testing on the same individual, not all states include data from commercial labs) showing that it is challenging to interpret such data at the aggregate level when there is so much heterogeneity across units. See, for example, [state-level details](https://covidtracking.com/data/)
+It reports daily records by state on number of positive,  negative, pending, hospitalized, death, and total number of tests.  This page points out specifics about each state (e.g., Maryland stopped reporting negative cases as of 3/12, MA numbers include repeated testing on the same individual, not all states include data from commercial labs) showing that it is challenging to interpret such data at the aggregate level when there is so much heterogeneity across units. See, for example, [state-level details](https://covidtracking.com/data/).
 
 
-```{r warning=F, message=F}
+```{r warning=F, message=F, echo=longform}
 covid.tracking <- read_csv("https://covidtracking.com/api/states/daily.csv")
 head(covid.tracking)
 
@@ -274,13 +278,13 @@ covid.tracking <- subset(covid.tracking, covid.tracking$state %in% state.abb)
 ## State-level information
 [Ken Kollman](https://www.isr.umich.edu/cps/people_faculty_kkollman.html) pointed me to some of these sources.
 
-PENDING: here I will download relevant data by state or county that can help me understand the trends. I need hypotheses for this such as population density, rural vs. urban, nature of public transportation offered, etc. I will also gather data around timing of key covid-related policies such as dates each state issued shelter in place rulings, or dates local and state governments issued restrictions on the number of people who could gather (seems some states issues numbers of 250, then 100, then 25, then 10, then 2, then shelter in place).  Lots of potentially interesting stuff. I'm not a political scientist nor a sociologist nor a public health expert nor a policy expert so I don't have a solid scientific bases on which to generate reasonable hypotheses to test, which would guide my thinking on which variables I should get.  I was trained to think this way:  organize your thinking and then seek out the relevant variables to test that thinking.  The modern approach in data science though turns that upside down:  don't worry about hypotheses, just gather as much information as you can conceive of gathering, clean and organize that information, then run it through special algorithms that simplify the complexity. The world of machine learning. I hope to add some examples of machine learning approaches at a very small scale to these data to give you a flavor of what this approach has to offer. 
+PENDING: here I will download relevant data by state or county that can help me understand the trends. I need hypotheses for this such as population density, rural vs. urban, nature of public transportation offered, etc. I will also gather data around timing of key covid-related policies such as dates each state issued shelter in place rulings, or dates local and state governments issued restrictions on the number of people who could gather (seems some states issues numbers of 250, then 100, then 25, then 10, then 2, then shelter in place).  Lots of potentially interesting stuff. I'm not a political scientist nor a sociologist nor a public health expert nor a policy expert so I don't have a solid scientific bases on which to generate reasonable hypotheses to test, which would guide my thinking on which variables I should get.  I was trained to think this way:  organize your thinking and then seek out the relevant variables to test that thinking.  The modern approach in data science though turns that upside down:  don't worry about hypotheses, just gather as much information as you can conceive of gathering, clean and organize that information, then run it through special algorithms that simplify the complexity. I'll include some examples of machine learning approaches to give you a flavor of what this approach has to offer. 
 
-A complete list of [state quarantine and isolation statutes](https://www.ncsl.org/research/health/state-quarantine-and-isolation-statutes.aspx) by the [National Conference of State Legislatures](https://www.ncsl.org/).
+Here is a complete list of [state quarantine and isolation statutes](https://www.ncsl.org/research/health/state-quarantine-and-isolation-statutes.aspx) by the [National Conference of State Legislatures](https://www.ncsl.org/).
 
 ### School Closure Data
 
-```{r}
+```{r echo=longform}
 #couldn't get automatic download so did cut and paste from screen
 #https://editproj.sharepoint.com/:x:/g/Ea32XJl_g9VBreFAia_zMmEBY6FW2ZWh8F4VeJ1Rt5Z4YA?rtime=XJX0eHvL10g
 #https://www.edweek.org/ew/section/multimedia/map-coronavirus-and-school-closures.html
@@ -297,25 +301,26 @@ head(schooldata)
 
 A few research groups have already started studying the public health implications of various state-level measures around social distancing.  One such example is a team at the [University of Washington](https://faculty.washington.edu/cadolph/papers/AABFW2020.pdf) and a link to their [git repository](https://github.com/COVID19StatePolicy/SocialDistancing) for the most up-to-date information.  Here I just read in the csv file I downloaded on 4/1/20; will switch to reading from the git directly at some point.
 
-```{r}
+```{r echo=longform}
 #downloaded 4/1/20; switch to git repo at some point for most current 
 #data set needs some cleaning
 distancingpolicy <- read.csv("USstatesCov19distancingpolicy.csv", header=T)
 
 head(distancingpolicy)
-
-#for a Michigan focus 
-#looks like another package has a "select" as I was getting an error; specifically call dplyr
-distancingpolicy %>% subset(StateName=="Michigan") %>% dplyr::select(DateIssued, PolicyCodingNotes) %>% head(n=10)
-
 ```
 
-### State level poverty percentage
+Here is a Michigan focus to illustrate the information the file contains.
+```{r echo=longform}
+#looks like another package has a "select" as I was getting an error; specifically call dplyr
+distancingpolicy %>% subset(StateName=="Michigan") %>% dplyr::select(DateIssued, PolicyCodingNotes) %>% head(n=10)
+```
+
+### State-level poverty percentage
 
 The Department of Agriculture lists percentage of state residents living in poverty. I downloaded the data and saved to a spreadsheet. It lists both percentage of all residents and percent of children in poverty.
 
 
-```{r}
+```{r echo=longform}
 statepoverty <- read_excel("state.poverty.xlsx")
 
 #delete DC and row with "National"
@@ -325,7 +330,7 @@ head(statepoverty)
 
 ## Summary
 
-Just because data files can be created does not mean those data are meaningful.   There are differences across these  data sources and some data are difficult to compare across states or over time (e.g., reporting of testing differs across states, different types of tests are used across states, the type of testing may have changed during the time interval). The myth is that if you have a large enough data set these kinds of issues will wash out in the aggregate.  Maybe random error will wash out, but large data sets do not necessarily eliminate, by virtue of their size alone, systematic differences or biases.  The size of the data set can impress and ease one into passive acceptance of a particular data pattern and interpretation. We must exercise the same skepticism we privilege small data sets, and be aware that large data sets may have additional issues not present in small-scale studies. 
+Just because data files can be created does not mean those data are meaningful.   There are differences across these  data sources and some data are difficult to compare across states or over time (e.g., reporting of testing differs across states, different types of tests are used across states, the type of testing may have changed during the time interval). The myth is that if you have a large enough data set these kinds of issues will wash out in the aggregate.  Maybe random error will wash out, but large data sets do not necessarily eliminate, by virtue of their size alone, systematic differences or biases.  The size of the data set can impress and ease one into passive acceptance of a particular data pattern and interpretation. We must exercise the same skepticism we privilege small data sets, and be aware that large data sets may have additional issues not present in well-controlled small-scale studies. 
 
 A lot of code was presented in this chapter, but the code is in service of downloading the relevant up-to-date data I wanted to automate everything and write code for all my data manipulations so that you could see what I did and to make the output completely reproducible. One benefit of this approach is that I can run this code every day to get the current information so that all my analyses and plots in this website automatically update. Any workflow process that would require that I manually download a spreadsheet and manually edit that file would not be easily reproducible and would create extra work for me each day when I update this website.
 
@@ -333,7 +338,7 @@ A lot of code was presented in this chapter, but the code is in service of downl
 
 **R Notes**
 
-In some workflows  I save my workspace at this stage when all the data have been read in and processed, so that subsequent files can just load the workspace and pick up from here. This saves time because the same operations don't have to be redone.  But because these covid-19 data downloads happen often it is better to recreate the workspace to avoid issues with newer data being available.  The R functions save.image() and load() usually work well when data remain static, such as after data collection is completed and no further data cleaning is needed.
+I usually save my workspace at this stage when all the data have been read in and processed, so that subsequent files can just load the workspace and pick up from here. This saves time because the same operations don't have to be redone.  But because these covid-19 data downloads happen often it is better to recreate the workspace to avoid issues with newer data being available.  The R functions save.image() and load() usually work well when data remain static, such as after data collection is completed and no further data cleaning is needed.
 
 :::
 
