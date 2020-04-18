@@ -46,6 +46,9 @@ library(readxl)
 library(rnn)
 library(stargazer)
 library(texreg)
+library(gamm4)
+library(splines)
+library(mgcv)
 ```
 
 ```{asis echo=longform}
@@ -58,7 +61,8 @@ if(!("pacman" %in% installed.packages()[,"Package"])) install.packages("pacman")
 library(pacman)
 #double check all the libraries listed above are listed here too
 p_load("bookdown","readr","tidyverse","rvest","magrittr","stringr","tidycensus","ggplot2","gganimate","ggeffects", "scales", 
-       "maps","ggthemes","viridis","ggrepel","sjPlot","sjmisc", "sjlabelled","lme4","nlme","merTools","Hmisc","readxl","rnn","stargazer","texreg")
+       "maps","ggthemes","viridis","ggrepel","sjPlot","sjmisc", "sjlabelled","lme4","nlme","merTools","Hmisc","readxl","rnn","stargazer","texreg"
+       "gamm4","splines","mgcv")
 ```
 
 ```{asis echo=longform}
@@ -71,7 +75,7 @@ By putting it here I just have to change the value (T vs F) in one place and els
 ```
 
 ```{r echo=longform}
-cache <- F
+cache <- T
 ```
 
 ```{asis echo=longform}
