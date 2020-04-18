@@ -2,6 +2,8 @@
 
 This chapter  presents some descriptive plots of the raw data. No analyses, no standard errors, no parameters to estimate, no hypotheses to test. Just raw data presented in different forms to gain insight into the patterns that are in the data.  I'll create a few plots at the world level, and then switch to the state level for US data.  You are free to take my code and edit it to produce additional plots for other countries and their states or provinces.  Throughout these notes I'll focus on the counts and rates of  positive tests. I'll defer death counts until the chapter on process models. 
 
+As stated in a few places in these notes, we need to be careful in how we interpret the counts of people who test positive.  There are many issues such as countries or states that test more frequently may see higher counts because they do  more testing, counts can vary across countries or states because decisions about who is tested may vary, the quality of the tests used may vary across units, and countless other differences that make it extremely difficult to generate clear explanations for patterns we may see.   Moving to other variables such as the number of deaths doesn't completely solve the problem either because, among other things, countries and states may vary in how they count deaths (e.g., death in a hospital, death among people who tested positive vs. deaths that are ["presumed to be covid-19 related"](https://www.washingtonpost.com/investigations/which-deaths-count-toward-the-covid-19-death-toll-it-depends-on-the-state/2020/04/16/bca84ae0-7991-11ea-a130-df573469f094_story.html)).
+
 ## World Map
 
 
