@@ -111,6 +111,7 @@ ggplot(datacov.long) +  borders("world", colour = "gray90", fill = "gray85") +
 
 While counts are useful (see [Preface](#preface) for a discussion of London's cholera epidemic) they have their limitations. Does a country have a relatively high number of positive cases because it has a large population?  In this field it is common to normalize counts by the population and report numbers per capita (e.g., 62 cases out of 100,000).  I'll have to track down the populations of each country and merge that information into this animation.  Later in this chapter, I develop this animation for the US and I do have the state populations so will illustrate the difference in this animation in counts versus per capita there.  However, raw counts still have a role in helping to inform the impact of covid-19.  If a city has 1500 available hospital beds (and presumably the staff and supplies to provide care for  those  beds), but there are 2000 people in need of hospitalization, then there is a public health issue and the 'per capita" concern becomes moot.
 
+For more information on working with maps see [Gimond](https://mgimond.github.io/Spatial/index.html).
 
 ## Compare World Counts to US
 
