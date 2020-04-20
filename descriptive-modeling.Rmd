@@ -5,7 +5,7 @@ By no means is any of the modeling presented here considered breakthrough modeli
 
 I'll try to use only the R features necessary to make the points I want to highlight. There are more complicated approaches using time series packages that format the data differently (e.g., they use special time series objects in R). There are benefits of doing this because there are automatic plotting and estimation routines that can take time series objects and do relevant computations. But I think as you are learning this it makes more sense to learn how to do some of the programming and then you are in a better position to learn the value of more advanced approaches like those for time series data.
 
-I won't cover commonly used descriptive summary methods such as smoothing techniques, mostly in the interest of time.
+I won't cover commonly used descriptive summary methods such as smoothing techniques, mostly in the interest of time.  For more general treatments on working with time series data see [Hyndman & Athanasopoulos](https://otexts.com/fpp2/); [Holmes, Scheuerell & Ward](https://nwfsc-timeseries.github.io/atsa-labs/) and the classic [Box & Jenkins](https://www.amazon.com/Time-Analysis-Forecasting-George-Box/dp/0470272848), with additional authors in newer editions.
 
 ##  Regression on US State Percentages
 
@@ -594,7 +594,7 @@ out <- nlme(count ~ richfu.logistic(day.numeric, l,y+b2*povertyperc,b1), fixed =
 ```
 
 
-```{r echo=longform, results=ifelse(longform, "markup", "hide"}
+```{r echo=longform, results=ifelse(longform, "markup", "hide")}
 out.logistic.poverty <- out
 
 if (is_html_output())
@@ -637,7 +637,7 @@ To get deeper in such process models of growth, we need to develop some addition
 
 I don't recommend going the route of splines and smoothers in this context.  While they can provide great fit to the data and can be used for interpolation (e.g., if we missed a day of data collection, we could interpolate), splines and smoothers are not helpful at informing one of the underlying process nor in forecasting (extrapolating)  from one's data, which is what we want to be able to do in this case.  For illustration, and to show that I too can get curves that approximate the data points closely, I ran a mixed model spline regression where the knots are treated as a random effect and show the plots just for New York and Michigan for brevity. One would need to do all the usual diagnostics for this mixed model as well.
 
-```{r message=F, warning=F, echo=longform, results=ifelse(longform, "markup", "hide"}
+```{r message=F, warning=F, echo=longform, results=ifelse(longform, "markup", "hide")}
 #linear mixed model using splines on the count data
 out.sp <- lmer(count ~ (bs(day.numeric, intercept=T, degree=5) | state.abb), data=na.omit(allstates.long))
 
@@ -706,11 +706,20 @@ par(mar = numeric(4))
 plotnet(mod)
 ```
 
-It is common to model time series using the counts for each day (such as with the [incidence plot](#incidenceplots) we saw in the Section \@ref(incidenceplots)) rather than the cumulative counts we have been using throughout most of these notes. I'll follow that convention here.
+It is common to model time series using the counts for each day (such as with the [incidence plot](#incidenceplots) we saw in the Section \@ref(incidenceplots)) rather than the cumulative counts we have been using throughout most of these notes. I'll follow that convention here. Here is the incident plot for New York State.
+
+```{r echo=longform}
+ggplot( subset(day.sums, state.abb="New York"), aes(x=day,y=daily)) +  geom_bar(stat="identity") +
+    scale_x_date(date_breaks="1 week", date_labels = "%d %b") +
+    labs(y="Daily incremental incidence ",
+                                   title="Positive US Covid-19 Cases New York")  +
+    theme(legend.position = "none",
+          strip.text.y = element_text(size=11))
+```
 
 ### Simple RNN example
 
-The following is a relatively large chunk of code. Other implementations of deep learning networks require even more code.  The basic idea is that we put all our data into one data frame, then partition it into testing data and training data. We want to be sure we partition early so as not to contaminate the testing data with any information that is in the testing data. For example, if we compute a mean we may inadvertently compute a mean for all the data (testing and training), and then if we use that mean in training we have contaminated the training data with information from the testing data.  
+The following involves a relatively large chunk of code. Other implementations of deep learning networks require even more code.  The basic idea is that we put all our data into one data frame, then partition it into testing data and training data. We want to be sure we partition early so as not to contaminate the testing data with any information that is in the testing data. For example, if we compute a mean we may inadvertently compute a mean for all the data (testing and training), and then if we use that mean in training we have contaminated the training data with information from the testing data.  
 
 The only information I have to work with so far is the number days and the previously observed daily counts; that is, as of this point in the notes we don't have access to other possible predictors of a state's daily count.  Here, "previously observed" means if I'm at time t then any data prior to t is "previous" data that I have but any data after t has not occurred yet as far as prediction goes. In the case of data I'm downloading, t may be say 3/23/20 so from that perspective any data after 3/23/20 cannot be used because as of that time point t I didn't know of any data after t.  Part of the machine learning algorithm works by varying t to different days, repeatedly feeding those sequences of data to the model and trying to learn the patterns by figuring out what it is getting wrong, making adjustments in the model's parameters (the weights and bias terms) and  making new predictions, and iterating.
 
@@ -719,10 +728,10 @@ The rest of the code is creating daily counts and several features to use as pre
 This model has 6 inputs:  day, day$^2$, day$^3$, count, count difference, and count second order difference. I currently have just have a few units in a single hidden layer, and one unit in the output layer.  Of course, to make this more interesting I could add many more predictors including state-level and daily information.
 
 ```{asis echo=longform}
-So, overall the long bit of code is because we have to do some work to put the data in the right format for machine learning to do its magic.  
+So, overall the long section of code is because we have to do some work to put the data in the right format for machine learning to do its magic.  
 ```
 
-I'll be the first to acknowledge that this is just for demonstration purposes. Our data set is way, way too small to have any chance of estimating meaningful machine learning models and I created a kludgy set of predictors (aka features) without much thought.
+I'll be the first to acknowledge that this is just for demonstration purposes. Our data set is way, way too small to have any chance of estimating meaningful machine learning models, I created a kludgy set of predictors (aka features) without much thought, I haven't included more predictors to the model and I've only focused on number of positive tests (e.g., a better demonstration of machine learning methods would be to use postive testing rates as predictors of subsequent death rates).
 
 In the figure below the red dots are the actual daily cases in New York.  The green curve is what the machine learning model learned. I intentionally over trained it. The last day shows the prediction by the machine learning model in solid blue and the actual in solid red.  
 
@@ -826,7 +835,9 @@ text(nrow(data)+.5,0,"test")
 #plot(colMeans(model$error), type="l")
 ```
 
-There are many more diagnostics to consider such as error rate and we can iterate over the tuning parameters to find optimal values that give good predictive validity without overfitting.
+There are more diagnostics to consider such as error rate and we can iterate over the tuning parameters to find optimal values that give good predictive validity without overfitting.  Note that between day 25 and 40 the overall "trend" of the open red circles is relatively flat (as an average) but the daily variability is increasing.  The current set of predictors I'm  using in this RNN doesn't have the ability to capture changes in the variability.  This is one clue for additional predictors (features, see next subsection) that could be added to the model.  This could be an interesting part of the story and something that can be addressed not only with machine learning models but also for the other models we considered in this chapter.  Models that are not capturing this change in variance are possibly missing something important about the underlying process (which could just be something as simple as not all juristictions in New York state are reporting daily but nonetheless an important property to understand if we want to use these approaches to make forecasts).  We could check whether this increasing variance occurs in other states and at different levels of analysis such as the county level. We could check whether this increase in variance is consistent with a multiplicative error model where error. The point is that there is a potential signal here that our current models are not capturing, and we need to figure out whether we need to move to a different class of models or whether this heterogeneity is due to a simple factor that can be easily addressed. 
+
+Note that this increasing variance was not easy to detect in the cumulative plots and models on cumulative data such as the log linear, exponential and logistic models we covered earlier in this chapter.  If you go back and look at those plots, even the ones using the curve fitting spline methods, they show systematic "under and over the curve" errors consistent with what we're seeing in the incidence plot.  The increasing variance is there but just difficult to spot. Sometimes converting data to different forms, such as cumulative and incidence forms, helps highlight different aspects of the same data.  It is not easy to see in the barplot of the New York incidence presented at the beginning of the RNN section. It is often useful to cross-check one's interpretation with different model forms and plots.
 
 There are many other approaches that fall under the large machine learning umbrella, these include extensions of RNNs such as long short-term memory deep learning models that can learn patterns further back in time than simple RNNs, general additive models with penalized smoothers, genetic algorithms,  and symbolic regression as well as several packages in R to compute these methods. Overall, I was underwhelmed by the effort.  Some of the R packages gave error messages even running the very examples supplied in the package or they made strange predictions.
 Part of the issue is that we don't have enough data to  allow these machine learning methods to shine. 
