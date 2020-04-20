@@ -8,6 +8,7 @@ documentclass: book
 bibliography: [book.bib, packages.bib]
 biblio-style: apalike
 link-citations: yes
+url: http://www-personal.umich.edu/~gonzo/covid19/_public/
 github-repo: https://github.com/gonzoum/covid19-analyses
 description: "Pages to make remote teaching of statistics more interesting during the covid-19 pandemic."
 params:
@@ -16,7 +17,7 @@ params:
 #https://bookdown.org/yihui/rmarkdown/params-use.html
 ---
 
-<!-- I decided to produce two versions of these documents. One for the R audience with all the R code and some statistical issues like checking assumptions and one for a broader audience without interest in the R details.  I use echo=longform to select which R chunks to print and asis echo=longform for conditional definition of text. -->
+<!-- I decided to produce two versions of these documents. One for the R audience with all the R code and some statistical issues like checking assumptions and one for a broader audience without interest in the R details.  I use echo=longform to select which R chunks to print and asis echo=longform for conditional definition of text. Currently need to set longform=T in header of index file and choose the right output directory in _bookdown.  Need to figure out how to automatically do both. -->
 
 
 ```{r echo=F}
@@ -40,7 +41,7 @@ longform <- params$longform
 
 **Note**
 
-I have an [abbreviated version](http://www-personal.umich.edu/~gonzo/covid19/public/) of these notes with limited R code displayed. That version may be easier to follow if you want to see the final results rather than the detailed code presented here.
+I have an [abbreviated version](http://www-personal.umich.edu/~gonzo/covid19/_public/) of these notes with limited R code displayed. That version may be easier to follow if you want to see the final results rather than the detailed code presented here.
 
 :::
   
@@ -67,7 +68,7 @@ These notes have three goals:
 
 The intended audience is the Psychology 614 graduate statistics course for the behavioral sciences at the University of Michigan. The notes are heavy with code because one goal is to teach how to conduct these analyses and create the visualizations.  Someday I may write a more accessible version of these notes.   If you would like to see the notes from the rest of the graduate statistics course visit my [course website](http://www-personal.umich.edu/~gonzo/coursenotes/) that I update regularly.
 
-In these notes I will not be able to address issues of specificity and sensitivity of the covid-19 tests because I don't have access to information about the tests' false positive and false negative rates.   Further, there appear to be different tests in use, tests from different vendors, new tests coming on line  frequently, etc., which increases the complexity in understanding the counts of "confirmed" covid-19 cases. Also, it is too early to develop population models of the baseline proportions of who has the disease.  Without knowing the base rates of the disease and the specificity/sensitivity of the available tests, we are at a major disadvantage for using the usual tools (e.g., Bayesian statistics) to evaluate such matters.  I find it strange that public health officials  talk about increasing the throughput of tests (e.g., on 3/29/20 a report indicated a new test that gives a result in 5 minutes) without discussing error rates of false positives and false negatives.  An inexpensive test that can deliver a result in 5 minutes but has a relatively high false negative rate (i.e., people who are sick test negative) may do more harm than good. 
+In these notes I will not be able to address issues of specificity and sensitivity of the covid-19 tests because I don't have access to information about the tests' false positive and false negative rates.   Further, there appear to be different tests in use, tests from different vendors, new tests coming on line  frequently, etc., which increases the complexity in understanding the counts of "confirmed" covid-19 cases. Also, it is too early to develop population models of the baseline proportions of who has the disease.  Without knowing the base rates of the disease and the specificity/sensitivity of the available tests, we are at a major disadvantage for using the usual tools (e.g., Bayesian statistics) to evaluate such matters.  I find it strange that public health officials  talk about increasing the throughput of tests (e.g., on 3/29/20 a report indicated a new test that gives a result in 5 minutes) without discussing error rates of false positives and false negatives.  An inexpensive test that can deliver a result in 5 minutes but has a relatively high false negative rate (i.e., people who are sick test negative) may do more harm than good. Further, at this point establishing base rates of the disease from positive test results and other indicators such as hospitalizations and deaths is not straightforward (e.g., testing in the US at least is currrently done following a set of criteria such as showing symptoms so merely examining positive counts, as I do in these notes, can lead to biased estimates of the incidence of the disease).
 
 The Wiki page on [sensitivity and specificity](https://en.wikipedia.org/wiki/Sensitivity_and_specificity) offers a basic introduction (and you'll see related concepts from Lecture Notes 1 on hypothesis testing); much of the original work on test evaluation was done between the 1940s and 1960s including the work by University of Michigan's own Green and Swets (1966) on [signal detection theory](https://en.wikipedia.org/wiki/Detection_theory).   I recently found an article about the specificity and sensitivity of the coronavirus tests in the [Washington Post 3/26/20](https://www.washingtonpost.com/science/2020/03/26/negative-coronavirus-test-result-doesnt-always-mean-you-arent-infected/). Not sure if it is behind a pay wall but worth a look if you are interested.  Some of the companies developing tests are not posting information about the sensitivity and specificity (e.g., [ARUP's website](https://www.aruplab.com/infectious-disease/coronavirus) states, 3/24/20,  "At this point, ARUP is unable to share our sensitivity and specificity data, but they will be very similar to those established by Hologic.") 
 
