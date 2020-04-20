@@ -137,14 +137,17 @@ There is always additional manipulation needed to format the table, here I had t
 If the table on the wiki changes, it could very well break this code.  This already changed in that originally the table I wanted was the 4th table, then it was the 5th table in the html file, then the 6th table, and now back to the 5th.
 
 ```{r echo=longform}
-URL <- "https://en.wikipedia.org/wiki/2019%E2%80%9320_coronavirus_pandemic"
+#table kept changing location in the wikipage, so go to the table URL directly rather than wiki page
+#URL <- "https://en.wikipedia.org/wiki/2019%E2%80%9320_coronavirus_pandemic"
+URL <- "https://en.wikipedia.org/wiki/Template:2019%E2%80%9320_coronavirus_pandemic_data"
 
 wikipage <- read_html(URL)
 
-#the 5th table in this html page is the country totals (so .[5] below)
+#originally the 5th table in the wiki html page had the country totals (so .[5] below)
 #the number 5 is hardcoded here, not great programming style
+#now that I point the the url of the table, it becomes .[1]
 table <- wikipage %>%
-html_nodes("table") %>% .[5] %>%
+html_nodes("table") %>% .[1] %>%
 html_table(fill=TRUE, header=T)
 
 #delete 1st row (incorrectly read in the header) and last three rows which are notes
@@ -264,7 +267,8 @@ cdc.testing$total.tests <- apply(cdc.testing[,c(2,3)],1,sum,na.rm=T)
 ```
 
 There is another site I found that reports positive and negative results by state. This is the [COVID tracking project](https://covidtracking.com).  I don't know how reputable this source is but I'll keep an eye on it. 
-It reports daily records by state on number of positive,  negative, pending, hospitalized, death, and total number of tests.  This page points out specifics about each state (e.g., Maryland stopped reporting negative cases as of 3/12, MA numbers include repeated testing on the same individual, not all states include data from commercial labs) showing that it is challenging to interpret such data at the aggregate level when there is so much heterogeneity across units. See, for example, [state-level details](https://covidtracking.com/data/).
+It reports daily records by state on number of positive,  negative, pending, hospitalized, death, and total number of tests.  This page points out specifics about each state (e.g., Maryland stopped reporting negative cases as of 3/12, MA numbers include repeated testing on the same individual, not all states include data from commercial labs) showing that it is challenging to interpret such data at the aggregate level when there is so much heterogeneity across units. See, for example, [state-level details](https://covidtracking.com/data/). As mentioned elsewhere in this document, positive test results need to be interpreted cautiously for several reasons including taking into account the specificity and sensitivity of the tests as well as selection bias in who receives the test. For example, the incidence rate will be biased upward if testing only occurs for people who exhibit symptoms.  Death rates have analogous issues, such as some units only report hospital deaths.  It is possible to develop complex models that take into account these various factors and arrive at corrected estimates, but these additional modeling efforts require additional assumptions for which there aren't always solid data to backing up those assumptions.  This is one of many reasons why different modeling groups can arrive at such diverse estimates.   There are methods that aggregate across multiple models, creating an [ensemble of models](https://www.climateprediction.net/climate-science/climate-ensembles/), which have been used successfully in climate science to predict hurricanes.
+
 
 
 ```{r warning=F, message=F, echo=longform}
@@ -327,6 +331,13 @@ statepoverty <- read_excel("state.poverty.xlsx")
 statepoverty <- statepoverty[!statepoverty$state %in% c("District of Columbia", "National"),]
 head(statepoverty)
 ```
+
+## Other data sources
+
+Here I'll list other sources that come on line as I build these notes.
+
+1. [covdata](https://kjhealy.github.io/covdata/) A git repository that includes some of the data sources I've already covered plus some others, such as the CDC Surveillance Network Data, which includes additional information in various tables such as total deaths (i.e., even the non-covid-19 deaths), number of pneumonia deaths, number of influenza deaths, etc.,  as well as data by age category.
+
 
 ## Summary
 
