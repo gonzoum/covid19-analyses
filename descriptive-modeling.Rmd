@@ -293,7 +293,7 @@ plot(0:max.day.numeric, richfu(0:max.day.numeric, 1, 1.23 , .000555 , 1)*1950000
 lines(0:max.day.numeric, richfu(0:max.day.numeric, 4, 1.23 , .000555 , 1)*19500000/100, col="blue")
 ```
 
-To illustrate how time locking can show structure, let me use the previous plot, where the two states look to have different patterns.  Time locking the two states to the first day when they each have nonzero cases shows that both states have identical trajectories. It is just that one state started earlier than the other state and so the patterns in the previous plot look (dramatically) different, and just by a delay of 4 days!  Much like singing ["Row, row, row your boat" in rounds](https://www.youtube.com/watch?v=2d_GLxa4_bg)---different parts start at different times, but its the same song.
+To illustrate how time locking can show structure, let me use the previous plot, where the two states look to have different patterns.  Time locking the two states to the first day when they each have nonzero cases shows that both states have identical trajectories. It is just that one state started earlier than the other state and so the patterns in the previous plot look (dramatically) different, and just by a delay of 4 days!  Much like singing ["Row, row, row your boat" in rounds](https://www.youtube.com/watch?v=2d_GLxa4_bg)---voices sing the same melody but start at different times creating a harmonious whole.
 
 
 
@@ -359,7 +359,7 @@ qqline(resid(out.exponential))
 
 Some  issues with residuals as seen in the residual scatterplot against the fitted values and the QQ plot suggesting longer tails than expected if residuals were distributed normally.  The first plot above shows a relatively strange pattern in the residuals when plotted against the fitted values. The blue points correspond to New York (I connected them with line segments to they stand out).  The second zooms in and suggests there still is some structure in the residuals the model is not picking up.  The third plot is a QQ plot suggest extremely long tails.
 
-Let's plot  the fitted values of each state.  These are the predicted exponential curves according to the model.
+Let's plot  the fitted values of each state.  These are the predicted exponential curves according to the model. Note that these are model estimates, not a plot of the actual data.
 
 ```{r fig.cap="Exponential Function Estimated through Nonlinear Mixed Model Regression", echo=longform}
 #alternative approach to getting this plot
@@ -368,6 +368,16 @@ predmatnonlin$prediction <- predict(out, list(day.numeric=predmatnonlin$day.nume
 nonlinreg <- ggplot(predmatnonlin, aes(day.numeric,prediction,group=state.abb, color=state.abb )) +  geom_line()   
 nonlinreg  
 ```
+
+
+```{r echo=longform}
+nydf <- predmatnonlin[predmatnonlin$state.abb=="New York",]
+
+nydf$percent <- allstates.long$percent[allstates.long$state.abb=="New York"]
+ggplot(nydf, aes(day.numeric,prediction,group=state.abb, color=state.abb )) + geom_line() + geom_point(aes(x=day.numeric, y=percent), col="blue") + ggtitle("New York: Actual percentage in blue; exponential growth in red")
+```
+
+Consistent to what we observed in the log transformed data, the points do not seem to follow an exponential curve (New York's poor fit being one example).  We will move to a different form that may be more appropriate for these data.
 
 <!-- Here one could run the same code above I used in the linear mixed model case on the log scale to produce tables of predicted counts, their confidence intervals, and the forecast plots with the confidence bands. This information could be compared with the previous ones to help us evaluate the models.  Some thought needs to go into writing code to simulate the confidence bands around the predictions from the nonlinear model. -->
 
@@ -391,7 +401,6 @@ actualny <- data.frame(y=y, x=0:(length(y)-1))
 temp %>%   ggplot(aes(x=day.numeric, y=fit)) + geom_point(data=subset(temp,day.numeric<=max.day.numeric) )+ geom_ribbon(data=subset(temp,day.numeric>max.day.numeric), aes(y=fit, ymin=lwr,ymax=upr), alpha=.2,fill="red") + geom_line() + geom_linerange(data=subset(temp,day.numeric<=max.day.numeric),aes(y=fit, ymin=lwr,ymax=upr)) + ylab("Counts") + geom_point(data=manualcounts, aes(x=day.numeric, y=fit),color="blue",shape=2) + geom_line(data=datapl, aes(x=day.numeric, y=counts),color="green") + geom_point(data=datapl, aes(x=day.numeric, y=counts),color="green") + geom_point(data=datapl, aes(x=day.numeric, y=counts),color="green") + geom_point(data=actualny, aes(x=x,y=y), color="violet")
 
 ```
-
 
 
 ## Logistic (Nonlinear) Regression 
@@ -557,9 +566,10 @@ Here is a test of the two logistic growth models (with and without correlated er
 anova(out.logistic, out.logistic2)
 ```
 
-For completeness, the plot of predicted trajectories for the logistic growth model with correlated error structure, followed by New York for comparison with the earlier logistic growth model with independent residuals.
 
-```{r messages=F, warning=F, echo=longform}
+<!-- For completeness, the plot of predicted trajectories for the logistic growth model with correlated error structure, followed by New York for comparison with the earlier logistic growth model with independent residuals. -->
+
+```{r messages=F, warning=F, echo=longform, eval=F}
 #print curves and ny data
 predmatnonlin2 <- data.frame(day.numeric=rep(c(0:max.day.numeric),50),state.abb=rep(rownames(coef(out.logistic2)),each=max.day.numeric+1))
 predmatnonlin2$prediction <- predict(out.logistic2, list(day.numeric=predmatnonlin2$day.numeric, state.abb=predmatnonlin2$state.abb),level=1)
@@ -584,7 +594,7 @@ abline(coef(lm(coef(out.logistic)[,2] ~ allstates$povertyperc)))
 par(pty="m")
 ```
 
- It looks like a slightly negative association though it is noisy. In principle, I could test this regression slope through a regular regression but it is better to do it in the context of the nonlinear logistic growth regression model. The reason is that a linear regression using the coefficients from the logistic growth as though they were an observed variable doesn't take into account the error structure of these parameters---the parameters aren't observed data but they are  estimates from another model.  By including the poverty predictor simultaneously with the logistic growth model we model the uncertainty much better. It would be even better to run this as a Bayesian model, which I'll add in a later version using the brm package.
+ It looks like a slight negative association is present though the data are noisy. In principle, I could test this regression slope through a regular regression but it is better to do it in the context of the nonlinear logistic growth regression model. The reason is that a linear regression using the coefficients from the logistic growth as though they were an observed variable doesn't take into account the error structure of these parameters---the parameters aren't observed data but they are  estimates from another model.  By including the poverty predictor simultaneously with the logistic growth model we model the uncertainty much better. It would be even better to run this as a Bayesian model, which I'll add in a later version using the brm package.
  
  <!-- https://cran.r-project.org/web/packages/brms/vignettes/brms_multilevel.pdf -->
  
@@ -606,7 +616,7 @@ if (is_latex_output())
 intervals(out.logistic.poverty)
 ```
 
-The $\beta$ associated with poverty is not statistically significant in this example so we do not have sufficient justification to argue that the state variability in the y parameter of this logistic growth model is related to the state's poverty level.  Anyways, this illustrates how one goes about adding predictors to such a nonlinear model.  One could use more complicated predictors, even test differences across groups on parameter values (e.g., do states with democratic governors have different parameter values than states with republican governors).  One follows the same principles for testing predictors and groups in a standard regression model.
+The $\beta$ associated with poverty is not statistically significant in this example so we do not have sufficient justification to claim that the state variability in the y parameter of this logistic growth model is related to the state's poverty level.  Anyways, this example illustrates how one goes about adding predictors to such a nonlinear model.  One could use more complicated predictors, even test differences across groups on parameter values (e.g., do states with democratic governors have different parameter values than states with republican governors); one follows the same principles for testing predictors and groups in a standard regression model. While the presentation has focused on associations, the overall framework can be extended to strengthen inference using various methods including instrumental variables (e.g., [Carrol et al, 2004](https://www.stat.tamu.edu/~carroll/ftp/2004.papers.directory/iv_jasa_2004.pdf)) and newer approaches (e.g., [Runge et al, 2019](https://advances.sciencemag.org/content/5/11/eaau4996)), though much theoretical work remains to be done to move these nonlinear mixed models from mere description to stronger inferences by allowing more direct tests of possible alternative explanations.  For an introduction to some basic modern methods in causal inference see [Bauer and Cohen](https://bookdown.org/paul/applied-causal-analysis/).
 
 More diagnostic checking is needed, however, to have confidence in this logistic growth model, with or without predictors. The two random effect parameters in the nonlinear mixed logistic growth model are assumed to follow a bivariate normal distribution, which does not seem to be the case.  Here is a 2D density plot (I know, a lot to ask for when there are only 50 pairs of points, one for each state), separate qqplots and boxplots for the asymptote and y parameters.  The qqplot for the asymptote parameter l has a long tail, mostly due to New York and New Jersey; the one for the y parameter looks symmetric. 
 
@@ -675,11 +685,11 @@ temp %>%   ggplot(aes(x=day.numeric, y=fit)) + geom_point(data=subset(temp,day.n
 
 ## Bayesian Estimation of Nonlinear Regression: Adding value to prediction and uncertainty
 
-Pending
+Pending: illustrate use of Bayesian nonlinear regression modeling to estimate prediction uncertainty, allow for more general models than the standard regression approaches described earlier in this chapter and highlight some of the issues with the standard assumptions for random effects modeling that can be examined more easily in the Bayesian context.
 
 ## Dynamic Systems Modeling
 
-Pending:  this section will include state-space models and dynamic regressions using demos with the R packages pomp and dynr.
+Pending:  this section will include state-space models and dynamic regressions with the R packages pomp and dynr.  I'll present a basic intro to these models here and then return to them in Chapter \@ref(process) when discussion process models.
 
 ## Basic Machine Learning Examples
 

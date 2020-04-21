@@ -37,7 +37,7 @@ My style of writing code is idiosyncratic as I suspect it is for everyone who wr
 Sometimes these present conflicts such as writing robust code may not be code that is easy to follow.
 
 
-## Pulling from a git repository
+## Pulling data from a git repository
 
 I'll use the [data base that Johns Hopkins](https://github.com/CSSEGISandData/COVID-19) has been maintaining on github. It is used by news outlets such as CNN.  I already cloned the git repository on my local computer so each day I merely have to issue a "git pull" command to get all new files that have been edited.  This is a better process than conducting a completely new download every day of the entire repository. You can see the Johns Hopkins github site for a complete listing of sources of their data.
 
@@ -306,9 +306,13 @@ head(schooldata)
 A few research groups have already started studying the public health implications of various state-level measures around social distancing.  One such example is a team at the [University of Washington](https://faculty.washington.edu/cadolph/papers/AABFW2020.pdf) and a link to their [git repository](https://github.com/COVID19StatePolicy/SocialDistancing) for the most up-to-date information.  Here I just read in the csv file I downloaded on 4/1/20; will switch to reading from the git directly at some point.
 
 ```{r echo=longform}
-#downloaded 4/1/20; switch to git repo at some point for most current 
 #data set needs some cleaning
-distancingpolicy <- read.csv("USstatesCov19distancingpolicy.csv", header=T)
+#if you download the data file you can manually read it with this command
+#distancingpolicy <- read.csv("USstatesCov19distancingpolicy.csv", header=T)
+
+#to get this URL go to github site in the link above, find the USstatesCov19distanceingpolicy.csv file and click on "raw"
+#then use that URL below
+distancingpolicy <- read_csv(url("https://raw.githubusercontent.com/COVID19StatePolicy/SocialDistancing/master/data/USstatesCov19distancingpolicy.csv"))
 
 head(distancingpolicy)
 ```

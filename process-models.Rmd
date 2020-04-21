@@ -3,7 +3,7 @@ output:
   pdf_document: default
   html_document: default
 ---
-# Process Models
+# Process Models {#process}
 
 
 Process models focus on mechanisms. These kinds of models allow us to model "what if" scenarios, such as what would happen to the spread of covid-19 cases if a state imposes a shelter-in-place order.  The models in the previous chapters don't allow us do such "what if" analyses in any reasonable manner.  The material in the earlier chapters, however, allow us to justify some of the assumptions we may need in process models.  Sometimes process models can be estimated directly from data, sometimes data merely provide ways of justifying assumptions one needs to make.  Sometimes there is an "analyst-in-the-loop" aspect to these models because they may not be able to be estimated from data directly, so require the analyst to systematically modify a particular aspect of the model (e.g., an unknown parameter) to see how varying that aspect would affect the model's outcome in a type of sensitivity or robustness analysis. 
@@ -116,7 +116,26 @@ In class I'll play with a [Netlogo](https://ccl.northwestern.edu/netlogo/) demo 
 
 Network-based models (previous subsection) and agent-based models share similarities with more equation-based SIR models in that they work on observed variables and try to model behaviors at multiple levels of analysis in hopes of understanding the underlying dynamics of the system.  There are also differences between these approaches. For example, equation-based models tend to tackle the system more directly (e.g., in the SIR models the equations involve interconnected variables, seen, for instance, how the three standard SIR equations involve terms from the other equations) whereas agent-based and network models tend to focus just on the behavior of individuals and possibly their immediate neighbors without much information about processes operating at other levels.  For more on these distinctions see a paper by [Van Dyke Parunak, Savit and Riolo](https://www.researchgate.net/profile/Robert_Savit/publication/2628179_Agent-Based_Modeling_vs_Equation-Based_Modeling_A_Case_Study_and_Users'_Guide/links/54e4c4bf0cf276cec1722e24.pdf).
 
-One could work with netlogo directly but it is probably better to use a workflow that includes R so you can make use of data and other R resources such as graphics.  There is an R package nlrx that creates an R interface to netlogo. It requires some work in setting things up, which vary depending on whether you have a mac or a pc.  There is another package RNetLogo that provides a different interface but it doesn't look like it has been updated since 2017 so use with caution. There is also a way [to call R commands within netlogo](https://ccl.northwestern.edu/netlogo/docs/r.html).
+One could work with netlogo directly but it is probably better to use a workflow that includes R so you can make use of data and other R resources such as graphics.  There is an R package nlrx that creates an R interface to netlogo. It requires some work in setting things up, which vary depending on whether you have a mac or a pc.  There is another package RNetLogo that provides a different interface but it doesn't look like it has been updated since 2017 so use with caution. There is also a way [to call R commands within netlogo](https://ccl.northwestern.edu/netlogo/docs/r.html).  
+```{asis echo=longform}
+These are all fussy though as they require a clean java installation and I've been having problems with rJava on my mac for several months, even with new installations.  Still waiting for a fix.
+```
+
+```{r echo=F, eval=F}
+#assumes netlogo is installed
+#closely following example in man page
+library(RNetLogo)
+library(nlrx)
+#dropped as I'm having problems with my rJava installation on my mac
+
+```
+
+Here is a video of a screen capture while I interacted with netlogo. I used the example Virus model that is an agent-based SIR-style model.  Sick (red) agents infect other agents when they bump into each other, green agents are healthy and gray agents are immune/recovered. The video starts with the infectiousness rate set relatively low and after a few time steps the sick agents drop out. Then I change I increase the infectiousness parameter and we see a cyclic pattern where the number of sick increases and decreases but the number of sick agents doesn't seem to go to zero. One plays with the parameters to get intuition of how this system behaves.  This can be extended in a variety of ways such as endowing the agents with different behaviors.
+
+
+<video width="640" height="720" controls>
+  <source src="Netlogo-Screen-Video.mp4" type="video/mp4">
+</video>
 
 ## Public Policy Models
 
