@@ -1,0 +1,36 @@
+# Deeper Understanding {#deeperunderstanding}
+
+## Regression Discontinuity
+
+County-level analysis of George that aggressively relaxed social distancing on April 24, 2020, with additional relaxation on April 27, 2020.
+
+Comparison group, logic of comparison
+
+need to wait about 5 days to see an effect.
+
+```{r}
+datacov.US.long <- gather(datacov.US, day, count, `1/22/20`:(names(datacov.US)[ncol(datacov.US)]))
+datacov.US.long$day <- as.Date(datacov.US.long$day, "%m/%d/%y")
+datacov.US.long$day.numeric <- as.numeric(datacov.US.long$day)-18283
+
+
+georgia.df <- subset(datacov.US.long, `Province/State`=="Georgia")
+
+ggplot(subset(georgia.df, day > as.Date("2020/04/15")), aes(day,count, group=Admin2, color=Admin2)) + geom_line() + ggtitle("Georgia Counties")
+
+```
+
+## Hospital Readmission Data
+
+The second wave. Jack's hypothesis. [Research](https://www.ncbi.nlm.nih.gov/pubmed/28550403) suggests that 40% of  ARDS patients are re-admitted to the hospitial within 1 year (national, multicenter study with 839 ARDS survivors).  Granted traditional ARDS patients may be different than covid-19-related ARDS patients but let's use this as a plausible estimate of hospital re-admission.  The study finds  an that with patient-reported physical activity and quality of life status is associated with fewer re-admissions.
+
+can I model this with a mixture model
+
+```{r}
+ggplot(subset(covid.tracking, date > as.Date("2020/03/20")), aes(date, hospitalizedCurrently, group=state, color=state)) + geom_line()
+
+```
+
+## Deaths
+
+
