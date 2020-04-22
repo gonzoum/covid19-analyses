@@ -3,7 +3,7 @@ language:
   ui:
     chapter_name: "Chapter "
 delete_merged_file: yes
-rmd_subdir = "Rmd-files"
+rmd_subdir: "Rmd-files"
 rmd_files:  ["index.Rmd", "intro.Rmd", "preliminary.Rmd", "read-data.Rmd", "descript-plots.Rmd", "descriptive-modeling.Rmd",
 "process-models.Rmd", "deep-dive.Rmd", "conclusion.Rmd", "Appendix.Rmd"]
 #yes below does khit and merge
