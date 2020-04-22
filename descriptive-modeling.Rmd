@@ -438,7 +438,7 @@ I could incorporate it by including a weight parameter (weights=varIdent(form= ~
 
 ```{r messages=F, warnings=F, results="hide", echo=longform}
 out <- nlme(count ~ richfu.logistic(day.numeric, l,y,b1), fixed = l+y+b1~1,
-            random =  l+y~1, data=na.omit(allstates.long.new),start=c( l=5100,y=800,b1=-.33), verbose=T, control=nlmeControl(msMaxIter=1000,opt="nlminb",pnlsTol=.01,msVerbose=T,minScale=.01, maxIter=1000, eval.mas=1000) )
+            random =  l+y~1, data=na.omit(allstates.long.new),start=c( l=17500,y=170,b1=-.15), verbose=T, control=nlmeControl(msMaxIter=1000,opt="nlminb",pnlsTol=.01,msVerbose=T,minScale=.01, maxIter=1000, eval.mas=1000) )
 ```
 
 ```{r  messages=F, warnings=F, echo=longform}
@@ -600,7 +600,7 @@ par(pty="m")
  
 ```{r messages=F, warning=F, results="hide", echo=longform}
 out <- nlme(count ~ richfu.logistic(day.numeric, l,y+b2*povertyperc,b1), fixed = l+y+b1 + b2~1,
-            random =  l+y~1, data=na.omit(allstates.long.new),start=c( l=5100,y=800,b1=-.33, b2=.01), verbose=T,  control=nlmeControl(msMaxIter=1000,opt="nlminb",pnlsTol=.02,msVerbose=T,minScale=.02, maxIter=1000, eval.mas=1000) )
+            random =  l+y~1, data=na.omit(allstates.long.new),start=c( l=17500,y=200,b1=-.15, b2=-4.5), verbose=T,  control=nlmeControl(msMaxIter=1000,opt="nlminb",pnlsTol=.02,msVerbose=T,minScale=.02, maxIter=1000, eval.mas=1000) )
 ```
 
 
@@ -719,7 +719,10 @@ plotnet(mod)
 It is common to model time series using the counts for each day (such as with the [incidence plot](#incidenceplots) we saw in the Section \@ref(incidenceplots)) rather than the cumulative counts we have been using throughout most of these notes. I'll follow that convention here. Here is the incident plot for New York State.
 
 ```{r echo=longform}
-ggplot( subset(day.sums, state.abb="New York"), aes(x=day,y=daily)) +  geom_bar(stat="identity") +
+data.temp <- allstates.long %>% filter(state.abb == "New York")
+data.temp$daily <- c(data.temp$count[1],diff(data.temp$count))
+
+ggplot( data.temp, aes(x=day,y=daily)) +  geom_bar(stat="identity") +
     scale_x_date(date_breaks="1 week", date_labels = "%d %b") +
     labs(y="Daily incremental incidence ",
                                    title="Positive US Covid-19 Cases New York")  +
@@ -747,10 +750,6 @@ In the figure below the red dots are the actual daily cases in New York.  The gr
 
 ```{r cache=F, warning=F, message=F, echo=longform, results=ifelse(longform, "markup", "hide")}
 #set.seed(03302020)
-#create a data frame for all avaiable days, both for the downloaded data and the manually entered data
-#OLDDATA
-#data <- data.frame(days= c(actualny$x[-1],14:(14+nrow(manualcounts)-1)), counts= c(actualny$y[-1], manualcounts$fit))
-
 y = allstates.long.new[allstates.long.new$state.abb == "New York","count"]
 actualny <- data.frame(y=y, x=0:(length(y)-1))
 
