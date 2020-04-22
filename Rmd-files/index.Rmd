@@ -1,0 +1,113 @@
+--- 
+title: "Data Analysis Examples Around Covid-19"
+author: "Richard Gonzalez, University of Michigan (gonzo@umich.edu)"
+date: "`r Sys.Date()`"
+site: bookdown::bookdown_site
+#output: bookdown::gitbook 
+documentclass: book
+bibliography: [book.bib, packages.bib]
+biblio-style: apalike
+link-citations: yes
+url: http://www-personal.umich.edu/~gonzo/covid19/_public/
+github-repo: https://github.com/gonzoum/covid19-analyses
+description: "Pages to make remote teaching of statistics more interesting during the covid-19 pandemic."
+params:
+  longform: FALSE
+#params$longform
+#https://bookdown.org/yihui/rmarkdown/params-use.html
+---
+
+<!-- I decided to produce two versions of these documents. One for the R audience with all the R code and some statistical issues like checking assumptions and one for a broader audience without interest in the R details.  I use echo=longform to select which R chunks to print and asis echo=longform for conditional definition of text. Currently need to set longform=T in header of index file and choose the right output directory in _bookdown.  Need to figure out how to automatically do both. -->
+
+
+```{r echo=F}
+#longform = T means print everything; longform=F means print just the pieces for public consumption
+#in hindsight I should have used the knitr global definition for echo (for r chunks) and "asis" (for text) but when I started I had 
+#in mind more nuanced use of chunks across the two versions and it seemed separate chunk by chunk definition
+#was more efficient
+longform <- params$longform
+
+#I could get fancy and have separate render_book commands but that would require writing a script and putting the longform boolean in the script
+#nice thing about that is that separate commands and save environments can be specified
+#for now, I just build this with either longform = T or F and remember to copy _book to public when longform = F
+```
+
+
+# Preface {-}
+
+
+
+```{asis echo=longform}
+::: {.infobox .caution data-latex="{caution}"}
+
+**Note**
+
+I have an [abbreviated version](http://www-personal.umich.edu/~gonzo/covid19/_public/) of these notes with limited R code displayed. That version may be easier to follow if you want to see the final results rather than the detailed code presented here.
+
+:::
+  
+```
+
+```{asis echo=!longform}
+::: {.infobox .caution data-latex="{caution}"}
+
+**Note**
+
+I have a more [detailed version](http://www-personal.umich.edu/~gonzo/covid19/_book/) of these notes with complete R code.  That version may be more appropriate if you want to follow the R code used to produce this document.
+:::
+  
+```
+
+These notes began as a set of lecture materials to teach advanced quantitative methods and data visualization to graduate statistics in the behavioral sciences at the University of Michigan. The notes are sprinkled with code because one goal is to teach how to conduct these analyses and create the visualizations.  There is another version of these notes that omits much of the code though still retains some of the flavor of how one uses these tools and interprets the output (see the note at the beginning of this page).   If you would like to see the notes from the rest of the graduate statistics course I teach for additional background, visit my [course website](http://www-personal.umich.edu/~gonzo/coursenotes/) that is updated regularly.
+
+
+## Postscript {-}
+
+I am not the [Richard Gonzalez](https://www.fiercepharma.com/pharma/abbvie-ceo-gonzalez-nabbed-21-6b-pay-package-year-marked-by-megamerger-humira-decline) who is the CEO of the biopharma company [AbbVie](https://www.abbvie.com/our-company.html?utm_campaign=cc_herenow_2020_rep&utm_medium=psearch&utm_source=google&utm_content=brand%20core&utm_term=abbvie), nor am I the salsa dancer and choreographer [Richard Gonzalez](https://gibneydance.org/event/mixed-flava-contemporary-caribbean-dance/2018-12-02/). 
+
+::: {.infobox .caution data-latex="{caution}"}
+
+**Note**
+
+Throughout these notes I adapted existing code and examples. Where I borrowed from other people I provide appropriate citation.  I wrote these notes relatively quickly and have not double checked all the code nor have edited the text carefully. I also worked on this in small pieces so there may be inconsistencies or redundancies across pieces, which will eventually be fixed and written in more elegant flowing code.
+
+:::
+
+```{r include=FALSE}
+#in case I switch to pdf and need latex/bibtex
+# automatically create a bib database for R packages
+knitr::write_bib(c(
+  .packages(), 'bookdown', 'knitr', 'rmarkdown'
+), 'packages.bib')
+```
+
+<!-- UM counter script -->
+
+<img src="http://counter.www.umich.edu/counter?link=http://www.umich.edu/~gonzo/covid-19/+book/index.html">
+
+
+<!--  To stop the server, run servr::daemon_stop(1) or restart your R session -->
+<!--  Serving the directory /Users/gonzo/Dropbox/transfer/mac transfer/bookdown-demo-master at http://127.0.0.1:4321-->
+
+<!-- Various R notes -->
+<!-- You can label chapter and section titles using `{#label}` after them, e.g., we can reference Chapter \@ref(intro). If you do not manually label them, there will be automatic labels anyway, e.g., Chapter \@ref(methods). -->
+
+<!-- Figures and tables with captions will be placed in `figure` and `table` environments, respectively. -->
+
+<!-- ```{r nice-fig, fig.cap='Here is a nice figure!', out.width='80%', fig.asp=.75, fig.align='center'} -->
+<!-- par(mar = c(4, 4, .1, .1)) -->
+<!-- plot(pressure, type = 'b', pch = 19) -->
+<!-- ``` -->
+
+<!-- Reference a figure by its code chunk label with the `fig:` prefix, e.g., see Figure \@ref(fig:nice-fig). Similarly, you can reference tables generated from `knitr::kable()`, e.g., see Table \@ref(tab:nice-tab). -->
+
+<!-- ```{r nice-tab, tidy=FALSE} -->
+<!-- knitr::kable( -->
+<!--   head(iris, 20), caption = 'Here is a nice table!', -->
+<!--   booktabs = TRUE -->
+<!-- ) -->
+<!-- ``` -->
+
+
+<!-- You can write citations, too. For example, we are using the **bookdown** package [@R-bookdown] in this sample book, which was built on top of R Markdown and **knitr** [@xie2015]. -->
+
