@@ -52,7 +52,8 @@ The script below will switch to the folder I'm keeping the git repository, execu
 #this is mac and linux specific; pc may be different unless unix commands have been installed
 
 #intern and cat print the output of the system command to this html document
-cat(system("pushd '/Users/gonzo/Dropbox/transfer/mac transfer/COVID-19' && git pull && popd", intern=T), sep="\n")
+cat(system(
+  "pushd '../COVID-19' && git pull && popd", intern=T), sep="\n")
 ```
 
 I prefer not to include data files in the git repository as a matter of habit (e.g., data may contain private information yet the repository may be public).
@@ -76,17 +77,17 @@ I include little notes so you can see how I adapted my code to the changing land
 #datacov <- read_csv("/Users/gonzo/Dropbox/transfer/mac transfer/COVID-19/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Confirmed.csv")
 
 datacov <- 
- read_csv("/Users/gonzo/Dropbox/transfer/mac transfer/covid19-analyses/time_series_19-covid-Confirmed.csv")
+ read_csv("time_series_19-covid-Confirmed.csv")
 ```
 
 We read in the two files with world and US cumulative data.
 
-```{r warning=F, message=F}
+```{r warning=F, message=F, linewidth=linewidth}
 #data for World and US county/states are now in separate files
 datacov.World <- 
-  read_csv("/Users/gonzo/Dropbox/transfer/mac transfer/COVID-19/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_global.csv")
+  read_csv("..//COVID-19/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_global.csv")
 datacov.US <- 
-  read_csv("/Users/gonzo/Dropbox/transfer/mac transfer/COVID-19/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_US.csv")
+  read_csv("../COVID-19/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_US.csv")
 ```
 
 <!-- Had trouble getting backticks to display across multipe displays (r viewers, pdf, web browsers so went with html code) -->
@@ -102,7 +103,7 @@ The behavior of the variable names I am showing here follows the default of R on
 colnames(datacov.US)
 ```
 
-```{r echo=longform}
+```{r echo=longform, linewidth=linewidth}
 #fix variable names in US to match World file
 names(datacov.US)[7] <- names(datacov.World)[1]
 names(datacov.US)[8] <- names(datacov.World)[2]
@@ -277,6 +278,7 @@ head(covid.tracking)
 
 #focus just on the 50 states (i.e., drop DC and territories like American Samoa AS)
 covid.tracking <- subset(covid.tracking, covid.tracking$state %in% state.abb)
+covid.tracking$date <- as.Date(as.character(covid.tracking$date), "%Y%m%d")
 ```
 
 ## State-level information
