@@ -1,5 +1,5 @@
 --- 
-title: "Data Analysis Examples Around Covid-19"
+title: "Learning Data Science Using Covid-19 Pandemic Data"
 author: "Richard Gonzalez, University of Michigan (gonzo@umich.edu)"
 date: "`r Sys.Date()`"
 site: bookdown::bookdown_site
@@ -12,7 +12,7 @@ url: http://www-personal.umich.edu/~gonzo/covid19/_public/
 github-repo: https://github.com/gonzoum/covid19-analyses
 description: "Pages to make remote teaching of statistics more interesting during the covid-19 pandemic."
 params:
-  longform: FALSE
+  longform: TRUE
 #params$longform
 #https://bookdown.org/yihui/rmarkdown/params-use.html
 ---
@@ -58,20 +58,22 @@ I have a more [detailed version](http://www-personal.umich.edu/~gonzo/covid19/_b
   
 ```
 
-These notes began as a set of lecture materials to teach advanced quantitative methods and data visualization to graduate statistics in the behavioral sciences at the University of Michigan. The notes are sprinkled with code because one goal is to teach how to conduct these analyses and create the visualizations.  There is another version of these notes that omits much of the code though still retains some of the flavor of how one uses these tools and interprets the output (see the note at the beginning of this page).   If you would like to see the notes from the rest of the graduate statistics course I teach for additional background, visit my [course website](http://www-personal.umich.edu/~gonzo/coursenotes/) that is updated regularly.
+** Disclaimer:  The contents of this website are in draft form.  Edits are conducted daily.** 
 
+These notes began at the beginning of the Covid-19 pandemic as a set of lecture materials to teach advanced quantitative methods and data visualization to graduate statistics in the behavioral sciences at the University of Michigan. I used an earlier version in four lectures during the end of March, 2020. The notes are sprinkled with code because one goal is to teach how to conduct these analyses, create visualizations and interpret results.  There is a version of these notes that omits much of the code though still retains some of the flavor of how one uses these tools and interprets the output (see the note at the beginning of this page).   If you would like to see my more general set of teaching notes from the rest of the year-long graduate statistics course for additional background, visit my [course website](http://www-personal.umich.edu/~gonzo/coursenotes/) that is updated regularly.
 
-## Postscript {-}
+<!-- ::: {.infobox .caution data-latex="{caution}"} -->
+
+<!-- **Note** -->
+
+<!-- Throughout these notes I adapted existing code and examples. Where I borrowed from other people I provide appropriate citation.  I wrote these notes relatively quickly and have not double checked all the code nor have edited the text carefully. I also worked on this in small pieces so there may be inconsistencies or redundancies across pieces, which will eventually be fixed and written in more elegant flowing code. -->
+
+<!-- ::: -->
+
 
 I am not the [Richard Gonzalez](https://www.fiercepharma.com/pharma/abbvie-ceo-gonzalez-nabbed-21-6b-pay-package-year-marked-by-megamerger-humira-decline) who is the CEO of the biopharma company [AbbVie](https://www.abbvie.com/our-company.html?utm_campaign=cc_herenow_2020_rep&utm_medium=psearch&utm_source=google&utm_content=brand%20core&utm_term=abbvie), nor am I the salsa dancer and choreographer [Richard Gonzalez](https://gibneydance.org/event/mixed-flava-contemporary-caribbean-dance/2018-12-02/). 
 
-::: {.infobox .caution data-latex="{caution}"}
 
-**Note**
-
-Throughout these notes I adapted existing code and examples. Where I borrowed from other people I provide appropriate citation.  I wrote these notes relatively quickly and have not double checked all the code nor have edited the text carefully. I also worked on this in small pieces so there may be inconsistencies or redundancies across pieces, which will eventually be fixed and written in more elegant flowing code.
-
-:::
 
 ```{r include=FALSE}
 #in case I switch to pdf and need latex/bibtex

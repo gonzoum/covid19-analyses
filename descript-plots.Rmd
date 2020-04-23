@@ -46,7 +46,7 @@ ggplot() +
 
 You'll notice that some countries like Canada, UK, Australia have multiple points but most countries are represented by only 1 point. This is because the data set we are using has some inconsistencies in reporting either country totals or  state/province totals. This would require further cleaning (e.g., computing country totals for those countries) but I left this in here as a teaching moment of how one needs to be careful working with data sets and consistently double check your assumptions about the structure of the data set you are using. The structure may also change over time so one needs to monitor carefully.
 
-Even more sophisticated is the  [interactive map](https://www.arcgis.com/apps/opsdashboard/index.html#/bda7594740fd40299423467b48e9ecf6) developed at Johns Hopkins (same group that provides the key data we downloaded in Chapter \@ref(intro)), where you can zoom in and out, click on different countries (left panel) and see data for that country on the right panel, etc. A small interactive display of that website is displayed below.
+Even more sophisticated is the  [interactive map](https://www.arcgis.com/apps/opsdashboard/index.html#/bda7594740fd40299423467b48e9ecf6) developed at Johns Hopkins (same group that provides the key data we downloaded in Chapter \@ref(readintro)), where you can zoom in and out, click on different countries (left panel) and see data for that country on the right panel, etc. A small interactive display of that website is displayed below.
 
 ```{r echo=F}
 knitr::include_url("https://www.arcgis.com/apps/opsdashboard/index.html#/bda7594740fd40299423467b48e9ecf6", height="600px")
