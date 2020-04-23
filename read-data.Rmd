@@ -1,5 +1,5 @@
 
-# Reading Data into R {#intro}
+# Reading Data into R {#readintro}
 
 ```{asis echo=!longform}
 ::: {.infobox .caution data-latex="{caution}"}
