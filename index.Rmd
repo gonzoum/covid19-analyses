@@ -1,4 +1,5 @@
 --- 
+#also change title in html code _output.yml
 title: "Learning Data Science Using Covid-19 Pandemic Data"
 author: "Richard Gonzalez, University of Michigan (gonzo@umich.edu)"
 date: "`r Sys.Date()`"

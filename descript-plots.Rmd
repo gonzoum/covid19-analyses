@@ -130,7 +130,6 @@ datacov.ori <-
 allstates <- subset(datacov.ori, `Province/State`%in% states)
 allstates.ori <- allstates
 
-
 allstates.temp2 <- allstates.temp2[order(match(allstates.temp2$`Province/State`,allstates$`Province/State`)),]
 #double check ordering of rows
 #head(cbind(allstates$`Province/State`, allstates.temp2$`Province/State`))

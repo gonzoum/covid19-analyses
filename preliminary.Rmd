@@ -34,7 +34,10 @@ knit_hooks$set(output = function(x, options) {
   hook_output(x, options)
 })
 
+#cache=F to redo the lengthy analyses for new data, otherwise set to T for daily runs
+cache <- T
 ```
+
 
 I organize in one place all the R packages that are used in these notes so they can be easily installed.
 
@@ -96,10 +99,6 @@ p_load("bookdown","readr","tidyverse","rvest","magrittr","stringr","tidycensus",
 When building these files there are some functions that take a long time to complete, like the animations and I don't want to wait each time for the animations to be consructed while I try to debug other aspects of the code.  So here I set cache. Rmarkdown will not run the commands if cache=T but will store the results and reuse them during sequent runs. When I want to have a true new build where everything runs (and can take about 10 minutes) I'll set cache=F.  The cache feature has some capabilities to know when it needs to rerun because a dependency has changed elsewhere in the code.
 
 By putting it here I just have to change the value (T vs F) in one place and elsewhere in the code the cache will be set. This way I don't have to hunt several files for where I need to set cache.
-```
-
-```{r echo=longform}
-cache <- T
 ```
 
 
