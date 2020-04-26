@@ -5,12 +5,15 @@ author: "Richard Gonzalez, University of Michigan (gonzo@umich.edu)"
 date: "`r Sys.Date()`"
 site: bookdown::bookdown_site
 #output: bookdown::gitbook 
-documentclass: book
+documentclass: krantz
+#book
 bibliography: [book.bib, packages.bib]
 biblio-style: apalike
 link-citations: yes
+colorlinks: yes
 url: http://www-personal.umich.edu/~gonzo/covid19/_public/
 github-repo: https://github.com/gonzoum/covid19-analyses
+graphics: yes
 description: "Pages to make remote teaching of statistics more interesting during the covid-19 pandemic."
 params:
   longform: TRUE
@@ -59,7 +62,7 @@ I have a more [detailed version](http://www-personal.umich.edu/~gonzo/covid19/_b
   
 ```
 
-** Disclaimer:  The contents of this website are in draft form.  Edits are conducted daily.** 
+** Disclaimer:  The contents of this website are in draft form.  Changes are made daily.  At this point I am more in "content creation mode" than in careful editing, consistency checks, references, meta-level summaries, etc.  Also, the code is run daily and all plots and tables change accordingly. Sometimes there are peculiar details that emerge for a particular day and I wasn't able to catch them prior to uploading the new day's files. This will eventually stablize as the notes enter their final form.** 
 
 These notes began at the beginning of the Covid-19 pandemic as a set of lecture materials to teach advanced quantitative methods and data visualization to graduate statistics in the behavioral sciences at the University of Michigan. I used an earlier version in four lectures during the end of March, 2020. The notes are sprinkled with code because one goal is to teach how to conduct these analyses, create visualizations and interpret results.  There is a version of these notes that omits much of the code though still retains some of the flavor of how one uses these tools and interprets the output (see the note at the beginning of this page).   If you would like to see my more general set of teaching notes from the rest of the year-long graduate statistics course for additional background, visit my [course website](http://www-personal.umich.edu/~gonzo/coursenotes/) that is updated regularly.
 
