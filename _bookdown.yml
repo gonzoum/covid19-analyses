@@ -1,6 +1,10 @@
 book_filename: "covid19-analyses"
 language:
+  label:
+    fig: "FIGURE "
+    tab: "TABLE "
   ui:
+    edit: "Edit"
     chapter_name: "Chapter "
 delete_merged_file: yes
 #rmd_subdir: TRUE
@@ -11,3 +15,6 @@ rmd_files:  ["index.Rmd", "intro.Rmd", "preliminary.Rmd", "read-data.Rmd", "desc
 output_dir: "_public"
 #output_dir: "_book"
 #bookdown:::opts$get("output_dir")
+
+
+
