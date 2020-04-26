@@ -1,8 +1,5 @@
----
-output:
-  pdf_document: default
-  html_document: default
----
+
+
 # Preliminaries
 
 I want these notes to serve as an example of how to keep your analyses organized and reproducible.  Analysis projects have many common elements, which include gathering data, cleaning and organizing data, preparing descriptive summaries, testing hypotheses, writing reports, and dissemination.  The end product should be a complete pipeline that takes you from soup to nuts with clear documentation.   While these notes are not perfect, they provide one example of how to prepare a workflow.
@@ -19,9 +16,13 @@ library(knitr)
 
 linewidth <- 50
 
-opts_chunk$set(tidy.opts=list(width.cutoff=65),tidy=TRUE)
+options(htmltools.dir.version = FALSE, formatR.indent = 2, 
+        width = 60, digits = 3)
 
-#coupled with linewidth=xx argument to chunk will make R code fit within the width of the page
+opts_chunk$set(tidy.opts=list(width.cutoff=60),tidy=FALSE)
+
+#coupled with linewidth=xx argument to chunk will make R code fit 
+#within the width of the page
 hook_output = knit_hooks$get('output')
 knit_hooks$set(output = function(x, options) {
   # this hook is used only when the linewidth option is not NULL
@@ -34,7 +35,8 @@ knit_hooks$set(output = function(x, options) {
   hook_output(x, options)
 })
 
-#cache=F to redo the lengthy analyses for new data, otherwise set to T for daily runs
+#cache=F to redo the lengthy analyses for new data, 
+#otherwise set to T for daily runs
 cache <- T
 ```
 
@@ -83,8 +85,9 @@ For ease of use it would be better to use the pacman package because it also che
 
 ```{r eval=F, echo=longform, linewidth=linewidth}
 #if pacman isn't installed, then install it and issue library(pacman)
-if(!("pacman" %in% installed.packages()[,"Package"])) 
+if(!("pacman" %in% installed.packages()[,"Package"])) {
   install.packages("pacman")
+}
 library(pacman)
 #double check all the libraries listed above are listed here too
 p_load("bookdown","readr","tidyverse","rvest","magrittr","stringr","tidycensus","ggplot2","gganimate","ggeffects", "scales", 
@@ -145,17 +148,17 @@ multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
     print(plots[[1]])
 
   } else {
-    # Set up the page
-    grid.newpage()
-    pushViewport(viewport(layout = grid.layout(nrow(layout), ncol(layout))))
+  # Set up the page
+  grid.newpage()
+  pushViewport(viewport(layout = grid.layout(nrow(layout), ncol(layout))))
 
-    # Make each plot, in the correct location
-    for (i in 1:numPlots) {
-      # Get the i,j matrix positions of the regions that contain this subplot
-      matchidx <- as.data.frame(which(layout == i, arr.ind = TRUE))
+  # Make each plot, in the correct location
+  for (i in 1:numPlots) {
+  # Get the i,j matrix positions of the regions that contain this subplot
+  matchidx <- as.data.frame(which(layout == i, arr.ind = TRUE))
 
-      print(plots[[i]], vp = viewport(layout.pos.row = matchidx$row,
-                                      layout.pos.col = matchidx$col))
+  print(plots[[i]], vp = viewport(layout.pos.row = matchidx$row,
+                          layout.pos.col = matchidx$col))
     }
   }
 }

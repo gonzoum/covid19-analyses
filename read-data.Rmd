@@ -47,7 +47,7 @@ The script below will switch to the folder I'm keeping the git repository, execu
 
 
 
-```{r}
+```{r echo=F}
 #assuming git has been installed on your machine (e.g., Xcode in mac);
 #this is mac and linux specific; pc may be different unless unix commands have been installed
 
@@ -74,7 +74,6 @@ I include little notes so you can see how I adapted my code to the changing land
 #OLD CODE PRIOR TO 3/23/20
 
 #imagine how difficult it would be to figure out my code with a lot of these obsolete lines with ignore messages; git version control is much better approach
-#datacov <- read_csv("/Users/gonzo/Dropbox/transfer/mac transfer/COVID-19/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Confirmed.csv")
 
 datacov <- 
  read_csv("time_series_19-covid-Confirmed.csv")
@@ -84,10 +83,13 @@ We read in the two files with world and US cumulative data.
 
 ```{r warning=F, message=F, linewidth=linewidth}
 #data for World and US county/states are now in separate files
+
+#path to folder with the data git repository
+path <- "../COVID-19/csse_covid_19_data/csse_covid_19_time_series/"
 datacov.World <- 
-  read_csv("..//COVID-19/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_global.csv")
+  read_csv(paste0(path,"time_series_covid19_confirmed_global.csv"))
 datacov.US <- 
-  read_csv("../COVID-19/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_US.csv")
+  read_csv(paste0(path,"time_series_covid19_confirmed_US.csv"))
 ```
 
 <!-- Had trouble getting backticks to display across multipe displays (r viewers, pdf, web browsers so went with html code) -->
@@ -175,7 +177,7 @@ head(table, 10)
 wiki.corona.counts <- table
 ```
 
-This table is ready to use in analyses.  It differs from the datacov Johns Hopkins data.frame I downloaded in the previous section because in addition to counts of confirmed cases it has number of deaths as well as number recovered.
+This table is ready to use in subsequent analyses.  It differs from the datacov Johns Hopkins data.frame I downloaded in the previous section because in addition to counts of confirmed cases it has number of deaths as well as number recovered.
 
 ## Using APIs
 
@@ -282,9 +284,9 @@ covid.tracking$date <- as.Date(as.character(covid.tracking$date), "%Y%m%d")
 ```
 
 ## State-level information
-[Ken Kollman](https://www.isr.umich.edu/cps/people_faculty_kkollman.html) pointed me to some of these sources.
+[Ken Kollman](https://www.isr.umich.edu/cps/people_faculty_kkollman.html), a political science colleague, pointed me to some relevant sources.
 
-PENDING: here I will download relevant data by state or county that can help me understand the trends. I need hypotheses for this such as population density, rural vs. urban, nature of public transportation offered, etc. I will also gather data around timing of key covid-related policies such as dates each state issued shelter in place rulings, or dates local and state governments issued restrictions on the number of people who could gather (seems some states issues numbers of 250, then 100, then 25, then 10, then 2, then shelter in place).  Lots of potentially interesting stuff. I'm not a political scientist nor a sociologist nor a public health expert nor a policy expert so I don't have a solid scientific bases on which to generate reasonable hypotheses to test, which would guide my thinking on which variables I should get.  I was trained to think this way:  organize your thinking and then seek out the relevant variables to test that thinking.  The modern approach in data science though turns that upside down:  don't worry about hypotheses, just gather as much information as you can conceive of gathering, clean and organize that information, then run it through special algorithms that simplify the complexity. I'll include some examples of machine learning approaches to give you a flavor of what this approach has to offer. 
+It will be helpful to download relevant data by state or county that can help me understand the trends. I need hypotheses to guide my variable search. There are many variables I could collect such as population density, rural vs. urban, nature of public transportation offered, etc. I can also gather data around the timing of key covid-related policies such as dates each state issued shelter-in-place rulings, or dates local and state governments issued restrictions on the number of people who could gather (seems some states initially issued numbers of 250, then 100, then 25, then 10, then 2, then finally shelter-in-place).  I'm not a political scientist nor a sociologist nor a public health expert nor a policy expert so I don't have a solid scientific bases on which to generate reasonable hypotheses to test, which would guide my thinking on which data I should get.  I was trained to think this way:  organize your thinking and then seek the relevant data to test that thinking.  The modern approach in data science though turns that upside down:  don't worry about hypotheses, just gather as much information as you can conceive of gathering, clean and organize that information, then run it through special algorithms that simplify the complexity. I'll include some examples of machine learning approaches to give you a flavor of what this approach has to offer. 
 
 Here is a complete list of [state quarantine and isolation statutes](https://www.ncsl.org/research/health/state-quarantine-and-isolation-statutes.aspx) by the [National Conference of State Legislatures](https://www.ncsl.org/).
 
