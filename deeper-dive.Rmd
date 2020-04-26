@@ -11,15 +11,39 @@ Pending:  I'll plot the data for Georgia by county 3 weeks before the 24th and 3
 This example will illustrate the use of the regression discontinuity (RD) design, though before the casuality police get on my case for not clarifying my assumptions I'll point out that I won't be using this to claim I have estimated the causal effect of social distancing.  I'll illustrate the idea of this design, its characteristic plot and  point to papers where the reader can learn about the various approaches to extracting additional information from this type of research design.
 
 
-```{r warning=F, message=F, eval=F, echo=F}
+```{r warning=F, message=F, echo=longform}
 datacov.US.long <- gather(datacov.US, day, count, `1/22/20`:(names(datacov.US)[ncol(datacov.US)]))
 datacov.US.long$day <- as.Date(datacov.US.long$day, "%m/%d/%y")
 datacov.US.long$day.numeric <- as.numeric(datacov.US.long$day)-18283
 
+#drop two counties because unassigned or out of GA; total 159 counties per wiki 
+#https://en.wikipedia.org/wiki/List_of_counties_in_Georgia
+georgia.df <- subset(datacov.US.long, `Province/State`=="Georgia") %>% filter(!Admin2 %in% c("Out of GA", "Unassigned") )
 
-georgia.df <- subset(datacov.US.long, `Province/State`=="Georgia")
+#all county plot
+#ggplot(subset(georgia.df, day > as.Date("2020/04/1")), aes(day,count, group=Admin2, color=Admin2)) + geom_line() + ggtitle("Georgia counties") 
 
-ggplot(subset(georgia.df, day > as.Date("2020/04/15")), aes(day,count, group=Admin2, color=Admin2)) + geom_line() + ggtitle("Georgia Counties")
+#focus just on counties with cases > 250 as of the compilation of the report
+#red vertical line at 4/24 and blue vertical line at 4/27
+georgia.df.max <- georgia.df %>% group_by(Admin2) %>% mutate(maxcount = max(count,na.rm=T)) %>% ungroup()
+ggplot(subset(georgia.df.max, day > as.Date("2020/04/1") & maxcount>=250), aes(day,count, group=Admin2, color=Admin2)) + geom_line() + ggtitle("Georgia counties with greater than 250 cases")  + geom_vline(xintercept=as.Date("2020/04/24"), color="red")
+
+```
+
+For comparison, I'll pick an adjacent state that has not relaxed their restrictions.  Alabama seems a safe comparison as both South Carolina and Florida have begin partial openings (e.g., Florida opened beaches prior to April 24). One could also examine Tennessee and North Carolina, which also border with Georgia.
+
+```{r warning=F, message=F, echo=longform}
+#drop two counties because unassigned or out of GA; total 159 counties per wiki 
+#https://en.wikipedia.org/wiki/List_of_counties_in_Georgia
+alabama.df <- subset(datacov.US.long, `Province/State`=="Alabama") %>% filter(!Admin2 %in% c("Out of AL", "Unassigned") )
+
+#all county plot
+#ggplot(subset(alabama.df, day > as.Date("2020/04/1")), aes(day,count, group=Admin2, color=Admin2)) + geom_line() + ggtitle("Alabama counties") 
+
+#focus just on counties with cases > 250 as of the compilation of the report
+#red vertical line at 4/24 and blue vertical line at 4/27
+alabama.df.max <- alabama.df %>% group_by(Admin2) %>% mutate(maxcount = max(count,na.rm=T)) %>% ungroup()
+ggplot(subset(alabama.df.max, day > as.Date("2020/04/1") & maxcount>=250), aes(day,count, group=Admin2, color=Admin2)) + geom_line() + ggtitle("Alabama counties with greater than 250 cases")  + geom_vline(xintercept=as.Date("2020/04/24"), color="red")
 
 ```
 
@@ -49,7 +73,7 @@ if we assume that the $R_0$ is relatively small and that people interact randoml
 $$
 a \;\;\mbox{sech}^2 (\kappa_0 + \kappa_1 t)
 $$
-where sech is the hyperbolic secant, its argument is a linear transformation of time t with a slope and intercept denoted by $\kappa$s, and parameter $a$ is a multiplier.  These parameters are each functions of the parameters of the SIR model (the $\beta_1$ and $\beta_2$ from Chapter \@ref(process)) as well as the starting count at time 0.  Let's perform a direct fit to the daily death count, since death is a more appriate outcome for the SIR model.  For this section I'll use the covid.tracking data (see Chapter \@ref(readintro)). We haven't worked much with that data yet so I'll also need to do some data cleaning and formating to be consistent with the other analyses conducted in this book.
+where sech is the hyperbolic secant, its argument is a linear transformation of time t with a slope and intercept denoted by $\kappa$s, and parameter $a$ is a multiplier.  These parameters are each functions of the parameters of the SIR model (the $\beta_1$ and $\beta_2$ from Chapter \@ref(process)) as well as the starting count at time 0. The hyperbolic secant can be reexpresssed in terms of exponentials:  $\mbox{sech} (x) = \frac{2}{\exp^{x} + \exp^{-x}}$ Let's perform a direct fit to the daily death count, since death is a more appriate outcome for the SIR model.  For this section I'll use the covid.tracking data (see Chapter \@ref(readintro)). We haven't worked much with that data yet so I'll also need to do some data cleaning and formating to be consistent with the other analyses conducted in this book.
 
 ```{r message=F, warning=F, results=ifelse(longform, "markup", "hide"), echo=longform}
 #use this package just for sech 
