@@ -362,9 +362,9 @@ Some  issues with residuals as seen in the residual scatterplot against the fitt
 Let's plot  the fitted values of each state.  These are the predicted exponential curves according to the model. Note that these are model estimates, not a plot of the actual data.
 
 ```{r fig.cap="Exponential Function Estimated through Nonlinear Mixed Model Regression", echo=longform}
-#alternative approach to getting this plot
-predmatnonlin <- data.frame(day.numeric=rep(c(0:max.day.numeric),50),state.abb=rep(rownames(coef(out)),each=max.day.numeric+1))
-predmatnonlin$prediction <- predict(out, list(day.numeric=predmatnonlin$day.numeric, state.abb=predmatnonlin$state.abb),level=1)
+predmatnonlin <- data.frame(day.numeric=rep(c(0:max.day.numeric),50),state.abb=rep(rownames(coef(out.exponential)),each=max.day.numeric+1))
+predmatnonlin$prediction <- predict(out.exponential, list(day.numeric=predmatnonlin$day.numeric, state.abb=predmatnonlin$state.abb),level=1)
+predmatnonlin.exponential <- predmatnonlin
 nonlinreg <- ggplot(predmatnonlin, aes(day.numeric,prediction,group=state.abb, color=state.abb )) +  geom_line()   
 nonlinreg  
 ```
@@ -374,6 +374,7 @@ nonlinreg
 nydf <- predmatnonlin[predmatnonlin$state.abb=="New York",]
 
 nydf$percent <- allstates.long$percent[allstates.long$state.abb=="New York"]
+nydf.exponential <- nydf
 ggplot(nydf, aes(day.numeric,prediction,group=state.abb, color=state.abb )) + geom_line() + geom_point(aes(x=day.numeric, y=percent), col="blue") + ggtitle("New York: Actual percentage in blue; exponential growth in red")
 ```
 
@@ -517,6 +518,7 @@ Below is the plot of predicted curves according to the model. Notice that the fi
 ```{r fig.cap="Logistic Growth Model", echo=longform}
 predmatnonlin <- data.frame(day.numeric=rep(c(0:max.day.numeric),50),state.abb=rep(rownames(coef(out.logistic)),each=max.day.numeric+1))
 predmatnonlin$prediction <- predict(out.logistic, list(day.numeric=predmatnonlin$day.numeric, state.abb=predmatnonlin$state.abb),level=1)
+predmatnonlin.logistic <- predmatnonlin
 nonlinreg.logistic <- ggplot(predmatnonlin, aes(day.numeric,prediction,group=state.abb, color=state.abb )) +  geom_line()   
 nonlinreg.logistic
 ```
@@ -527,6 +529,7 @@ Here is the predicted curve for New York. We know the residuals suggest the mode
 nydf <- predmatnonlin[predmatnonlin$state.abb=="New York",]
 
 nydf$count <- allstates.long$count[allstates.long$state.abb=="New York"]
+nydf.logistic <- nydf
 ggplot(nydf, aes(day.numeric,prediction,group=state.abb, color=state.abb )) + geom_line() + geom_point(aes(x=day.numeric, y=count), col="blue") + ggtitle("New York: Actual counts in blue; logistic growth in red")
 ```
 
@@ -581,6 +584,7 @@ nydf2$count <- allstates.long$count[allstates.long$state.abb=="New York"]
 ggplot(nydf2, aes(day.numeric,prediction,group=state.abb, color=state.abb )) + geom_line() + geom_point(aes(x=day.numeric, y=count), col="blue") + ggtitle("New York: Actual counts in blue; logistic growth in red")
 ```
 
+### Additional Predictors: Example with State-Level Poverty Rate
 
 Now that we have a reasonable model, let's see how we can include predictors to the model.  One way to include predictors is to see if the parameters of the logistic growth regression are influenced by the predictor, e.g. do the state rate parameters vary according to the predictor.   We can accomplish this by, say, having the rate for each state be a linear function of the predictor, as in rate = $\beta_0$ + $\beta_1$ predictor + $\epsilon$.  Our current model is merely rate = $\beta_0$ + $\epsilon$ where the intercept is the fixed effect (same value for each state) and the "$\epsilon$" is the random effect (a term associated with each state).
 
@@ -636,9 +640,9 @@ par(mfcol=c(1,1))
 ```
 
 
-We'll have to use more sophisticated approaches to model these data given that assuming a nonlinear model with normally distributed parameters may not be tenable.  
+We'll have to use more sophisticated approaches to model these data given that assuming a nonlinear model with normally distributed parameters may not be tenable for these data.  
 
-The overall point here is that testing whether the data fit an exponential growth model,  a logistic growth model, or various other plausible growth trajectories is not merely a modeling fitting exercise although some people treat it as such.  There is much diagnostic testing one needs to do in order to figure out in what ways is a model working well and where it is messing up.  The model selection game is more complex than merely selecting the model that has the best fit value on a standard metric such as AIC or BIC.  To me, there is deeper insight that emerges from understanding the type of growth that is underlying the processes under investigation. We are in a better position to understand how to intervene if we understand the growth process that underlies a data set.  
+The overall point is that testing whether the data fit an exponential growth model,  a logistic growth model, or various other plausible growth trajectories is not merely a modeling fitting exercise. There is much diagnostic testing one needs to do in order to figure out in what ways is a model working well and where it is messing up.  The model selection game is more complex than merely selecting the model that has the best fit value on a standard metric such as AIC or BIC or predictive accuracy.  To me, there is deeper insight that emerges from understanding the type of growth that is underlying the processes under investigation. We are in a better position to understand how to intervene if we understand the growth process that underlies a data set.  Just because a model achieves relatively good performance on measures of fit does not imply that the model is following the same mechanisms of the processes that generated the actual data.  This is where the diagnostic tests come in to help us diagnose such situations.  
 
 To get deeper in such process models of growth, we need to develop some additional machinery including differential equations, which are equations that govern changes over time.  I'll briefly touch on these models in the next chapter.
 
@@ -734,19 +738,19 @@ ggplot( data.temp, aes(x=day,y=daily)) +  geom_bar(stat="identity") +
 
 The following involves a relatively large chunk of code. Other implementations of deep learning networks require even more code.  The basic idea is that we put all our data into one data frame, then partition it into testing data and training data. We want to be sure we partition early so as not to contaminate the testing data with any information that is in the testing data. For example, if we compute a mean we may inadvertently compute a mean for all the data (testing and training), and then if we use that mean in training we have contaminated the training data with information from the testing data.  
 
-The only information I have to work with so far is the number days and the previously observed daily counts; that is, as of this point in the notes we don't have access to other possible predictors of a state's daily count.  Here, "previously observed" means if I'm at time t then any data prior to t is "previous" data that I have but any data after t has not occurred yet as far as prediction goes. In the case of data I'm downloading, t may be say 3/23/20 so from that perspective any data after 3/23/20 cannot be used because as of that time point t I didn't know of any data after t.  Part of the machine learning algorithm works by varying t to different days, repeatedly feeding those sequences of data to the model and trying to learn the patterns by figuring out what it is getting wrong, making adjustments in the model's parameters (the weights and bias terms) and  making new predictions, and iterating.
+The only information I have to work with so far is the number days and the previously observed daily counts; that is, as of this point in these notes we don't have access to other possible predictors of a state's daily count.  Here, "previously observed" means if I'm at time t, then any data prior to t is "previous" data that I have but any data after t has not occurred. In the case of data I'm downloading, t may be, say, 4/10/20 so from that perspective any data after 4/10/20 cannot be used because as of that time point t I don't know of data after t.  Part of the machine learning algorithm works by varying t to different days, repeatedly feeding those sequences of data to the model and trying to learn the patterns by figuring out what it is getting wrong, making adjustments in the model's parameters (the weights and bias terms) and  making new predictions, and iterating that process.
 
-The rest of the code is creating daily counts and several features to use as predictors. We don't have a rich set of predictors here so I created some from day, so I'm using day, day$^2$ and day$^3$ (of course, mean centering day before computing the higher order terms). I created a predictor of how much daily change there was (e.g., the count at t minus the count at t - 1). This serves as a slope estimate of change (a first order difference) but it is the slope one time point back as I don't know the current time points count yet.  I also created a "difference of difference" (or second order difference analogous to acceleration, or how the change is changing) to measure how much the slope is changing from day to day. In other words how different is the change today from the change we saw yesterday.  This process of creating new variables from existing variables is called "feature engineering."
+The rest of the code is creating daily counts and several features to use as predictors. We don't have a rich set of predictors set up yet so I created some from the day variable. I will use day, day$^2$ and day$^3$ (of course, mean centering day before computing the higher order terms). I created a predictor of how much daily change there was (e.g., the count at t minus the count at t - 1). This serves as a slope estimate of change, which is a first order difference because I'm working in discrete time (days); technically, it is a secant rather than the slope (which would correspond to the tangent).  I also created a "difference of difference" (or second order difference analogous to acceleration, or how the change is changing) to measure how much the slope is changing from day to day. In other words how different is the change today from the change we saw yesterday.  This process of creating new variables from existing variables is called "feature engineering."
 
-This model has 6 inputs:  day, day$^2$, day$^3$, count, count difference, and count second order difference. I currently have just have a few units in a single hidden layer, and one unit in the output layer.  Of course, to make this more interesting I could add many more predictors including state-level and daily information.
+This model has 6 inputs:  day, day$^2$, day$^3$, count, count difference, and count second order difference. I currently have just have a few units in a single hidden layer, and one unit in the output layer.  Of course, to make this more interesting I could add many more predictors including state-level and daily information (e.g., measures of compliance to social distancing measures; weather, which could affect people's behavior going outside; changes in a state's social distancing policy; etc.).
 
 ```{asis echo=longform}
 So, overall the long section of code is because we have to do some work to put the data in the right format for machine learning to do its magic.  
 ```
 
-I'll be the first to acknowledge that this is just for demonstration purposes. Our data set is way, way too small to have any chance of estimating meaningful machine learning models, I created a kludgy set of predictors (aka features) without much thought, I haven't included more predictors to the model and I've only focused on number of positive tests (e.g., a better demonstration of machine learning methods would be to use postive testing rates as predictors of subsequent death rates).
 
-In the figure below the red dots are the actual daily cases in New York.  The green curve is what the machine learning model learned. I intentionally over trained it. The last day shows the prediction by the machine learning model in solid blue and the actual in solid red.  
+
+In the figure below the red dots are the actual daily cases in New York.  The green curve is what the machine learning model learned. I intentionally over trained the model. The last day shows the prediction by the machine learning model in solid blue and the actual in solid red.  
 
 ```{r cache=F, warning=F, message=F, echo=longform, results=ifelse(longform, "markup", "hide")}
 #set.seed(03302020)
@@ -808,9 +812,9 @@ Y <- array(sc(time.series.day.counts[-c(1:3)]), dim=c(1,nrow(data.mat),1))
 #batchsize should not be greater than the size of the training set
 model <- trainr(Y = Y,
                 X = X,
-                learningrate = .25, momentum=.8, batchsize=20,
-                hidden_dim = 8, use_bias=T,
-                numepochs = 2500, network_type="rnn")
+                learningrate = .1, momentum=.1, batchsize=4,
+                hidden_dim = c(3), use_bias=T,
+                numepochs = 250, network_type="rnn")
 
 # Predicted values
 Yp <- predictr(model, X)
@@ -835,7 +839,7 @@ plot(data$days[-c(1:3, length(data$days))], time.series.day.counts[-c(1:3)] , co
 points(data$days[length(data$days)], Yp.new,col = 'blue' ,pch=19)
 points(data$days[length(data$days)], diff(data$counts)[nrow(data)-1],col = 'red' , pch=19)
 lines(data$days[-c(1:3)], c(dv.Y,Yp.new),col="green")
-legend(c(0,13),c(max(diff(data$counts)),max(diff(data$counts))-2000) ,legend=paste("Last Day: \n difference between predicted  (blue) and actual  (red):",round(Yp.new-diff(data$counts)[nrow(data)-1],0)),cex=.5)
+legend(c(0,22),c(max(diff(data$counts)),max(diff(data$counts))-1500) ,legend=paste("Last Day: \n difference between predicted  (blue) and actual  (red):",round(Yp.new-diff(data$counts)[nrow(data)-1],0)),cex=.5)
 abline(v=nrow(data)-.5)
 text(15,0,"training")
 text(nrow(data)+.5,0,"test")
@@ -844,11 +848,13 @@ text(nrow(data)+.5,0,"test")
 #plot(colMeans(model$error), type="l")
 ```
 
-There are more diagnostics to consider such as error rate and we can iterate over the tuning parameters to find optimal values that give good predictive validity without overfitting.  Note that between day 25 and 40 the overall "trend" of the open red circles is relatively flat (as an average) but the daily variability is increasing.  The current set of predictors I'm  using in this RNN doesn't have the ability to capture changes in the variability.  This is one clue for additional predictors (features, see next subsection) that could be added to the model.  This could be an interesting part of the story and something that can be addressed not only with machine learning models but also for the other models we considered in this chapter.  Models that are not capturing this change in variance are possibly missing something important about the underlying process (which could just be something as simple as not all juristictions in New York state are reporting daily but nonetheless an important property to understand if we want to use these approaches to make forecasts).  We could check whether this increasing variance occurs in other states and at different levels of analysis such as the county level. We could check whether this increase in variance is consistent with a multiplicative error model where error. The point is that there is a potential signal here that our current models are not capturing, and we need to figure out whether we need to move to a different class of models or whether this heterogeneity is due to a simple factor that can be easily addressed. 
+I'll be the first to acknowledge that this example is just for demonstration purposes. Our data set is way, way too small to have any chance of estimating meaningful machine learning models, I created a kludgy set of predictors (aka features) without much thought, I haven't included more predictors to the model and I've only focused on number of positive tests (e.g., a better demonstration of machine learning methods would be to use postive testing rates as predictors of outcomes such as subsequent death rates).
 
-Note that this increasing variance was not easy to detect in the cumulative plots and models on cumulative data such as the log linear, exponential and logistic models we covered earlier in this chapter.  If you go back and look at those plots, even the ones using the curve fitting spline methods, they show systematic "under and over the curve" errors consistent with what we're seeing in the incidence plot.  The increasing variance is there but just difficult to spot. Sometimes converting data to different forms, such as cumulative and incidence forms, helps highlight different aspects of the same data.  It is not easy to see in the barplot of the New York incidence presented at the beginning of the RNN section. It is often useful to cross-check one's interpretation with different model forms and plots.
+There are more diagnostics to consider such as error in prediction and we can iterate over the tuning parameters to find optimal values that give good predictive validity without overfitting.  Note that between day 25 and 40 the overall "trend" of the open red circles is relatively flat (as an average) but the daily variability is increasing.  The current set of predictors I'm  using in this RNN doesn't have the ability to easily capture changes in the variability.  This is one clue for additional predictors (features, see next subsection) that could be added to the model.  This could be an interesting part of the story and something that can be addressed not only with machine learning models but also for the other models we considered in this chapter.  Models that are not capturing this change in variance are possibly missing something important about the underlying process (which could just be something as simple as not all juristictions in New York state are reporting daily but nonetheless an important property to understand if we want to use these approaches to make forecasts).  We could check whether this increasing variance occurs in other states and at different levels of analysis such as the county level. We could check whether this increase in variance is consistent with a multiplicative error model where error (the "plus $\epsilon$" term we discussed earlier) could provide a clue to the underlying process. The point is that there is a potential signal here that our current models are not capturing, and we need to figure out whether we need to move to a different class of models or whether this heterogeneity is due to a simple factor that can be easily addressed. 
 
-There are many other approaches that fall under the large machine learning umbrella, these include extensions of RNNs such as long short-term memory deep learning models that can learn patterns further back in time than simple RNNs, general additive models with penalized smoothers, genetic algorithms,  and symbolic regression as well as several packages in R to compute these methods. Overall, I was underwhelmed by the effort.  Some of the R packages gave error messages even running the very examples supplied in the package or they made strange predictions.
+Note that this increasing variance was not easy to detect in the cumulative plots and models on cumulative data such as the log linear, exponential and logistic models we covered earlier in this chapter.  If you go back and look at those plots, even the ones using the curve fitting spline methods, they show systematic "under and over the curve" errors consistent with what we are seeing in the incidence plot.  The increasing variance is there but just difficult to spot in the way we examined these data previously. Sometimes converting data to different forms, such as cumulative and incidence forms, helps highlight different aspects of the same data.  It is not easy to see in the barplot of the New York incidence presented at the beginning of the RNN section. It is often useful to cross-check one's interpretation with different model forms and plots.
+
+There are many other approaches that fall under the large machine learning umbrella, these include extensions of RNNs such as long short-term memory deep learning models that can learn patterns further back in time than simple RNNs, general additive models with penalized smoothers, genetic algorithms,  and symbolic regression as well as several packages in R to compute these methods. Overall, I was underwhelmed by the effort so far.  Some of the R packages gave error messages even running the very examples supplied in the package or they made strange predictions.
 Part of the issue is that we don't have enough data to  allow these machine learning methods to shine. 
 
 ### Feature engineering
@@ -859,7 +865,7 @@ The concept of feature engineering is much like entering linear, quadratic, cubi
 
 As a simple illustration of feature extraction,  here is the output of the daily count variable for each of the 50 states.
 
-```{r warning=F, message=F, echo=longform}
+```{r warning=F, message=F, echo=longform, results="hide"}
 #since this is a package I'm just using here for illustration I'll read it from github and load it here rather than in preliminary.Rmd;
 #if you want to download just uncomment the next line
 #devtools::install_github("nelsonroque/tsfeaturex")
@@ -867,18 +873,20 @@ library(tsfeaturex)
 
 #create just a submatrix of the allstates.long data frame
 tsdat <- allstates.long[,c("day.numeric", "state.abb", "count")]
-out.featurex <- extract_features(tsdat, group_var="state.abb", value_var="count" , features="all", verbose=F)
+out.featurex <- extract_features(tsdat, group_var="state.abb", 
+              value_var="count", features="all", verbose=F, return_timing=F)
 
 #list of features computed by tsfeaturex for each state
 names(out.featurex)
 ```
 
-```{r echo=longform, eval=longform}
+```{r echo=longform}
 #example for just the median
 head(out.featurex$f.median)
 
 #double check we get the median if we had computed it by hand
-median(allstates.long$count[allstates.long$state.abb == c("Alaska")], na.rm=T)
+#median(allstates.long$count[allstates.long$state.abb == 
+#                                        c("Alaska")], na.rm=T)
 
 ```
 
