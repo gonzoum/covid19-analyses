@@ -689,7 +689,151 @@ temp %>%   ggplot(aes(x=day.numeric, y=fit)) + geom_point(data=subset(temp,day.n
 
 ## Bayesian Estimation of Nonlinear Regression: Adding value to prediction and uncertainty
 
-Pending: illustrate use of Bayesian nonlinear regression modeling to estimate prediction uncertainty, allow for more general models than the standard regression approaches described earlier in this chapter and highlight some of the issues with the standard assumptions for random effects modeling that can be examined more easily in the Bayesian context.
+I will illustrate the use of Bayesian nonlinear regression modeling to estimate prediction uncertainty. The Baysian approach also allows for more general models than the standard regression approaches described earlier in this chapter, these include expanding the assumptions limitations of the classic approach.  For example, within a Bayesian approach one can include predictors of the variance terms, which is not easy to do in the classic setting. This could be useful, for example, if a predictor influences not only the value of a random effect parameter but also its variance. Or, we may be able to do a better job of developing models that are more appropriate for the count data we are using throughout these notes.  We know that a normal distribution can provide a reasonable approximation to count data distributions but there may be cases, such as the present nonlinear random effects case, where that approximation breaks down and we would be better off modeling the count distribution directly.  Another example of something that is difficult to do in the classical framework is dealing with distribution of random effects that do not follow a normal distribution. Earlier we saw that there may be two clusters of states and that the joint distribution of random effect parameters appears to be skewed.  This makes suspect inferences based on random effects that assume a joint normal distribution. These nonstandard cases can be handled relatively easy in the Bayesian framework.
+
+I co-wrote an [introductory chapter](http://www-personal.umich.edu/~gonzo/papers/feinberg-gonzalez-2012-bayesian.pdf) on Bayesian statistics with [Fred Feinberg](https://michiganross.umich.edu/faculty-research/faculty/fred-feinberg) that highlights some of the advantages and disadvantages of the Bayesian framework.  For a complete book on Bayesian statistics I very much like [Gelman et al. Bayesian Data Analysis](https://www.amazon.com/Bayesian-Analysis-Chapman-Statistical-Science-ebook/dp/B00I60M6H6/ref=sr_1_2?dchild=1&keywords=Gelman+Bayesian+statistics&qid=1587941657&sr=8-2).  Other textbooks include [Kruschke's Doing Bayesian Data Analysis](https://www.amazon.com/Doing-Bayesian-Data-Analysis-Tutorial-ebook/dp/B00PYZ2VR6/ref=sr_1_6?dchild=1&keywords=Krusce+bayesian+statistics&qid=1587941724&sr=8-6).
+
+My single Bayesian example here will take a problem that was extremely difficult in what we did earlier but is relatively easy to do in the Bayesian context:  put intervals (or, as a Bayesian would say, credible intervals because the interpretation is slightly different than a standard confidence interval) around predictions form a nonlinear random effects regression model.  This is an important detail that the classical approach has a difficult time addressing, as I mentioned in earlier subsections of this chapter when I wasn't able to establish the uncertainty around the predictions.  While uncertainty intervals around the parameter estimates are possible in the classical approach, computing error bars around the prediction interval in a random effects nonlinear model is not straightforward. 
+
+I'll follow the same modeling implementation as used earlier. The brm() function in the [brms](https://cran.r-project.org/web/packages/brms/index.html) package provides a convenient wrapper to the Stan Bayesian modeling using typical R commands. I'll follow a similar set of assumptions as I did before (e.g., normally distributed random effects using relatively "flat" priors).  The computation takes over four hours on my desktop computer so for now I'll set the iteration to 2000 with 4 chains, which are the default settings.  When these notes are complete and I'm no longer running the code each evening, I will increase the number of iterations, say, to 10000 and vary some of the other computational details to produce more stable estimates. Experts in Bayesian analysis will see some issues with the diagnostic plots I show but I'm sure many will agree with my decision to keep things relatively quick for now in this draft form.
+
+
+```{r message=F, warning=F, echo=longform, cache=cache, eval=F}
+#once working correctly move these library calls to prelim file
+#continue to use save trick (maybe cache) to minimize computation time
+library(brms)
+library(bayesplot)
+library(tidybayes)
+fit_loss <- brm(
+  bf(count ~ asymp / (1 + exp(b1*(liftoff-day.numeric))),
+     asymp ~ 1 + (1|state.abb), b1 ~ 1,
+     liftoff ~ 1 + (1|state.abb),
+     nl = TRUE),
+  data = allstates.long, family = gaussian(),
+  prior = c(
+    prior(normal(15000, 40000), nlpar = "asymp"),
+    prior(normal(40, 40), nlpar = "liftoff"),
+    prior(normal(.2, .5), nlpar = "b1", lb=0)
+    ), iter=2000,
+  control = list(adapt_delta = 0.95)
+)
+saveRDS(fit_loss, file="fitloss.RDS")
+```
+
+```{r message=F, warning=F, echo=longform}
+#put libs here again
+library(brms)
+library(bayesplot)
+library(tidybayes)
+#in interest of time just read in the saved object 
+#currently using data through 4/22/20 in what I saved
+fit_loss <- readRDS("fitloss.RDS")
+
+summary(fit_loss)
+
+plot(fit_loss, N = 3, ask = FALSE)
+pairs(fit_loss)
+
+
+plot(conditional_effects(fit_loss)) 
+```
+
+```{r eval=F, echo=F}
+#need to fix, interals are too narrow
+#another plotting approach
+int<- 1:100
+out.predict <- predict(fit_loss, newdata=data.frame(state.abb=rep("Michigan",max(int)), day.numeric=int), re_formula=NULL)
+temp <-data.frame(day.numeric=int, out.predict)
+ggplot(temp) + 
+  geom_line(aes(day.numeric, Estimate)) +
+  geom_ribbon(aes(day.numeric, ymin = Q2.5, ymax = Q97.5), alpha = .2) +
+  geom_point(data=midf,aes(x=day.numeric, y = count))+ ggtitle("Michigan")
+
+#ggplot(temp, aes(day.numeric, Estimate)) + geom_smooth(aes(ymin=Q2.5, ymax=Q97.5), stat="identity") 
+  
+#another apporaoch using tidybayes
+grid <- allstates.long %>%
+  group_by(state.abb) %>%
+  tidyr::expand(day.numeric = modelr::seq_range(day.numeric, n = 80, expand=.5, pretty=T)) %>%
+  ungroup()
+
+fits <- grid %>%
+  add_predicted_draws(fit_loss, n = 200, re_formula=NULL, dpar=T)
+#changed fitted to predicted
+
+ggplot(subset(allstates.long, state.abb %in% c("New York","Michigan"))) +
+  aes(x = day.numeric, y = count) +
+  geom_line(
+    aes(group = interaction(state.abb, .draw), y = .prediction),
+    data = subset(fits, state.abb %in% c("New York","Michigan")), alpha = .3) +
+  geom_point(color = "red") +
+  facet_wrap("state.abb")
+
+library(RColorBrewer)
+ggplot(subset(allstates.long, state.abb %in% c("New York","Michigan"))) +
+  aes(x = day.numeric, y = count) +
+  geom_point(color = "red") + stat_lineribbon(data=subset(fits, state.abb %in% c("New York","Michigan")), aes(y=.prediction), .width = c(.99, .95,.80, .50), alpha=1/4, color = brewer.pal(5, "Blues")[[5]]) +
+  facet_wrap("state.abb") 
+
+#might be a scaling issue where band is wider but scale of NY counts makes it seem too narrow
+#still count is 3000 off
+ggplot(subset(allstates.long, state.abb %in% c("Michigan"))) +
+  aes(x = day.numeric, y = count) +
+  geom_point(color = "red") + stat_lineribbon(data=subset(fits, state.abb %in% c("Michigan")), aes(y=.prediction), .width = c(.95,.80, .50), alpha=1/4, color = brewer.pal(5, "Blues")[[5]]) +
+  scale_fill_brewer() + facet_wrap("state.abb") 
+
+#for add_fitted_draws
+ggplot(subset(allstates.long, state.abb %in% c("New York","Michigan"))) +
+  aes(x = day.numeric, y = count) +
+  geom_line(
+    aes(group = interaction(state.abb, .draw), y = .value),
+    data = subset(fits, state.abb %in% c("New York","Michigan")), alpha = .3) +
+  geom_point(color = "red") +
+  facet_wrap("state.abb")
+
+```
+
+```{r echo=F, eval=F}
+#some additional plots for reference; may use later
+
+#plot all 50 states separately; too crunched up
+conditions <- data.frame(state.abb = unique(allstates.long$state.abb))
+rownames(conditions) <- unique(allstates.long$state.abb)
+me_loss <- conditional_effects(
+  fit_loss, conditions = conditions,
+  re_formula = NULL, method = "predict"
+)
+plot(me_loss, ncol = 5, points = TRUE)
+
+#just michigan, error bars seem too narrow
+conditions <- data.frame(state.abb = c("Michigan", "New York"))
+rownames(conditions) <- c("Michigan", "New York")
+me_loss <- conditional_effects(
+  fit_loss, conditions = conditions,  
+  re_formula = NULL, method = "posterior_predict"
+)
+plot(me_loss, ncol = 5, points = TRUE)
+
+pp_check(fit_loss)
+
+#useful examples
+#https://cran.r-project.org/web/packages/brms/vignettes/brms_nonlinear.html
+#https://rpubs.com/tjmahr/bayesian-nlmer
+#https://rstudio-pubs-static.s3.amazonaws.com/154568_f7f4815a852646ebbd6a6a4ced38b62f.html
+#https://rpubs.com/tjmahr/bayesian-nlmer
+#https://cran.r-project.org/web/packages/brms/vignettes/brms_multilevel.pdf
+#https://mjskay.github.io/tidybayes/articles/tidy-brms.html
+#stan based prophet
+#https://research.fb.com/prophet-forecasting-at-scale/
+
+#need to figure out if the multimodes are real, or something else such as the model has mulitple likelihood peaks (check with the hessian); could run on simulated data
+
+#get correlated random effects in nonlinear working
+
+
+
+
+```
 
 ## Dynamic Systems Modeling
 
