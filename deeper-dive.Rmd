@@ -87,6 +87,9 @@ a*sech(b1*d + b0)^2
 #use covid tracking data set; start at march 9 and create day.numeric as before
 covid.tracking.new <- covid.tracking %>% subset(date>as.Date("2020-03-9", "%Y-%m-%d"))
 covid.tracking.new$day.numeric <- as.numeric(covid.tracking.new$date)-18330
+
+#temporary fix on 4/27/20 one missing code came up so I'll set it to 0
+covid.tracking.new$deathIncrease <- ifelse(is.na(covid.tracking.new$deathIncrease),0,covid.tracking.new$deathIncrease)
 ```
 
 ```{r messages=F, warnings=F, results="hide", echo=longform}
