@@ -295,7 +295,7 @@ coord_cartesian(clip = 'off') + scale_x_date(limits=as.Date(c("2020-03-09", as.c
 
 This pattern is quite remarkable. The states appear to have similar slopes on this log plot. They vary in intercept, but that reflects when the state started reporting positive cases.  It seems states are on a similar growth trajectory, but some states are further along (higher intercepts) than other states.  That the log transformation of the Y axis converted these curves into approximate lines is consistent with the underlying pattern of these data following an exponential model. But we could argue that the slight curvature away from a straight line goes against an exponential growth process.  I'll say more about this in the next chapter where I'll cover the exponential more directly, both in its log linear form as in these graphs as well as through nonlinear regression models.
 
-## Animated Map of US
+### Animated Map of US
 
 Here is the animation of the US.  This map needs work as Alaska and Hawaii outlines are not printed (their data points appear on the left side roughly where the states would be on the map).  I'll need to do some coding to create an inset for Alaska and Hawaii (possible clue to inset: https://stackoverflow.com/questions/49523375/graphing-lat-long-data-points-on-us-map-50-states-including-alaska-hawaii
 
@@ -389,9 +389,58 @@ ggplot(allstates.long) +  borders("usa", colour = "gray90", fill = "gray85") +
   transition_time(day) + ease_aes('linear')
 ```
 
+### US county-level plots
+
+We can move to a different level of resolution with county-level data. 
+I used the log10 scale on the number of positive tests for each US county. White represents both counts of 0 and counts of 1.  This plot uses count and not percentage of the county population.
+
+```{asis echo=longform}
+For this plot I switched from the package I used earlier to the urbnmapr package.  This package needs to be downloaded from github. The first line in the chunk below (commented out) shows the call to download.   This package uses [FIPS](https://en.wikipedia.org/wiki/FIPS_county_code) rather than longitude and latitude, which makes it slightly easier to work with maps, including shading the entire region and putting Alaska and Hawaii as insets.
+```
+
+```{r echo=longform}
+#devtools::install_github("UrbanInstitute/urbnmapr")
+library(urbnmapr)
+
+#get county level data
+newmap.US <- datacov.US[,c(1:11,dim(datacov.US)[2])]
+recent.col <- dim(newmap.US)[2]
+
+#set up the map
+counties <- get_urbn_map(map="counties",sf=T)
+counties$FIPS <- as.numeric(counties$county_fips)
+counties <- counties %>% left_join(newmap.US, by=c("FIPS"))
+
+#which column contains the counts
+current.total <- which(names(counties)==names(newmap.US)[recent.col])
+
+#compute log10 of counts
+counties$logcount <- log10(c(counties[,current.total])[[1]])
+counties$logcount <- ifelse(is.finite(counties$logcount), counties$logcount, 0)
+
+#here are the plot commands
+counties %>% ggplot() +
+  geom_sf(mapping = aes(fill = logcount),
+          size = 0.25, color="white") +
+ scale_fill_gradient(low="white", high="blue", 
+                     limits=range(counties$logcount,finite=T), oob=squish) +
+  coord_sf(datum = NA) + ggtitle(paste0(
+    "County log10 totals (",names(newmap.US)[recent.col],
+    "); white represents counts of 0 and 1"))
+```  
+
+
+```{exercise}
+Download the county-level population data from the US census following the example in Chapter \@ref(readintro) (see help in the ?fips_codes function in the tidycensus package). Merge these data with the counties data.frame used above. Compute the percentage of the county population that tests positive. Redraw the US map using the population percentages. You may find it helpful to replace the scale_fill_gradient command with something like scale_fill_gradientn(labels = scales::percent) to handle percentages more naturally.
+```
+
+```{exercise}
+Animate the county-level plot using the previous US animations as a template.
+```
+ 
 ## Incidence Plots {#incidenceplots}
 
-It is common with these type of time series data to work with what are called first order differences. Rather than look at cumulative counts you look at day to day differences in the cumulative counts, or equivalently, the number of new cases each day.  This is what give rise to the "curves" when people talk about "flattening the curve". Think of this as daily counts and we merely compute histograms.  This section was adapted from [Tim Chruches Blog](https://timchurches.github.io/blog/posts/2020-02-18-analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1/).
+It is common with these type of time series data to work with what are called first order differences. Rather than look at cumulative counts you look at day to day differences in the cumulative counts, or equivalently, the number of new cases each day.  This #is what give rise to the "curves" when people talk about "flattening the curve". Think of this as daily counts and we merely compute histograms.  This section was adapted from [Tim Chruches Blog](https://timchurches.github.io/blog/posts/2020-02-18-analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1/).
 
 Here is the daily incidence rate using the same US data (starting on 3/10/20 and not including DC and the territories).   
 
