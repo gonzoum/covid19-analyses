@@ -320,7 +320,7 @@ For these estimations I'm using percent of positive cases in the state (count/po
 
 ```{r message=F, warning=F, results=ifelse(longform, "markup", "hide"), echo=longform}
 out <- nlme(percent ~ richfu(day.numeric, l=0, rate,y,b1=1), fixed = rate+y~1,
-            random =  rate+y ~1, data=na.omit(allstates.long.new),start=c( rate=1.2,y=.01), verbose=T, control=nlmeControl(msMaxIter=500,opt="nlminb",pnlsTol=.01,msVerbose=T,minScale=.01) )
+            random =  rate+y ~1, data=na.omit(allstates.long.new),start=c( rate=1.05,y=.01), verbose=T, control=nlmeControl(msMaxIter=500,opt="nlminb",pnlsTol=.01,msVerbose=T,minScale=.01) )
 ```
 
 ```{r message=F, warning=F, echo=longform}
@@ -434,7 +434,7 @@ plot(0:max.day.numeric, richfu.logistic(0:max.day.numeric, 3880, 133.45, -.332),
 
 Let's fit the logistic function to these data.  Note that I do not use state population size in this model.  
 ```{asis echo=longform}
-I could incorporate it by including a weight parameter (weights=varIdent(form= ~1|state.abb)), which allows each state to have its own residual variance, or change the dependent variable from raw counts to, say, per capita counts.  I'll leave that as an exercise to see whether it changes the results. If you go the unequal residual variance route, you can use the anova command to compare the fits, which is essentially an increment in fit test comparing the reduced model (e.g., one residual variance for all states) to a full model (e.g., each state has its own residual variance). The command would be anova(reduced, full) where you replace reduced and full with the name of the object you saved the nlme (e.g., reduced = out.logistic in the example below).
+I could incorporate it by including a weight parameter (weights=varIdent(form= ~1|state.abb)), which allows each state to have its own residual variance, or change the dependent variable from raw counts to, say, per capita counts.  I'll leave that as an exercise to see whether it changes the results. 
 ```
 
 ```{r messages=F, warnings=F, results="hide", echo=longform}
@@ -540,6 +540,17 @@ AIC(out.logistic)
 BIC(out.logistic)
 ```
 
+```{exercise}
+Rerun the logistic growth model using the weight parameter to allow each state to have a different residual variance.
+```
+
+```{exercise}
+Use the anova command to compare the fits of the regressions with equal and unequal state error variances. THis is is an increment in fit test comparing the reduced model (e.g., one residual variance for all states) to a full model (e.g., each state has its own residual variance). The command would be anova(reduced, full) where you replace reduced and full with the name of the object you saved the nlme (e.g., reduced = out.logistic in the example below).
+```
+
+```{r}
+Re-run the logistic growth nonlinear mixed model using the percentage of the state population that tests positive. Compare these results to the logistic growth models computed on the count data with equal residual variance across states. How do you address the different scales of the dependent variable?
+```
 
 Another consideration is that the residuals may not be independent given that these are time series data. Yestersday's residual may be correlated with today's residual.  Here I add a correlation structure to the nlme command using an autocorrelation lag of 1 (AR p =1) and a moving average lag of 1 (MA q = 1).  The ARMA implementation in nlme, though, operates completely on the residuals. So, the AR refers to the previous residual correlation and the MA refers to a set of independent and identically distributed noise terms apart from the residuals (see Pinhero & Bates, 2000, as this is not standard).  You can think of the MA noise parameters are "factors" that are added to produce an additional source of correlation across residuals, much like a common factor would, but separate from the serial correlation of resisuals.  I also use the ACF() command to display the autocorrelation function.  One could also try a heterogeneous residual variance model (the weight argument described above) along with the correlated error.  Much more diagnostics would be needed to settle on the appropriate correlational structure for the error term plus the usual checks on the residuals to ensure we are properly meeting the assumptions.
 
@@ -829,11 +840,37 @@ pp_check(fit_loss)
 #need to figure out if the multimodes are real, or something else such as the model has mulitple likelihood peaks (check with the hessian); could run on simulated data
 
 #get correlated random effects in nonlinear working
+```
 
 
+## Time Series Methods
 
+Pending: in this section I'll illustrate the use of the forecast package and the excellent outline book by [Hyndman and Athanasopoulos](https://otexts.com/fpp2/). Set up an example forecast using NY data, including checkresiduals(), as well as hierarchical time series to model state trajectories within the US.
+
+```{r eval=F, echo=F}
+#better to redo plots with dates like 4/1/20 and weekly markers
+library(forecast)
+library(hts)
+library(ggfortify)
+nydays <- allstates.long$day[allstates.long$state.abb=="New York"]
+#check
+nycount.ts <- ts(nydf$count, start=1, end=max(nydf$day.numeric)+1, frequency = 1)
+autoplot(nycount.ts) 
+
+plot(forecast(nycount.ts), xlab="Day", ylab="count")
+
+#splines, h=# days predicted
+h <- 10
+fcast <- splinef(nycount.ts,h=h)
+autoplot(fcast)
+checkresiduals(fcast)
+
+fcast <- splinef(nycount.ts,h=h, lambda="auto")
+autoplot(fcast)
+checkresiduals(fcast)
 
 ```
+
 
 ## Dynamic Systems Modeling
 
