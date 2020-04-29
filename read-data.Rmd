@@ -47,7 +47,7 @@ The script below will switch to the folder I'm keeping the git repository, execu
 
 
 
-```{r echo=F}
+```{r warning=F, message=F, results='hide'}
 #assuming git has been installed on your machine (e.g., Xcode in mac);
 #this is mac and linux specific; pc may be different unless unix commands have been installed
 
@@ -66,14 +66,11 @@ Here is the notice of the change to the data structure: [link](https://github.co
 
 **NOTE:** On 3/30/20 the repository now lists the updated files. The new files changed in small ways that require some additional rewriting of the code. These changes include separating the US into a different file from the world (though the total US counts appear in the world data set), changing the names of a few columns but these are not consistent between the different data files that are downloaded (e.g., the US file has slightly different column names than the world data file), US data file ends one day behind the world data file (i.e., 3/30 and 3/31 respectively), and for the US data providing county-level counts rather than state-level counts so I need to create sums by states. These aren't big deals but can create lots of problems catching all the edits needed in  later code. For example, originally the longitude variable was called Long but now it is called Long_, and in the US data column names are given with dates as 2020 but in the world data file they are given as 20. There are several ways to address such changes. I'll go the route of changing the variable names here so that I don't need to make many changes throughout the rest of the code.  I suspect there may be more changes in the comming days so I'll make the minimal changes in a way that let's me easily adapt to future changes.
 
-I include little notes so you can see how I adapted my code to the changing landscape and evaluate the decisions I made along the way.  As much as possible I will document my edits and use clear commit messages in git so that one could go back to earlier versions as needed. Such documentation is an important part of conducting reproducible science.  The approach I've taken here still makes the code readable yet my changes can be examined without a bunch of clutter of obsolete code commented out with unhelpful statements such as "DO NOT USE THIS" (see below for a silly example).
+I include little notes so you can see how I adapted my code to the changing landscape and evaluate the decisions I made along the way.  As much as possible I will document my edits and use clear commit messages in git so that one could go back to earlier versions as needed. Such documentation is an important part of conducting reproducible science.  The approach I've taken here allows  the code to be readable yet my changes can be examined without a bunch of clutter of obsolete code commented out with unhelpful statements such as "DO NOT USE THIS" (see below for a silly example).
 
 ```{r eval=F}
 #DO NOT USE THIS (SILLY EXAMPLE)
-
 #OLD CODE PRIOR TO 3/23/20
-
-#imagine how difficult it would be to figure out my code with a lot of these obsolete lines with ignore messages; git version control is much better approach
 
 datacov <- 
  read_csv("time_series_19-covid-Confirmed.csv")
@@ -81,15 +78,17 @@ datacov <-
 
 We read in the two files with world and US cumulative data.
 
-```{r warning=F, message=F, linewidth=linewidth}
+```{r warning=F, message=F, linewidth=linewidth, tidy=F}
 #data for World and US county/states are now in separate files
 
 #path to folder with the data git repository
-path <- "../COVID-19/csse_covid_19_data/csse_covid_19_time_series/"
+path <- 
+  "../COVID-19/csse_covid_19_data/csse_covid_19_time_series/"
 datacov.World <- 
-  read_csv(paste0(path,"time_series_covid19_confirmed_global.csv"))
+read_csv(paste0(path,"time_series_covid19_confirmed_global.csv"))
+
 datacov.US <- 
-  read_csv(paste0(path,"time_series_covid19_confirmed_US.csv"))
+read_csv(paste0(path,"time_series_covid19_confirmed_US.csv"))
 ```
 
 <!-- Had trouble getting backticks to display across multipe displays (r viewers, pdf, web browsers so went with html code) -->
@@ -105,7 +104,7 @@ The behavior of the variable names I am showing here follows the default of R on
 colnames(datacov.US)
 ```
 
-```{r echo=longform, linewidth=linewidth}
+```{r echo=longform, linewidth=linewidth, tidy=F}
 #fix variable names in US to match World file
 names(datacov.US)[7] <- names(datacov.World)[1]
 names(datacov.US)[8] <- names(datacov.World)[2]
@@ -140,40 +139,43 @@ There is always additional manipulation needed to format the table, here I had t
 If the table on the wiki changes, it could very well break this code.  This already changed in that originally the table I wanted was the 4th table, then it was the 5th table in the html file, then the 6th table, and now back to the 5th.
 
 ```{r echo=longform}
-#table kept changing location in the wikipage, so go to the table URL directly rather than wiki page
+# table kept changing location in the wikipage, so go to the table 
+# URL directly rather than wiki page
 #URL <- "https://en.wikipedia.org/wiki/2019%E2%80%9320_coronavirus_pandemic"
-URL <- "https://en.wikipedia.org/wiki/Template:2019%E2%80%9320_coronavirus_pandemic_data"
+URL <- 
+"https://en.wikipedia.org/wiki/Template:2019%E2%80%9320_coronavirus_pandemic_data"
 
 wikipage <- read_html(URL)
 
-#originally the 5th table in the wiki html page had the country totals (so .[5] below)
-#the number 5 is hardcoded here, not great programming style
-#now that I point the the url of the table, it becomes .[1]
+# originally the 5th table in the wiki html page had the country totals (so .[5]
+# below) the number 5 is hardcoded here, not great programming style now that I
+# point the the url of the table, it becomes .[1]
 table <- wikipage %>%
-html_nodes("table") %>% .[1] %>%
-html_table(fill=TRUE, header=T)
+  html_nodes("table") %>% .[1] %>%
+  html_table(fill = TRUE, header = T)
 
-#delete 1st row (incorrectly read in the header) and last three rows which are notes
+# delete 1st row (incorrectly read in the header) and last
+# three rows which are notes
 table <- table[[1]]
-table <- table[-c(1,(nrow(table)-1):nrow(table)),-c(1,6)]
-colnames(table) <- c("location","cases","deaths","recov")
+table <- table[-c(1, (nrow(table) - 1):nrow(table)), -c(1, 6)]
+colnames(table) <- c("location", "cases", "deaths", "recov")
 
-#drop [*] footnotes from country names in col 1
-#could use fancier regex or perl style script
-#if last char is "]" then delete the last 3 characters
-#k is a temporary placeholder to make the code more readable as k appears multiple times in the 2nd line
+# drop [*] footnotes from country names in col 1;
+# could use fancier regex or perl style script;
+# if last char is "]" then delete the last 3 characters;
+# k is a temporary placeholder to make the code more readable as k appears multiple times in the 2nd line
 k <- table[,1]
 k <- ifelse(substr(k,nchar(k),nchar(k)) == "]", substr(k,1,nchar(k)-3), k)
 table[,1] <- k
 
-#this line no longer needed as table has been reformatted
-#change label to sum referring to sum of all countries
-#table[1,1] <- "World Sum"
+# this line no longer needed as table has been reformatted;
+# change label to sum referring to sum of all countries
+# table[1,1] <- "World Sum"
 
-#print first 10 rows
+# print first 10 rows
 head(table, 10)
 
-#save into object
+# save into object
 wiki.corona.counts <- table
 ```
 
@@ -186,15 +188,15 @@ For later analyses I'll need to know current population sizes. Here I'll just fo
 This code makes use of the library tidycensus (and also functions in tidyverse). To access the national census data base one needs to register with the census site and receive a unique key.  My unique key is not printed here to keep it private. If you want to run this code yourself, you would need to register with the national census and then enter the key you receive as an argument to the census_api_key() command below. See the documentation of the tidycensus package for more information; here is the registration page to get your own key [registration](https://api.census.gov/data/key_signup.html)
 
 ```{r eval=F, echo=FALSE}
-#hey, I said I'll keep this key private and I hid it from printing in the outpout
-#but guess what, this code chunk got uploaded to git so if you are looking at this file
-#you can see my code, AHHHHH;
+# hey, I said I'll keep this key private and I hid it from printing in the outpout
+# but guess what, this code chunk got uploaded to git so if you are looking at this file
+# you can see my code, AHHHHH;
 
-#a better way to do this is to save the code in a local file
-#and issue an R command to read that file to read the code like
-#my.key.code <- source(keycode.R)
-#where the file keycode.R merely sets the text to a name like mykey="THE.NUMBERS.LETTERS"
-#and don't include that keycode.R file in the git repository.
+# a better way to do this is to save the code in a local file
+# and issue an R command to read that file to read the code like
+# my.key.code <- source(keycode.R)
+# where the file keycode.R merely sets the text to a name like mykey="THE.NUMBERS.LETTERS"
+# and don't include that keycode.R file in the git repository.
 census_api_key(key="9fdfc1d46398c3a9e30971df2850174583db8a48", install=T)
 ```
 
@@ -204,16 +206,17 @@ census_api_key(key="9fdfc1d46398c3a9e30971df2850174583db8a48", install=T)
 
 states <- unique(fips_codes$state_name)
 
-#drop DC and territories
+# drop DC and territories
 states <- states[-c(9,52:57)]
 states.abb <- unique(fips_codes$state)[-c(9,52:57)]
 
-#go to the census, get population data (product) by state (geophaphy) using states listed in the object states
+# go to the census, get population data (product) by state (geophaphy) using states listed in the object states
 state.population <- get_estimates(geography="state", state=states, product="population")
 state.population <- subset(state.population, variable == "POP")
 
-#create state abbreviations with popoulation size in million like "39.6 CA" for California 39.6 million
-#this is for shorter, more informative labels in plots I'll do later
+# create state abbreviations with popoulation size in million like "39.6 CA" for
+# California 39.6 million this is for shorter, more informative labels in plots
+# I'll do later
 state.population$prettyval <- paste(format(round(state.population$value / 1e6, 1), trim = TRUE), states.abb)
 state.population$prettyval <- fct_reorder(state.population$prettyval, state.population$value)
 ```
@@ -231,25 +234,23 @@ Another important piece of information we need are the number of tests that have
 As of 3/21/20 this information is spotty.  We can go to the CDC website to collect this information.  The website now lists testing data for both CDC and Public Health Labs.  After scraping the data off the CDC website I had to do some cleaning, parsing data into numbers as some cells had extra characters that are the footnote symbols appearing on the website, and had to change the format of the date column to be compatible with the date format I'm using elsewhere in these notes.
 
 
-```{r warning=F, message=F, echo=longform}
+```{r warning=F, message=F, echo=longform, tidy=F}
 URL <- "https://www.cdc.gov/coronavirus/2019-ncov/cases-updates/testing-in-us.html"
 
 wikipage <- read_html(URL)
 
-table <- wikipage %>%
-html_nodes("table") %>%
-html_table(fill=TRUE, header=T)
-table <- table[[1]]
+table <- wikipage %>% html_nodes("table") %>%
+ html_table(fill=TRUE, header=T)
+ table <- table[[1]]
 
 
-#drop extra character from 2nd and 3rd columns
-#k is a temporary placeholder to make the code more readable as k appears multiple times in the 2nd line
+# drop extra character from 2nd and 3rd columns k is a temporary placeholder to
+# make the code more readable as k appears multiple times in the 2nd line
 k <- table[,2]
-#nice function readr package to extract the numerical part of a string
+# nice function readr package to extract the numerical part of a string
 table[,2] <- parse_number(k)
 
 k <- table[,3]
-#nice function readr package to extract the numerical part of a string
 table[,3] <- parse_number(k)
 
 
@@ -259,13 +260,13 @@ table[,1] <- as.Date(paste0(k,"/20"), "%m/%d/%y")
 
 cdc.testing <- table
 
-#last 6 rows of cdc.testing to see what we created 
+# last 6 rows of cdc.testing to see what we created 
 tail(cdc.testing)
 
-#total tested in CDC and Public Health
+# total tested in CDC and Public Health
 apply(cdc.testing[,c(2,3)],2,sum,na.rm=T)
 
-#day totals: testing totals regardless of CDC or Public Health Lab
+# day totals: testing totals regardless of CDC or Public Health Lab
 cdc.testing$total.tests <- apply(cdc.testing[,c(2,3)],1,sum,na.rm=T)
 ```
 
@@ -274,11 +275,12 @@ It reports daily records by state on number of positive,  negative, pending, hos
 
 
 
-```{r warning=F, message=F, echo=longform}
-covid.tracking <- read_csv("https://covidtracking.com/api/states/daily.csv")
+```{r warning=F, message=F, echo=longform, tidy=F}
+covid.tracking <- 
+  read_csv("https://covidtracking.com/api/states/daily.csv")
 head(covid.tracking)
 
-#focus just on the 50 states (i.e., drop DC and territories like American Samoa AS)
+# focus just on the 50 states (i.e., drop DC and territories like American Samoa AS)
 covid.tracking <- subset(covid.tracking, covid.tracking$state %in% state.abb)
 covid.tracking$date <- as.Date(as.character(covid.tracking$date), "%Y%m%d")
 ```
@@ -293,12 +295,12 @@ Here is a complete list of [state quarantine and isolation statutes](https://www
 ### School Closure Data
 
 ```{r echo=longform}
-#couldn't get automatic download so did cut and paste from screen
-#https://editproj.sharepoint.com/:x:/g/Ea32XJl_g9VBreFAia_zMmEBY6FW2ZWh8F4VeJ1Rt5Z4YA?rtime=XJX0eHvL10g
-#https://www.edweek.org/ew/section/multimedia/map-coronavirus-and-school-closures.html
-#saved results locally into schoolclosure.xlsx and then read it into R
-
-#downloaded roughly 3/25/20 (check manually for more recent files)
+# couldn't get automatic download so did cut and paste from screen
+# https://editproj.sharepoint.com/:x:/g/Ea32XJl_g9VBreFAia_zMmEBY6FW2ZWh8F4VeJ1Rt5Z4YA?rtime=XJX0eHvL10g
+# https://www.edweek.org/ew/section/multimedia/map-coronavirus-and-school-closures.html
+# saved results locally into schoolclosure.xlsx and then read it into R
+# 
+# downloaded roughly 3/25/20 (check manually for more recent files)
 schooldata <- read_excel("schoolclosure.xlsx")
 
 head(schooldata)
@@ -310,12 +312,13 @@ head(schooldata)
 A few research groups have already started studying the public health implications of various state-level measures around social distancing.  One such example is a team at the [University of Washington](https://faculty.washington.edu/cadolph/papers/AABFW2020.pdf) and a link to their [git repository](https://github.com/COVID19StatePolicy/SocialDistancing) for the most up-to-date information.  Here I just read in the csv file I downloaded on 4/1/20; will switch to reading from the git directly at some point.
 
 ```{r echo=longform}
-#data set needs some cleaning
-#if you download the data file you can manually read it with this command
-#distancingpolicy <- read.csv("USstatesCov19distancingpolicy.csv", header=T)
+# data set needs some cleaning if you download the data file you can manually
+# read it with this command distancingpolicy <-
+# read.csv("USstatesCov19distancingpolicy.csv", header=T)
 
-#to get this URL go to github site in the link above, find the USstatesCov19distanceingpolicy.csv file and click on "raw"
-#then use that URL below
+# to get this URL go to github site in the link above, find the
+# USstatesCov19distanceingpolicy.csv file and click on "raw" then use that URL
+# below
 distancingpolicy <- read_csv(url("https://raw.githubusercontent.com/COVID19StatePolicy/SocialDistancing/master/data/USstatesCov19distancingpolicy.csv"))
 
 head(distancingpolicy)
@@ -323,7 +326,8 @@ head(distancingpolicy)
 
 Here is a Michigan focus to illustrate the information the file contains.
 ```{r echo=longform}
-#looks like another package has a "select" as I was getting an error; specifically call dplyr
+# looks like another package has a "select" as I was getting an error;
+# specifically call dplyr
 distancingpolicy %>% subset(StateName=="Michigan") %>% dplyr::select(DateIssued, PolicyCodingNotes) %>% head(n=10)
 ```
 
@@ -335,14 +339,14 @@ The Department of Agriculture lists percentage of state residents living in pove
 ```{r echo=longform}
 statepoverty <- read_excel("state.poverty.xlsx")
 
-#delete DC and row with "National"
+# delete DC and row with "National"
 statepoverty <- statepoverty[!statepoverty$state %in% c("District of Columbia", "National"),]
 head(statepoverty)
 ```
 
 ## Other data sources
 
-Here I'll list other sources that come on line as I build these notes.
+These are other sources that came on line after I was well into building these notes. 
 
 1. [covdata](https://kjhealy.github.io/covdata/) A git repository that includes some of the data sources I've already covered plus some others, such as the CDC Surveillance Network Data, which includes additional information in various tables such as total deaths (i.e., even the non-covid-19 deaths), number of pneumonia deaths, number of influenza deaths, etc.,  as well as data by age category.
 
