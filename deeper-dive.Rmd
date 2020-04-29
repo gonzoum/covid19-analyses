@@ -26,7 +26,8 @@ georgia.df <- subset(datacov.US.long, `Province/State`=="Georgia") %>% filter(!A
 #focus just on counties with cases > 250 as of the compilation of the report
 #red vertical line at 4/24 and blue vertical line at 4/27
 georgia.df.max <- georgia.df %>% group_by(Admin2) %>% mutate(maxcount = max(count,na.rm=T)) %>% ungroup()
-ggplot(subset(georgia.df.max, day > as.Date("2020/04/1") & maxcount>=250), aes(day,count, group=Admin2, color=Admin2)) + geom_line() + ggtitle("Georgia counties with greater than 250 cases")  + geom_vline(xintercept=as.Date("2020/04/24"), color="red")
+range.ylim <- range(georgia.df.max$maxcount)
+ggplot(subset(georgia.df.max, day > as.Date("2020/04/1") & maxcount>=250), aes(day,count, group=Admin2, color=Admin2)) + geom_line() + ggtitle("Georgia counties with greater than 250 cases")  + geom_vline(xintercept=as.Date("2020/04/24"), color="red") + ylim(range.ylim)
 
 ```
 
@@ -43,7 +44,7 @@ alabama.df <- subset(datacov.US.long, `Province/State`=="Alabama") %>% filter(!A
 #focus just on counties with cases > 250 as of the compilation of the report
 #red vertical line at 4/24 and blue vertical line at 4/27
 alabama.df.max <- alabama.df %>% group_by(Admin2) %>% mutate(maxcount = max(count,na.rm=T)) %>% ungroup()
-ggplot(subset(alabama.df.max, day > as.Date("2020/04/1") & maxcount>=250), aes(day,count, group=Admin2, color=Admin2)) + geom_line() + ggtitle("Alabama counties with greater than 250 cases")  + geom_vline(xintercept=as.Date("2020/04/24"), color="red")
+ggplot(subset(alabama.df.max, day > as.Date("2020/04/1") & maxcount>=250), aes(day,count, group=Admin2, color=Admin2)) + geom_line() + ggtitle("Alabama counties with greater than 250 cases")  + geom_vline(xintercept=as.Date("2020/04/24"), color="red") + ylim(range.ylim)
 
 ```
 
