@@ -2,13 +2,20 @@
 
 # Preliminaries
 
-I want these notes to serve as an example of how to keep your analyses organized and reproducible.  Analysis projects have many common elements, which include gathering data, cleaning and organizing data, preparing descriptive summaries, testing hypotheses, writing reports, and dissemination.  The end product should be a complete pipeline that takes you from soup to nuts with clear documentation.   While these notes are not perfect, they provide one example of how to prepare a workflow.
+I want these notes to serve as an example of how to keep your analyses organized and reproducible.  Analysis projects have many common elements, which include gathering data, cleaning and organizing data, preparing descriptive summaries, testing hypotheses, writing reports, and dissemination.  The end product should be a complete pipeline that takes you from soup to nuts with clear documentation.   These notes provide one example of how to prepare a workflow.
 
-These notes are written completely in R. They are organized across several Rmd files (like this one) that are executed in a particular order. For example, the file that reads the data and cleans the data is sourced before the file that produces the descriptive summaries of the data.  
+These notes are written completely in [Rmarkdown](https://rmarkdown.rstudio.com/), a scripting language that allows one to weave text, statistical commands, and output to create a document. They are organized across several Rmd files (like this one) that are executed in a particular order. For example, the file that reads the data and cleans the data is sourced before the file that produces the descriptive summaries of the data.  
 
-I can reproduce all my analyses and so can you. I put the files for this project (except for the data downloads) in a git repository that you can clone and follow along. Further, I tried to be diligent in using git commits and writing clear comments so you can see how these notes developed; edits I made to the text; code I edited, de-bugged and re-edited; turns I took in my analyses that were dead ends so I didn't pursue them; etc.  This is all part of the regular scientific process.  In the "old days" scientists maintained lab notebooks where they recorded everything they did. A git repository serves the analogous role of an electronic library. It keeps track of everything I did for this project.  You can read the final product (the notes you are currently reading) but you are free to see my thought process, see how I edited these documents, and see the order in which I actually wrote things rather than the order they are presented.  All you have to do is visit the [github site for this project](https://github.com/gonzoum/covid19-analyses).
+I can reproduce all my analyses and so can you. I put the files for this project (except for the data downloads) in a [git repository](https://github.com/gonzoum/covid19-analyses) that you can clone and follow along. Further, I tried to be diligent in using git commits and writing clear comments so you can see how these notes developed; edits I made to the text; code I edited, de-bugged and re-edited; turns I took in my analyses that were dead ends so I didn't pursue them; etc.  This is all part of the regular scientific process.  In the "old days" scientists maintained lab notebooks where they recorded everything they did. A git repository serves the analogous role of an electronic library when conducting analyses. It keeps track of everything I did for this project.  You can read the final product (the notes you are currently reading) but you are free to see my thought process, see how I edited these documents, and see the order in which I actually wrote things rather than the order they are presented.  All you have to do is visit the [github site for this project](https://github.com/gonzoum/covid19-analyses).
 
 ## Libraries and Setup
+
+I need to set up some housekeeping commands. This includes formatting the R code so that it doesn't spill off the margin of the page and caching some time consuming computations. There are some analyses that I demonstrate here take a few hours to run. Rather than running them every time I recompile these notes, I cache those results in a folder so the results are re-used.  
+```{asis echo=longform}
+Rmarkdown detects when data has changed and those time consuming analyses need to be rerun. I prefer to exert manual control on the caching process and explicitly say cache=TRUE or cache=FALSE.  Later, you will see chunks of R code that are cached depending on whether I set the cache variable to TRUE or FALSE.
+
+A variable that I set up in the index.Rmd file is longform. This is set either to TRUE or FALSE depending whether I want the "long version" of the book with all the R code and some additional explanations tied to R or the "short version" that omits the printing of the R code and some text specifically related to R.  For example, this paragraph is part of an Rmarkdown chunk that sets the echo argument to longform. If longform is TRUE this paragraph is printed, whereas if longform is FALSE the paragraph is omited.  This allows me to embed conditional statements and easily print two versions of the same document.  I use this feature in my own data analysis depending on whether I want to discuss all the analytic details with my colleagues or focus the end products of the analyses.
+```
 
 ```{r setup, echo=longform}
 #assumes knitr is installed in R
@@ -17,9 +24,9 @@ library(knitr)
 linewidth <- 50
 
 options(htmltools.dir.version = FALSE, formatR.indent = 2, 
-        width = 60, digits = 3)
+        width = linewidth, digits = 3)
 
-opts_chunk$set(tidy.opts=list(width.cutoff=60),tidy=FALSE)
+opts_chunk$set(tidy.opts=list(width.cutoff=linewidth),tidy=TRUE)
 
 #coupled with linewidth=xx argument to chunk will make R code fit 
 #within the width of the page
@@ -41,12 +48,12 @@ cache <- T
 ```
 
 
-I organize in one place all the R packages that are used in these notes so they can be easily installed.
+I organize in one place all the R packages that are used in these notes so they can be easily installed.  Typically, R packages are loaded with the library() command, which I'll use here.  This assumes the R package is already installed. 
+
+There can be issues that arise when reading in multiple packages as I do here as there could be conflicts. For example, the package dplyr contains a function called select(), but there is also a select() function in another package I am using. I need to be careful I'm using the correct select() command and one what to accomplish that is by using the double colon construction. The command dplyr::select() instructs R to use the select() command that is contained in the package dplyr.
+
 
 ```{r message=F,warning=F,results='hide'}
-#be careful in case there are conflicts between these packages
-#e.g., select in dplyr is written over by a select function in a different package
-#so need to call select from dplyr with dplyr::select
 library(bookdown)
 library(readr)
 library(tidyverse)
@@ -80,7 +87,7 @@ library(nlrx)
 ```
 
 ```{asis echo=longform}
-For ease of use it would be better to use the pacman package because it also checks if the libraries are installed on your computer (if not, the package automatically downloads them along with all their dependencies).  Finally, pacman initiates the library() call for each library in the list leaving you ready to proceed with the analyses. For illustration, here is the pacman code you would use. This facilitates reproducibility.  
+For ease of use it would be better to use the pacman package because it also checks if the libraries are installed on your computer (if not, the package automatically downloads the missing libraries along with all their dependencies).  Finally, pacman initiates the library() call for each library in the list leaving you ready to proceed with the analyses. For illustration, here is the pacman code you would use. This facilitates reproducibility because it is easier to recreate the working environment with all the required packages.  
 ```
 
 ```{r eval=F, echo=longform, linewidth=linewidth}
@@ -90,20 +97,13 @@ if(!("pacman" %in% installed.packages()[,"Package"])) {
 }
 library(pacman)
 #double check all the libraries listed above are listed here too
-p_load("bookdown","readr","tidyverse","rvest","magrittr","stringr","tidycensus","ggplot2","gganimate","ggeffects", "scales", 
-       "maps","ggthemes","viridis","ggrepel","sjPlot","sjmisc", "sjlabelled","lme4","nlme","merTools","Hmisc","readxl","rnn","stargazer","texreg",
-       "gamm4","splines","mgcv","nlrx")
+p_load("bookdown","readr","tidyverse","rvest","magrittr",
+   "stringr","tidycensus","ggplot2","gganimate","ggeffects", 
+   "scales", "maps","ggthemes","viridis","ggrepel","sjPlot",
+   "sjmisc", "sjlabelled","lme4","nlme","merTools","Hmisc",
+   "readxl","rnn","stargazer","texreg","gamm4","splines","mgcv",
+   "nlrx")
 ```
-
-```{asis echo=longform}
-
-## Setting variables
-
-When building these files there are some functions that take a long time to complete, like the animations and I don't want to wait each time for the animations to be consructed while I try to debug other aspects of the code.  So here I set cache. Rmarkdown will not run the commands if cache=T but will store the results and reuse them during sequent runs. When I want to have a true new build where everything runs (and can take about 10 minutes) I'll set cache=F.  The cache feature has some capabilities to know when it needs to rerun because a dependency has changed elsewhere in the code.
-
-By putting it here I just have to change the value (T vs F) in one place and elsewhere in the code the cache will be set. This way I don't have to hunt several files for where I need to set cache.
-```
-
 
 
 ```{asis echo=longform}
@@ -119,13 +119,16 @@ This function puts multiple ggplots on the same page.  There are now packages th
 ```{r echo=longform , linewidth=linewidth}
 #Multiple plot function
 #
-# ggplot objects can be passed in ..., or to plotlist (as a list of ggplot objects)
+# ggplot objects can be passed in ..., 
+# or to plotlist (as a list of ggplot objects)
 # - cols:   Number of columns in layout
-# - layout: A matrix specifying the layout. If present, 'cols' is ignored.
+# - layout: A matrix specifying the layout. If present, 'cols' 
+# is ignored.
 #
-# If the layout is something like matrix(c(1,2,3,3), nrow=2, byrow=TRUE),
-# then plot 1 will go in the upper left, 2 will go in the upper right, and
-# 3 will go all the way across the bottom.
+# If the layout is something like 
+# matrix(c(1,2,3,3), nrow=2, byrow=TRUE),
+# then plot 1 will go in the upper left, 2 will go in the upper 
+#right, and 3 will go all the way across the bottom.
 #
 multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
   library(grid)
@@ -150,11 +153,12 @@ multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
   } else {
   # Set up the page
   grid.newpage()
-  pushViewport(viewport(layout = grid.layout(nrow(layout), ncol(layout))))
+  pushViewport(viewport(layout = grid.layout(nrow(layout), 
+        ncol(layout))))
 
   # Make each plot, in the correct location
   for (i in 1:numPlots) {
-  # Get the i,j matrix positions of the regions that contain this subplot
+  # Get the i,j positions of the regions that contain this subplot
   matchidx <- as.data.frame(which(layout == i, arr.ind = TRUE))
 
   print(plots[[i]], vp = viewport(layout.pos.row = matchidx$row,
@@ -169,10 +173,11 @@ multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
 
 ### Caterpillar Plot
 
-Useful plot from this [link](https://stackoverflow.com/questions/13847936/plot-random-effects-from-lmer-lme4-package-using-qqmath-or-dotplot-how-to-mak) that I'll use to plot random effects.
+Useful plot function from this [link](https://stackoverflow.com/questions/13847936/plot-random-effects-from-lmer-lme4-package-using-qqmath-or-dotplot-how-to-mak) that I'll use to plot random effects.  I won't print it here but if you are interested you can refer to the github page for this book.
+
 ```
 
-```{r echo=longform, linewidth=linewidth}
+```{r echo=F, linewidth=linewidth}
 ## re = object of class ranef.mer
 ggCaterpillar <- function(re, QQ=TRUE, likeDotplot=TRUE) {
     require(ggplot2)
