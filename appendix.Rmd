@@ -59,7 +59,7 @@ You would need to be in the folder where you want to save this repository becaus
 
 The idea is simple.  I push (copy) my changes to the repository and you pull (download) the repository to your computer. The software keeps track of all changes that are pushed to the git server, who made those changes, and any notes that the person wants to attach to those changes.  The software keeps track of what version you have installed locally on your machine and lets you know if there are more recent versions on the server.  If there are conflicts, such as you may have edited a line of a file that another person working on the same file may have also edited (assuming they commited their edits and pushed them to the server), then the software points to the two versions and asks you want you want to do such as accept their edits, accept your edits, etc.
 
-## Using Git beyond this course
+## Using Git beyond this book
 
 
 I strongly recommend that you use Git as part of your code writing, especially if you collaborate with others including your advisors. You can use git with any text files not just with R. For example, if you write SAS syntax, SPSS syntax, Stata code, whatever, you can use git to keep track of all the files.   
@@ -103,7 +103,14 @@ save.image(file=paste0("data-archive/",currentversion,"-dataworkspace.RData"))
 print(paste0("File name associated with this run is ", currentversion, "-dataworkspace.RData"))
 ```
 
-# Appendix D: The bookdown package
+# Appendix D: Learning R
+
+There are many tutorials on basic R commands.  
+
+Pending: add some material, refer to tutorials
+
+
+# Appendix E: The bookdown package
 
 This entire html site was built using the bookdown R package. It has advanced features for building reports around analysis as you can see. The [bookdown manual](https://bookdown.org/yihui/bookdown/) was itself written with the bookdown package.  I uploaded the entire file structure to my git repository so you can build this bookdown website yourself.  To do production builds I click on Build/Build All in RStudio, which starts up a new R session, compiles all the R code, aggregates tables and figures and creates both html and pdf versions.  I have been running this code each evening since UM stopped face-to-face instruction in order to download and rerun the entire website with the newest data.  I also added some conditional statements throughout to produce (almost automatically) two versions of this document:  one version with the R code displayed with all the relevant R instructional material and one version without the R coding distraction.
 
