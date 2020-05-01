@@ -6,9 +6,9 @@ In this chapter I consider some hypotheses that can be tested with relatively si
 
 This subsection will show a fun test that we can examine in real time.  Some governors of US states have decided to reopen businesses much sooner than recommended by public health officials.  For example, Georgia has decided to reopen gyms, massage therapy, tatoo shops, barbers and hair stylists on April 24th with restaurants, theaters and private social clubs opening up on the 27th.  It will be  difficult to practice social distancing while getting a tatoo or a body piercing.
 
-Pending:  I'll plot the data for Georgia by county 3 weeks before the 24th and 3 weeks after.  It will take a few days to see the effects on the positive testing rate due to a higher rate of social contact, and maybe up to two weeks to see any effects on the death rate.  I'll examine a similar plot for an adjacent state that has not relaxed their social distancing mandate for comparison.
+Pending:  I'll plot the data for Georgia by county 3 weeks before the 24th and 3 weeks after.  It will take a few days, possibly up to 14 days, to see the effects on the positive testing rate due to a higher rate of social contact, and maybe up to two weeks to see any effects on the death rate.  I'll examine a similar plot for an adjacent state that has not relaxed their social distancing mandate for comparison.
 
-This example will illustrate the use of the regression discontinuity (RD) design, though before the casuality police get on my case for not clarifying my assumptions I'll point out that I won't be using this to claim I have estimated the causal effect of social distancing.  I'll illustrate the idea of this design, its characteristic plot and  point to papers where the reader can learn about the various approaches to extracting additional information from this type of research design.
+This example will illustrate the use of the regression discontinuity (RD) design, though before the causality police get on my case for not clarifying my assumptions I'll point out that I won't be using this to claim I have estimated the causal effect of social distancing.  I'll illustrate the idea of this design, its characteristic plot and  point to papers where the reader can learn about the various approaches to extracting additional information from this type of research design.
 
 
 ```{r warning=F, message=F, echo=longform}
@@ -94,8 +94,12 @@ covid.tracking.new$deathIncrease <- ifelse(is.na(covid.tracking.new$deathIncreas
 ```
 
 ```{r messages=F, warnings=F, results="hide", echo=longform}
+#something is wrong with data on 4/29 as this won't converge;drop 4/29 
+#save into temp and put temp in nlme call as a temporary fix
+temp <- subset(covid.tracking.new, day.numeric!=51)
+covid.tracking.new <- temp
 out <- nlme(deathIncrease ~ richfu.sir(day.numeric, a, b0,b1), fixed = a+b0+b1~1,
-            random =  a+b1~1, data=covid.tracking.new,start=c(a=100, b0=-2.7,b1=.05), verbose=T, groups=~state, control=nlmeControl(msMaxIter=500,opt="nlminb",pnlsTol=.0001,msVerbose=T,minScale=.0001, maxIter=200) )
+            random =  a+b1~1, data=covid.tracking.new,start=c(a=45, b0=-2.8,b1=.07), verbose=T, groups=~state, control=nlmeControl(msMaxIter=500,opt="nlminb",pnlsTol=.01,msVerbose=T,minScale=.01, maxIter=500) )
 ```
 
 We see that this function (red curve) does a reasonable job of fitting the daily death counts (black points) in New York. 
@@ -103,6 +107,9 @@ We see that this function (red curve) does a reasonable job of fitting the daily
  
  
 ```{r  messages=F, warnings=F, echo=longform}
+summary(out)
+out.nlme.deaths <- out
+
 #add predicted values to the data frame
 covid.tracking.new$predicted <- predict(out)
 
@@ -120,7 +127,7 @@ But a more interesting result emerges by examining this approximate functional f
 The general form is 
 
 $$
-\bigg[\frac{a}{\kappa_1 (1+\exp^{2(\kappa_0 + \kappa_1 t)} )}\bigg] \;\;\; \bigg[(\exp^{2(\kappa_0 + \kappa_1 t)} - 1)\bigg] + C
+\bigg[\frac{a}{\kappa_1 (1+e^{2(\kappa_0 + \kappa_1 t)} )}\bigg] \;\;\; \bigg[(e^{2(\kappa_0 + \kappa_1 t)} - 1)\bigg] + C
 $$
 The left square bracket term has the form of the logistic growth function and the right square bracket term has the form of an exponential growth function. The term $C$ is the integration constant that we will set so that the cumulative sum starts at 0.  Thus, this simplification of the SIR model yields a product of the two functions we explored in Chapter \ref(descmodel).  It isn't one or the other as we explored earlier, but this model suggests the curves approximately follow a combination of both forms. This is an example of the advantage of doing some mathematical modeling to be able to examine the implications of your model.  In the earlier chapter we considered exponential and logistic growth models without careful attention to why we chose those functions.  This type of mathematical modeling allows you to justify the functional forms you want to test based on implications from your hypotheses. Here I'm referring to the change equations of the SIR model as a set of hypotheses that govern how change occurs among the susceptibles, the infecteds and recovered.  Those equations (with some additional assumptions and approximations) imply this product of both forms, which we can test and exmaine with data.  
 
