@@ -17,12 +17,13 @@ Day is entered into the model as a linear time variable (1, 2, 3, etc). Our prev
 
 
 ```{r echo=longform}
-#drop all 0 counts from the allstates.long data base. be careful, this data.frame no longer has 0s
-#can't study liftoff (see on descriptive plots) now that 0s are removed
-#reason is that log10(0) = -Inf
+# drop all 0 counts from the allstates.long data base. be careful, 
+# this data.frame no longer has 0s
+# can't study liftoff (see on descriptive plots) now that 0s are removed
+# reason is that log10(0) = -Inf
 allstates.long <- allstates.long %>% mutate(count = na_if(count, "0"))
 
-#save percent variable and log10 version
+# save percent variable and log10 version
 allstates.long$percent <- allstates.long$count/allstates.long$population * 100
 allstates.long$percent.log10 <- log10(allstates.long$percent)
 ```
@@ -30,18 +31,18 @@ allstates.long$percent.log10 <- log10(allstates.long$percent)
 It is good to check the distribution of the log percent variable to make sure there aren't major issues with symmetry. 
 
 ```{r echo=longform}
-#histogram of percent.log10; not a bad looking distribution
+# histogram of percent.log10; not a bad looking distribution
 hist(allstates.long$percent.log10, xlab="log percent", main="Histogram")
 ```
 
 Run the linear mixed model on the log scale and examine the summary of the model.
 
 ```{r echo=longform}
-#run linear mixed model default optimizer didn't converge so switched to Nelder_Mead
+# run linear mixed model default optimizer didn't converge so switched to Nelder_Mead
 out.lmer <- lmer(percent.log10 ~ 1 + day.numeric + (1+ day.numeric|state.abb), allstates.long, control = lmerControl(optimizer ="Nelder_Mead"))
 
-#summary(out.lmer)
-#tab_model() produces nicer looking tables
+# summary(out.lmer)
+# tab_model() produces nicer looking tables
 if (is_html_output())
 tab_model(out.lmer, show.se=T, show.stat=T)
 ```
@@ -61,7 +62,7 @@ For more documentation on the computation of these terms see the help page for f
 Now let's examine plots of residuals to diagnose potential issues.
 
 ```{r echo=longform}
-#plots of residuals
+# plots of residuals
 plot(out.lmer)
 qqnorm(resid(out.lmer))
 qqline(resid(out.lmer))
@@ -73,14 +74,14 @@ The residuals against the fitted values suggest a nonlinear pattern remains in t
 Let's look at the state-level slopes and intercepts more directly:  first with a table of each state and then with some plots.  Light gray points have confidence intervals that overlap 0 so those parameter estimates are not significantly different from zero. But here we did not do a correction like Bonferroni or Scheffe to address the 100 tests we just did (50 states on each of slope and intercept).  This would just require a small modification to the code to adjust the level of the CI to correspond, say, to the Bonferroni corrected levels.
 
 ```{r echo=longform}
-#list of the set of 50 intercept/slope pairs
+# list of the set of 50 intercept/slope pairs
 coef(out.lmer)$state.abb
 
-#quantile plot of the estimates
-#ggCaterpillar(ranef(out.lmer, condVar=T),QQ=T, likeDotplot = T)
+# quantile plot of the estimates
+# ggCaterpillar(ranef(out.lmer, condVar=T),QQ=T, likeDotplot = T)
 
-#include 95% CI, could do instead +/- 1 standard error, which is roughly .68 CIs
-#light grey points are not statistically different from 0
+# include 95% CI, could do instead +/- 1 standard error, which is roughly .68 CIs
+# light grey points are not statistically different from 0
 raeff <- REsim(out.lmer)
 plotREsim(raeff,labs=T, stat="mean",level=.95)
 ```
@@ -91,7 +92,7 @@ It turns out that computing standard errors for the prediction is not straightfo
 Here is one method for computing the predicted value and a prediction interval. To maintain clarity I'll focus just on two states, but one could do these plots for all 50 states.
 
 ```{r warning=F, message=F, echo=longform}
-#First New York
+# First New York
 nydf <- allstates.long %>% filter(state.abb == "New York")
 pred <- data.frame(day.numeric= nydf$day.numeric, predictInterval(out.lmer, nydf, which="full", level=.95), percap100=nydf$percap100)
 pred
@@ -103,8 +104,8 @@ ggplot(pred) +
 ```
 
 ```{r  warning=F, message=F,  echo=longform, eval=longform}
-#similar plot adding prediction band 5 days out beyond current day
-#but this doesn't look right as the band should widen the 5 days beyond data
+# similar plot adding prediction band 5 days out beyond current day
+# but this doesn't look right as the band should widen the 5 days beyond data
 outdays <- 5
 pred2 <- data.frame(day.numeric = 1:(max(nydf$day.numeric)+outdays), predictInterval(out.lmer, newdata=list(day.numeric=1:(max(nydf$day.numeric)+outdays), state.abb=rep("New York",outdays+max(nydf$day.numeric))), which="full", level=.95))
 pred2
@@ -121,7 +122,7 @@ Note that the linear pattern (line and prediction band) doesn't do a good job of
 To check this is not just a fluke for New York, let's look at another state. For Michigan a similar story, where we see under, over and under prediction. These plots suggest while the linear model may seem ok at first pass, there may some systematic deviations form the line that are worth capturing.  We can see that if we forecast out five days or so, the line will continue to increase but it appears that the points are increasing at a slower rate.
 
 ```{r  warning=F, message=F, echo=longform}
-#similarly for michigan
+# similarly for michigan
 midf <- allstates.long %>% filter(state.abb == "Michigan")
 pred <- data.frame(day.numeric=midf$day.numeric, predictInterval(out.lmer, midf), percap100=midf$percap100)
 pred
@@ -140,17 +141,17 @@ Now that we understand the slopes and intercepts, let's make some predictions.  
 max.day.numeric <- max(allstates.long$day.numeric)
 max.day <- max(allstates.long$day)
 
-#predict day.ahead number of days
+# predict day.ahead number of days
 days.ahead <- 5
 
-#be sure order of states is the same across all parts of this command
+# be sure order of states is the same across all parts of this command
 predmat <- data.frame(day.numeric=rep(c(0:(max.day.numeric+days.ahead)),50),state.abb=rep(rownames(coef(out.lmer)$state.abb),each=max.day.numeric+days.ahead+1), prettyval=rep(allstates.long$prettyval[order(match(allstates$`Province/State`,state.population$NAME))], each=max.day.numeric+days.ahead+1),
 population= rep(allstates.long$population[order(match(allstates$`Province/State`,state.population$NAME))], each=max.day.numeric+days.ahead+1))
 
-#compute predictions
+# compute predictions
 predmat$prediction <- predict(out.lmer, predmat)
 
-#linear plot of predictions as estimated
+# linear plot of predictions as estimated
 predmat %>% mutate(label = if_else(day.numeric == max(day.numeric), as.character(prettyval), NA_character_)) %>%
   ggplot(aes(day.numeric,prediction,group=prettyval, color=prettyval )) +  geom_line()   +
    geom_label_repel(aes(label= label), nudge_x=2, na.rm=T,segment.color = 'grey50', label.size=.01, size=2.5, show.legend=F) +
@@ -163,7 +164,7 @@ coord_cartesian(clip = 'off') +  scale_x_continuous(limits=c(0,max.day.numeric+ 
 Using the same data I  take the exponential of those predictions to see the percentages with their predicted curves.  The Y axis is on the percentage scale (count/population * 100).
 
 ```{r fig.cap="Predictions of percentages 5 days out", echo=longform}
-#plot of same predictions as 10^prediction to put back on original percentage scale
+# plot of same predictions as 10^prediction to put back on original percentage scale
 predmat %>% mutate(label = if_else(day.numeric == max(day.numeric), as.character(prettyval), NA_character_)) %>%
 ggplot( aes(day.numeric,10^prediction,group=prettyval, color=prettyval )) +  geom_line()   +
    geom_label_repel(aes(label= label), nudge_x=2, na.rm=T,segment.color = 'grey50', label.size=.01, size=2.5, show.legend=F) +
@@ -194,35 +195,35 @@ Finally, for comparison, I run a linear regression through these data after tran
 
 
 ```{r origplot, echo=longform, results=ifelse(longform,"markup","hide")}
-#set random seed to results appear the same each run
+# set random seed to results appear the same each run
 set.seed(0101202019)
 x <- 1:25
-#here is the true model that generated the data
+# here is the true model that generated the data
 y <- 1*exp(.15*x) + rnorm(length(x),0,.25)
 plot(x,y)
 
-#linear regression with one predictor, draw violet curve
+# linear regression with one predictor, draw violet curve
 out <- lm(y~x)
 summary(out)
 lines(x,predict(out), col="violet")
 
-#add quadratic term, draw red curve
+# add quadratic term, draw red curve
 out <- lm(y~x + I(x^2))
 summary(out)
 lines(x,predict(out), col="red")
 
-#add cubic term, draw blue curve
+# add cubic term, draw blue curve
 out <- lm(y~x + I(x^2) + I(x^3))
 summary(out)
 lines(x,predict(out), col="blue")
 
 
-#nonlinear exponential directly estimated, draw green curve
+# nonlinear exponential directly estimated, draw green curve
 out <- nls(y~exp(beta*x), start=list(beta=.5))
 summary(out)
 lines(x,predict(out), col="green")
 
-#log transform followed by linear regression, draw black curve
+# log transform followed by linear regression, draw black curve
 out <- lm(log(y)~x)
 summary(out)
 lines(x,exp(predict(out)), col="black")
@@ -258,13 +259,13 @@ You can think of this model as being similar to a balance in a savings account t
 ```{r messages=F, warnings=F, echo=longform}
 allstates.long.new <- groupedData(count ~ day.numeric | state.abb, data=allstates.long)
 
-#this is a more general function that can estimate liftoff l (point at which counts begin to be nonzero)
-#for for now set l=0 
+# this is a more general function that can estimate liftoff l (point at which counts begin to be nonzero)
+# for for now set l=0 
 richfu <- function(d,l,rate,y,b1){
 ifelse(d<l,0,y*rate^(b1*(d-l)))
 }
 
-#example exponential growth model
+# example exponential growth model
 plot(0:max.day.numeric, richfu(0:max.day.numeric, 0, 1.23 , .000555 , 1)*19500000/100,type="l",xlab="days",ylab="counts",main="Hypothetical plot of counts following an exponential growth \n(tied to population of New York)")
 ```
 
@@ -298,7 +299,7 @@ To illustrate how time locking can show structure, let me use the previous plot,
 
 
 ```{r echo=longform}
-#very kludgy code to impose time locking
+# very kludgy code to impose time locking
 plot(c(0:max.day.numeric)[-1], richfu(c(0:max.day.numeric)[-1], 1, 1.23 , .000555 , 1)*19500000/100,type="l",xlab="days",ylab="counts",
      main="Hypothetical plot of counts for two states \n with different liftoffs but time locked")
 lines(c(0:max.day.numeric)[-1*c(1:6)]-5, richfu(c(0:max.day.numeric)[-1*c(1:6)]-2, 4, 1.23 , .000555 , 1)*19500000/100, col="blue")
@@ -331,23 +332,23 @@ summary(out.exponential)
 if (is_latex_output())
   texreg(out.exponential, booktabs=T, dcolumn = T)
 
-#intervals(out.exponential, which="fixed")
+# intervals(out.exponential, which="fixed")
 intervals(out.exponential)
 
-#idea for boostrapping to get predicted interval but be careful about the time aspect; maybe better to simulate data 
-#https://stackoverflow.com/questions/55552080/how-to-obtain-confidence-intervals-for-non-linear-mixed-model-logistic-growth-c
+# idea for boostrapping to get predicted interval but be careful about the time aspect; maybe better to simulate data 
+# https://stackoverflow.com/questions/55552080/how-to-obtain-confidence-intervals-for-non-linear-mixed-model-logistic-growth-c
 ```
 
 Checking residuals for assumptions.
 
 ```{r echo=longform}
 plot(fitted(out.exponential), resid(out.exponential), main="New York in blue")
-#suspect weird points are new york; so put NY in blue points and connected dots with a curve
+# suspect weird points are new york; so put NY in blue points and connected dots with a curve
 points(fitted(out.exponential)[names(fitted(out.exponential))=="New York"],resid(out.exponential)[names(resid(out.exponential))=="New York"],col="blue")
 lines(fitted(out.exponential)[names(fitted(out.exponential))=="New York"],resid(out.exponential)[names(resid(out.exponential))=="New York"],col="blue")
 
-#let's drop outliers and look at the resid plot (zoom in for fits < .08 and abs(resid) < .01)
-#this helps us see the majority of the residual plot
+# let's drop outliers and look at the resid plot (zoom in for fits < .08 and abs(resid) < .01)
+# this helps us see the majority of the residual plot
 plot(fitted(out.exponential)[
   fitted(out.exponential)<.08 & abs(resid(out.exponential)) < .01], 
   resid(out.exponential)[fitted(out.exponential)<.08 & abs(resid(out.exponential)) < .01], 
@@ -385,15 +386,15 @@ Consistent to what we observed in the log transformed data, the points do not se
 <!-- I'll compare the predicted curve for New York five days out from 3/23 using this nonlinear mixed model regression to the earlier linear mixed model regression on the log scale, by superimposing the predicted curve in green from the nonlinear model on the plot for  the log linear model. -->
 
 ```{r eval=F, echo=F}
-#need to rewrite this to incldue predictioninteval for nlme (don't use temp from log linear version)
-#go days.ahead out
+# need to rewrite this to incldue predictioninteval for nlme (don't use temp from log linear version)
+# go days.ahead out
 predmatnonlin <- data.frame(day.numeric=rep(c(0:(14+days.ahead)),50),state.abb=rep(rownames(coef(out)),each=15+days.ahead))
 predmatnonlin$prediction <- predict(out, list(day.numeric=predmatnonlin$day.numeric, state.abb=predmatnonlin$state.abb),level=1)
 
-#focus just on New York for simplicity
+# focus just on New York for simplicity
 datapl <- data.frame(predmatnonlin[predmatnonlin$state.abb=="New York", ])
 
-#convert the fits back to counts to match the plot used in the log linear 
+# convert the fits back to counts to match the plot used in the log linear 
 datapl$counts <- datapl$prediction * c(state.population[state.population$NAME=="New York","value"])$value / 100
 
 y = allstates.long.new[allstates.long.new$state.abb == "New York","count"]
@@ -416,7 +417,7 @@ This is the form of logistic growth I'm using
 
 $$
 \begin{aligned}
-count &= \frac{asymptote}{1 + \exp{\beta_1(day.mid - day)}}
+count &= \frac{asymptote}{1 + e^{\beta_1(day.mid - day)}}
 \end{aligned}
 $$
 The asymptote parameter controls the maximum value the function reaches, the day.mid parameter is both the day at which the function is half way to the asymptote and is also the inflection point and $\beta_1$ is a scaling parameter defined to be the distance between the inflection point day.mid and point at which the count is 73% of the asymptote (basically, the difference between day.mid and the day corresponding to the count asymptote*$\frac{1}{1+exp(-1)}$, see Pinhero & Bates).
@@ -427,7 +428,7 @@ richfu.logistic <- function(d,l,y,b1){
 l/(1+y*exp(b1*d))
 }
 
-#example logistic growth model
+# example logistic growth model
 plot(0:max.day.numeric, richfu.logistic(0:max.day.numeric, 3880, 133.45, -.332),type="l",xlab="days",
   ylab="counts",main="Hypothetical plot of counts following a logistic growth function")
 ```
@@ -443,7 +444,7 @@ out <- nlme(count ~ richfu.logistic(day.numeric, l,y,b1), fixed = l+y+b1~1,
 ```
 
 ```{r  messages=F, warnings=F, echo=longform}
-#AIC(out)
+# AIC(out)
 out.logistic <- out
 
 if (is_html_output())
@@ -452,17 +453,17 @@ summary(out.logistic)
 if (is_latex_output())
   texreg(out.logistic, booktabs=T, dcolumn = T)
 
-#confidence intervals of the parameters
+# confidence intervals of the parameters
 intervals(out.logistic)
 
-#Checking residuals for assumptions
+# Checking residuals for assumptions
 plot(fitted(out.logistic), resid(out.logistic), main="New York in blue")
-#suspect weird points are new york; so put NY in blue points and connected dots with a curve
+# suspect weird points are new york; so put NY in blue points and connected dots with a curve
 points(fitted(out.logistic)[names(fitted(out.logistic))=="New York"],resid(out.logistic)[names(resid(out.logistic))=="New York"],col="blue")
 lines(fitted(out.logistic)[names(fitted(out.logistic))=="New York"],resid(out.logistic)[names(resid(out.logistic))=="New York"],col="blue")
 
-#let's drop outliers and look at the resid plot (zoom in for fits < .08 and abs(resid) < .01)
-#this helps us see the majority of the residual plot
+# let's drop outliers and look at the resid plot (zoom in for fits < .08 and abs(resid) < .01)
+# this helps us see the majority of the residual plot
 plot(fitted(out.logistic)[
   fitted(out.logistic)<20000 & abs(resid(out.logistic)) < 1000], 
   resid(out.logistic)[fitted(out.logistic)<20000 & abs(resid(out.logistic)) < 1000], 
@@ -472,29 +473,29 @@ plot(fitted(out.logistic)[
 qqnorm(resid(out.logistic))
 qqline(resid(out.logistic))
 
-#autocorrelation, set lag to 6 given small data set
+# autocorrelation, set lag to 6 given small data set
 ACF(out.logistic, maxLag=6)
 plot(ACF(out.logistic, maxLag=6))
 
-#example of another version that had higher AIC so I discarded this model
-#out2 <- nlme(count ~ richfu.logistic(day.numeric, l,y,b1), fixed = l+y+b1~1,
-#            random =  l+b1~1, data=na.omit(allstates.long.new),start=c( l=15000,y=800,b1=-.65), verbose=T, #control=nlmeControl(msMaxIter=1000,opt="nlminb",pnlsTol=.02,msVerbose=T,minScale=.02, maxIter=1000) )
-#AIC(out2)
+# example of another version that had higher AIC so I discarded this model
+# out2 <- nlme(count ~ richfu.logistic(day.numeric, l,y,b1), fixed = l+y+b1~1,
+#            random =  l+b1~1, data=na.omit(allstates.long.new),start=c( l=15000,y=800,b1=-.65), verbose=T, # # # control=nlmeControl(msMaxIter=1000,opt="nlminb",pnlsTol=.02,msVerbose=T,minScale=.02, maxIter=1000) )
+# AIC(out2)
 
-#example of a different parameterization of logistic growth (previous y = 1 and allowing shift by subracting by parameter)
-#starts <- getInitial(count~ SSlogis(day.numeric, Asym=1, xmid=1, scal=1), data=allstates.long.new)
-#out3 <- nlme(count ~ SSlogis(day.numeric, Asym, xmid,scal), fixed =  Asym + xmid + scal  ~1,
+# example of a different parameterization of logistic growth (previous y = 1 and allowing shift by subracting by parameter)
+# starts <- getInitial(count~ SSlogis(day.numeric, Asym=1, xmid=1, scal=1), data=allstates.long.new)
+# out3 <- nlme(count ~ SSlogis(day.numeric, Asym, xmid,scal), fixed =  Asym + xmid + scal  ~1,
 #            random = xmid + Asym ~ 1, data=na.omit(allstates.long.new),start=c(Asym=starts[1], xmid=starts[2],scal=starts[3]), verbose=T, control=nlmeControl(msMaxIter=500))
-#AIC(out3)
+# AIC(out3)
 ```
 
 Same three residual plots as before, with slight improvement as seen in the zoomed in version and slightly less extreme tails. Not completely satisfying.  I also include the autocorrelation function plot.
 
 
 ```{r messages=F, warning=F, eval=F, echo=longform}
-#stopped working 4/4/20 (likely a few outliers in the data points so need to investigate)
-#For illustration purposes, here is another way of fitting this model using the a different package lme4.  
-#I'll only provide a summary and a residual plot.
+# stopped working 4/4/20 (likely a few outliers in the data points so need to investigate)
+# For illustration purposes, here is another way of fitting this model using the a different package lme4.  
+# I'll only provide a summary and a residual plot.
 # Asym/(1+exp((xmid-input)/scal))
 out.logistic.nlmer <- nlmer(percent ~ SSlogis(day.numeric, l, y,b1) ~ l + y + b1| state.abb, data=na.omit(allstates.long.new), start=c( l=5300, y=20, b1=3.5), 
                             control=nlmerControl(tolPwrss=.05, optCtrl=list(maxiter=500)))
@@ -548,7 +549,7 @@ Rerun the logistic growth model using the weight parameter to allow each state t
 Use the anova command to compare the fits of the regressions with equal and unequal state error variances. THis is is an increment in fit test comparing the reduced model (e.g., one residual variance for all states) to a full model (e.g., each state has its own residual variance). The command would be anova(reduced, full) where you replace reduced and full with the name of the object you saved the nlme (e.g., reduced = out.logistic in the example below).
 ```
 
-```{r}
+```{exercise}
 Re-run the logistic growth nonlinear mixed model using the percentage of the state population that tests positive. Compare these results to the logistic growth models computed on the count data with equal residual variance across states. How do you address the different scales of the dependent variable?
 ```
 
@@ -561,10 +562,10 @@ out <- nlme(count ~ richfu.logistic(day.numeric, l,y,b1), fixed = l+y+b1~1,
 
 ```{r messages=F, warning=F, echo=longform}
 out.logistic2 <- out
-#ACF(out.logistic2, maxLag=6)
-#plot(ACF(out.logistic2, maxLag=6))
+# ACF(out.logistic2, maxLag=6)
+# plot(ACF(out.logistic2, maxLag=6))
 
-#Checking residuals for assumptions
+# Checking residuals for assumptions
 #plot(fitted(out.logistic2), resid(out.logistic2), main="New York in blue")
 #suspect weird points are new york; so put NY in blue points and connected dots with a curve
 #points(fitted(out.logistic2)[names(fitted(out.logistic2))=="New York"],resid(out.logistic2)[names(resid(out.logistic2))=="New York"],col="blue")
@@ -576,7 +577,7 @@ out.logistic2 <- out
 
 Here is a test of the two logistic growth models (with and without correlated error structure).
 ```{r messages=F, warning=F}
-#test the reduced (no correlation) to the full (with ARMA(1,1) correlational structure)
+# test the reduced (no correlation) to the full (with ARMA(1,1) correlational structure)
 anova(out.logistic, out.logistic2)
 ```
 
@@ -584,7 +585,7 @@ anova(out.logistic, out.logistic2)
 <!-- For completeness, the plot of predicted trajectories for the logistic growth model with correlated error structure, followed by New York for comparison with the earlier logistic growth model with independent residuals. -->
 
 ```{r messages=F, warning=F, echo=longform, eval=F}
-#print curves and ny data
+# print curves and ny data
 predmatnonlin2 <- data.frame(day.numeric=rep(c(0:max.day.numeric),50),state.abb=rep(rownames(coef(out.logistic2)),each=max.day.numeric+1))
 predmatnonlin2$prediction <- predict(out.logistic2, list(day.numeric=predmatnonlin2$day.numeric, state.abb=predmatnonlin2$state.abb),level=1)
 nonlinreg.logistic2 <- ggplot(predmatnonlin2, aes(day.numeric,prediction,group=state.abb, color=state.abb )) +  geom_line()   
@@ -658,15 +659,16 @@ The overall point is that testing whether the data fit an exponential growth mod
 To get deeper in such process models of growth, we need to develop some additional machinery including differential equations, which are equations that govern changes over time.  I'll briefly touch on these models in the next chapter.
 
 
-## Splines and Smoothers
+## Splines, Smoothers and Time Series {#splines}
 
-I don't recommend going the route of splines and smoothers in this context.  While they can provide great fit to the data and can be used for interpolation (e.g., if we missed a day of data collection, we could interpolate), splines and smoothers are not helpful at informing one of the underlying process nor in forecasting (extrapolating)  from one's data, which is what we want to be able to do in this case.  For illustration, and to show that I too can get curves that approximate the data points closely, I ran a mixed model spline regression where the knots are treated as a random effect and show the plots just for New York and Michigan for brevity. One would need to do all the usual diagnostics for this mixed model as well.
+I'll briefly give an example of splines because it will be helpful in subsequent sections.
+I don't recommend going the route of splines and smoothers in this context.  While splines can provide great fit to the data and can be used for interpolation (e.g., if we missed a day of data collection, we could interpolate), splines and smoothers are not helpful at informing one of the underlying process nor in forecasting (extrapolating)  from one's data, which is what we want to be able to do in this case.  For illustration, and to show that I too can get curves that approximate the data points closely, I ran a mixed model spline regression where the knots are treated as a random effect and show the plots just for New York and Michigan for brevity. One would need to do all the usual diagnostics for this mixed model as well.
 
 ```{r message=F, warning=F, echo=longform, results=ifelse(longform, "markup", "hide")}
-#linear mixed model using splines on the count data
+# linear mixed model using splines on the count data
 out.sp <- lmer(count ~ (bs(day.numeric, intercept=T, degree=5) | state.abb), data=na.omit(allstates.long))
 
-#diagnostics omitted for brevity
+# diagnostics omitted for brevity
 #plot(out.sp)
 #qqnorm(resid(out.sp))
 #qqline(resid(out.sp))
@@ -675,27 +677,34 @@ out.temp$fit <- fitted(out.sp)
 subset(out.temp,state.abb %in% c("New York","Michigan")) %>% ggplot(aes(x=day.numeric,y=fit,group=state.abb,color=state.abb)) + geom_line() + geom_point(aes(x=day.numeric,y=count), color="black") + ggtitle("Black points are actual data; curves are spline regression fits")
 ```
 
+The splines approach can be extended in the context of time series to permit forecasts.  Here I'll show the use 
+of the forecast package and the excellent outline book by [Hyndman and Athanasopoulos](https://otexts.com/fpp2/). I'll forecast 10 days out from the current date using New York data and compute an error band, show how to check reisudals with the  checkresiduals() command, and how to incorporate use hierarchical time series to model state trajectories within the US.  
 
-<!-- I'll compare the predicted curve for New York five days out from 3/23 using this nonlinear mixed model regression to the earlier linear mixed model regression on the log scale, by superimposing the predicted curve in green from the nonlinear model on the plot for  the log linear model. -->
+```{r echo=longform}
+# better to redo plots with dates like 4/1/20 and weekly markers
+library(forecast)
+library(hts)
+library(ggfortify)
+nydays <- allstates.long$day[allstates.long$state.abb=="New York"]
+# check
+nycount.ts <- ts(nydf$count, start=1, end=max(nydf$day.numeric)+1, frequency = 1)
+autoplot(nycount.ts) 
 
-```{r eval=F, echo=F}
-#once nlme is fixed for exponential, then fix this segment
-#go days.ahead out
-predmatnonlin <- data.frame(day.numeric=rep(c(0:(14+days.ahead)),50),state.abb=rep(rownames(coef(out)),each=15+days.ahead))
-predmatnonlin$prediction <- predict(out, list(day.numeric=predmatnonlin$day.numeric, state.abb=predmatnonlin$state.abb),level=1)
+plot(forecast(nycount.ts), xlab="Day", ylab="count")
 
-#focus just on New York for simplicity
-datapl <- data.frame(predmatnonlin[predmatnonlin$state.abb=="New York", ])
+# splines, h= number days predicted
+h <- 10
+splne.forecast.ny <- splinef(nycount.ts,h=h)
+autoplot(splne.forecast.ny)
+checkresiduals(splne.forecast.ny)
 
-#convert the fits back to counts to match the plot used in the log linear 
-datapl$counts <- datapl$prediction * c(state.population[state.population$NAME=="New York","value"])$value / 100
-
-y <- allstates.long.new[allstates.long.new$state.abb == "New York","count"]
-actualny <- data.frame(y=y, x=0:(length(y)-1))
-
-temp %>%   ggplot(aes(x=day.numeric, y=fit)) + geom_point(data=subset(temp,day.numeric<=max.day.numeric) )+ geom_ribbon(data=subset(temp,day.numeric>max.day.numeric), aes(y=fit, ymin=lwr,ymax=upr), alpha=.2,fill="red") + geom_line() + geom_linerange(data=subset(temp,day.numeric<=max.day.numeric),aes(y=fit, ymin=lwr,ymax=upr)) + ylab("Counts") + geom_point(data=manualcounts, aes(x=day.numeric, y=fit),color="blue",shape=2) + geom_line(data=datapl, aes(x=day.numeric, y=counts),color="green") + geom_point(data=datapl, aes(x=day.numeric, y=counts),color="green") + geom_point(data=datapl, aes(x=day.numeric, y=counts),color="green") + geom_point(data=actualny, aes(x=x,y=y), color="violet")
+# comparison (may drop)
+splne.forecast.ny <- splinef(nycount.ts,h=h, lambda="auto")
+autoplot(splne.forecast.ny)
+checkresiduals(splne.forecast.ny)
 
 ```
+
 
 
 ## Bayesian Estimation of Nonlinear Regression: Adding value to prediction and uncertainty
@@ -710,8 +719,8 @@ I'll follow the same modeling implementation as used earlier. The brm() function
 
 
 ```{r message=F, warning=F, echo=longform, cache=cache, eval=F}
-#once working correctly move these library calls to prelim file
-#continue to use save trick (maybe cache) to minimize computation time
+# once working correctly move these library calls to prelim file
+# continue to use save trick (maybe cache) to minimize computation time
 library(brms)
 library(bayesplot)
 library(tidybayes)
@@ -732,12 +741,12 @@ saveRDS(fit_loss, file="fitloss.RDS")
 ```
 
 ```{r message=F, warning=F, echo=longform}
-#put libs here again
+# put libs here again
 library(brms)
 library(bayesplot)
 library(tidybayes)
-#in interest of time just read in the saved object 
-#currently using data through 4/22/20 in what I saved
+# in interest of time just read in the saved object 
+# currently using data through 4/22/20 in what I saved
 fit_loss <- readRDS("fitloss.RDS")
 
 summary(fit_loss)
@@ -750,8 +759,8 @@ plot(conditional_effects(fit_loss))
 ```
 
 ```{r eval=F, echo=F}
-#need to fix, interals are too narrow
-#another plotting approach
+# need to fix, interals are too narrow
+# another plotting approach
 int<- 1:100
 out.predict <- predict(fit_loss, newdata=data.frame(state.abb=rep("Michigan",max(int)), day.numeric=int), re_formula=NULL)
 temp <-data.frame(day.numeric=int, out.predict)
@@ -762,7 +771,7 @@ ggplot(temp) +
 
 #ggplot(temp, aes(day.numeric, Estimate)) + geom_smooth(aes(ymin=Q2.5, ymax=Q97.5), stat="identity") 
   
-#another apporaoch using tidybayes
+# another apporaoch using tidybayes
 grid <- allstates.long %>%
   group_by(state.abb) %>%
   tidyr::expand(day.numeric = modelr::seq_range(day.numeric, n = 80, expand=.5, pretty=T)) %>%
@@ -770,7 +779,7 @@ grid <- allstates.long %>%
 
 fits <- grid %>%
   add_predicted_draws(fit_loss, n = 200, re_formula=NULL, dpar=T)
-#changed fitted to predicted
+# changed fitted to predicted
 
 ggplot(subset(allstates.long, state.abb %in% c("New York","Michigan"))) +
   aes(x = day.numeric, y = count) +
@@ -786,14 +795,14 @@ ggplot(subset(allstates.long, state.abb %in% c("New York","Michigan"))) +
   geom_point(color = "red") + stat_lineribbon(data=subset(fits, state.abb %in% c("New York","Michigan")), aes(y=.prediction), .width = c(.99, .95,.80, .50), alpha=1/4, color = brewer.pal(5, "Blues")[[5]]) +
   facet_wrap("state.abb") 
 
-#might be a scaling issue where band is wider but scale of NY counts makes it seem too narrow
-#still count is 3000 off
+# might be a scaling issue where band is wider but scale of NY counts makes it seem too narrow
+# still count is 3000 off
 ggplot(subset(allstates.long, state.abb %in% c("Michigan"))) +
   aes(x = day.numeric, y = count) +
   geom_point(color = "red") + stat_lineribbon(data=subset(fits, state.abb %in% c("Michigan")), aes(y=.prediction), .width = c(.95,.80, .50), alpha=1/4, color = brewer.pal(5, "Blues")[[5]]) +
   scale_fill_brewer() + facet_wrap("state.abb") 
 
-#for add_fitted_draws
+# for add_fitted_draws
 ggplot(subset(allstates.long, state.abb %in% c("New York","Michigan"))) +
   aes(x = day.numeric, y = count) +
   geom_line(
@@ -805,9 +814,9 @@ ggplot(subset(allstates.long, state.abb %in% c("New York","Michigan"))) +
 ```
 
 ```{r echo=F, eval=F}
-#some additional plots for reference; may use later
+# some additional plots for reference; may use later
 
-#plot all 50 states separately; too crunched up
+# plot all 50 states separately; too crunched up
 conditions <- data.frame(state.abb = unique(allstates.long$state.abb))
 rownames(conditions) <- unique(allstates.long$state.abb)
 me_loss <- conditional_effects(
@@ -816,7 +825,7 @@ me_loss <- conditional_effects(
 )
 plot(me_loss, ncol = 5, points = TRUE)
 
-#just michigan, error bars seem too narrow
+# just michigan, error bars seem too narrow
 conditions <- data.frame(state.abb = c("Michigan", "New York"))
 rownames(conditions) <- c("Michigan", "New York")
 me_loss <- conditional_effects(
@@ -827,7 +836,7 @@ plot(me_loss, ncol = 5, points = TRUE)
 
 pp_check(fit_loss)
 
-#useful examples
+# useful examples
 #https://cran.r-project.org/web/packages/brms/vignettes/brms_nonlinear.html
 #https://rpubs.com/tjmahr/bayesian-nlmer
 #https://rstudio-pubs-static.s3.amazonaws.com/154568_f7f4815a852646ebbd6a6a4ced38b62f.html
@@ -837,44 +846,98 @@ pp_check(fit_loss)
 #stan based prophet
 #https://research.fb.com/prophet-forecasting-at-scale/
 
-#need to figure out if the multimodes are real, or something else such as the model has mulitple likelihood peaks (check with the hessian); could run on simulated data
+# need to figure out if the multimodes are real, or something else such as the model has mulitple likelihood peaks (check with the hessian); could run on simulated data
 
-#get correlated random effects in nonlinear working
+# get correlated random effects in nonlinear working
 ```
 
 
-## Time Series Methods
 
-Pending: in this section I'll illustrate the use of the forecast package and the excellent outline book by [Hyndman and Athanasopoulos](https://otexts.com/fpp2/). Set up an example forecast using NY data, including checkresiduals(), as well as hierarchical time series to model state trajectories within the US.
+## State-space modeling 
+
+The simple idea of a time series introduced earlier in Section \@ref{splines} can be extend to a context involving a latent variable, or as it is called in this context, a state.  The basic idea is that there are two equations governing different levels of analysis. One equation governs our observations and another equation govern a latent state. 
+
+One form of this approach has these equations.  For the state-space portion,
+$$
+S(t+1) = S(t) + \epsilon_s
+$$
+where S(t) is the state at time and the $\epsilon_s$ is the noise in the state model.  This equation governs the transition from one state to another at each time step possibly with error. The error is assumed to be normally distributed with mean = 0 and some variance. If the variance is constrained to be 0, then there is no noise in process modeling the transition across states.  This model can be extend to include parameters, transition probabilities, covariates, structure on the error terms and other bells-and-whistles usually associated with regression models.
+
+The second equation governs what we observe
+$$
+Y(t) = S(t) + \epsilon_m
+$$
+where Y(t) is our observation at time t, S(t) is the state at time t and the $\epsilon_m$ is the noise associated with our observation. Typically, the two $\epsilon$s in these two equations are assumed to be independent.  If they are both normally distributed, then this is typically known as a dynamic linear model.  
+
+The way to think about these two equations is that there is a process governing the way way the system moves from time step to time step and there is an additional process that can lead to noisy observations of those states. There are analogous models in other areas of statistics (e.g., factor analysis can be represented in a similar way of a measurement model separate from a structural model).
+
+I adapted some of the code from this [webpage](https://towardsdatascience.com/state-space-model-and-kalman-filter-for-time-series-prediction-basic-structural-dynamic-linear-2421d7b49fa6). R example pending.
+
+```{ eval=F, echo=F}
+# keep library here while developing section
+library(TSstudio)
+library(dlm)
+
+# split data to train on all but the last nahead data points
+nahead <- 10
+#work with daily counts
+split.ny <- ts_split(ts(c(nycount.ts[1],diff(nycount.ts))), sample.out=nahead)
+
+training <- split.ny$train
+testing <- split.ny$test
+
+model <- function(i) {
+   #return(dlmModPoly(3,dV=i[1], dW=i[2:3]))
+   return(dlmModPoly(2))
+}
+
+dlm.mle <- dlmMLE(training, parm = c(.1, .001, 1,1), build=model)
+dlmfit <- model(dlm.mle$par)
+
+#applying kalman filter
+dlmfilter <- dlmFilter(training, dlmfit)
+dlmsmoothed <- dlmSmooth(training, dlmfit)
+```
 
 ```{r eval=F, echo=F}
-#better to redo plots with dates like 4/1/20 and weekly markers
-library(forecast)
-library(hts)
-library(ggfortify)
-nydays <- allstates.long$day[allstates.long$state.abb=="New York"]
-#check
-nycount.ts <- ts(nydf$count, start=1, end=max(nydf$day.numeric)+1, frequency = 1)
-autoplot(nycount.ts) 
+library(timetk)
+nahead <- 10
+forecast <- dlmForecast(dlmfilter, nAhead=nahead)
 
-plot(forecast(nycount.ts), xlab="Day", ylab="count")
+x <- tk_index(training)
+xf <- seq(max(x), max(x)+nahead,1)
+aa <- forecast$a[,-1] * (-1)
+aa <- cbind(forecast$a[,1],aa)
+a <- drop(forecast$a %*% t(FF(dlmfit)))
+a <- c(tail(training,1),a)
 
-#splines, h=# days predicted
-h <- 10
-fcast <- splinef(nycount.ts,h=h)
-autoplot(fcast)
-checkresiduals(fcast)
+# need to figure out why off by one index for filter adn smoothed
+df <- rbind(
+   data.frame(x=x, y=as.numeric(training), series="original"),
+   data.frame(x=x[-1], y=apply(dlmfilter$m[-1,1:2],1,sum)[-max(x)], series="filtered"),
+   data.frame(x=x[-1],y=apply(dlmsmoothed$s[-1,1:2],1,sum)[-max(x)], series="smoothed"),
+   data.frame(x=xf,y=a, series="forecast"),
+   data.frame(x=xf, y=c(as.numeric(training)[max(x)], as.numeric(testing)), series="actual")
+)
+outplot <- ggplot(df, aes(x=x,y=y,color=series)) + geom_line()
 
-fcast <- splinef(nycount.ts,h=h, lambda="auto")
-autoplot(fcast)
-checkresiduals(fcast)
+# create CI sample
+new <- 1000
+fore <- dlmForecast(dlmfilter, nAhead=nahead)
+ciTheory <- (outer(sapply(fore$Q, FUN=function(x) sqrt(diag(x))), qnorm(c(0.025,0.975))) +
+             as.vector(t(fore$f)))
+ciSample <- t(apply(array(unlist(fore$newObs), dim=c(nahead,1,new))[,1,], 1,
+                    FUN=function(x) quantile(x, c(0.05,0.95))))
 
+fore <- dlmForecast(dlmfilter, nAhead=nahead)
+se.mat <- t(sapply(fore$R, FUN=function(x) sqrt(diag(x))))
+
+bounds.df <- data.frame(lwr=ciTheory[,1],upr=ciTheory[,2], x=xf[-1], series="bounds",y=a[-1])
+outplot + geom_ribbon(data=bounds.df, aes(x, y=y, ymin = lwr, ymax = upr), alpha = .2) 
 ```
 
 
-## Dynamic Systems Modeling
-
-Pending:  this section will include state-space models and dynamic regressions with the R packages pomp and dynr.  I'll present a basic intro to these models here and then return to them in Chapter \@ref(process) when discussion process models.
+I will return to state-space models in Chapter \@ref(process) when discussiing process models. 
 
 ## Basic Machine Learning Examples
 
@@ -940,56 +1003,56 @@ actualny <- data.frame(y=y, x=0:(length(y)-1))
 
 data <- data.frame(days= actualny$x[-1], counts= actualny$y[-1])
 
-#partition train and test data; good to do that first so that test data doesn't creep into training
-#this could happen accidentally say when computing a mean
-#for this classroom example the test set is the last day, so I'm testing by a prediction one day out
+# partition train and test data; good to do that first so that test data doesn't creep into training
+# this could happen accidentally say when computing a mean
+# for this classroom example the test set is the last day, so I'm testing by a prediction one day out
 data_train <- data[-nrow(data),]
 data_test <- data[nrow(data),]
 
-#diff computes first order differences so need to add day 1 at the begining of the series
+# diff computes first order differences so need to add day 1 at the begining of the series
 time.series.day.counts <- ts(c(173,diff(data_train$counts)))
 time.series.day.counts
 
-#first order difference
+# first order difference
 first.diff  <- diff(time.series.day.counts)
 first.diff
-#second order difference
+# second order difference
 second.diff  <- diff(first.diff)
 second.diff
 
-#put into data matrix and pad differences with NA 
+# put into data matrix and pad differences with NA 
 data.mat <- data.frame(days.numeric=data_train$days-mean(data_train$days), first=c(NA,first.diff), second=c(NA,NA,second.diff))
-#create day sq and day cube with centering
+# create day sq and day cube with centering
 data.mat$daysq <- (data.mat$days.numeric-mean(data.mat$days.numeric))^2
 data.mat$daycube <- (data.mat$days.numeric-mean(data.mat$days.numeric))^3
 data.mat$previous.day.count <- c(NA, time.series.day.counts[-length(time.series.day.counts)])
 
-#but to make future prediction is sensible I can't compute first and second order difference knowing the future count I'm predicting
-#so move the 1st and 2nd order diff down one row and pad with NAs; save the last count I'm dropping here because I do know it when 
-#making prediction to the training set (previous.day.count is already moved up)
+# but to make future prediction is sensible I can't compute first and second order difference knowing the future count I'm predicting
+# so move the 1st and 2nd order diff down one row and pad with NAs; save the last count I'm dropping here because I do know it when 
+# making prediction to the training set (previous.day.count is already moved up)
 save.last.row.data.mat <- data.mat[nrow(data.mat),]
 data.mat[,2:3] <- cbind(c(NA, data.mat[1:(nrow(data.mat)-1),2]), c(NA, data.mat[1:(nrow(data.mat)-1),3]))
 
-#drop first three rows to avoid missing data
+# drop first three rows to avoid missing data
 data.mat <- data.mat[-c(1:3),]
 
-#define scaling function for scaling 0-1
+# define scaling function for scaling 0-1
 sc <- function(x){(x-min(x,na.rm=T))/(max(x,na.rm=T)-min(x,na.rm=T))}
-#testing function sc as identity to check creation of X and Y arrays
+# testing function sc as identity to check creation of X and Y arrays
 #sc <- function(x) x
 
-#save the original mean, sd, min and max of the data_train features for later user
+# save the original mean, sd, min and max of the data_train features for later user
 tempmat <- cbind(data.mat$days.numeric,data.mat$daysq, data.mat$daycube, data.mat$first,data.mat$second, data.mat$previous.day.count, counts=time.series.day.counts[-c(1:3)])
 minmat <- apply(tempmat, 2, min,na.rm=T)
 maxmat <- apply(tempmat, 2, max,na.rm=T)
 meanmat <- apply(tempmat, 2, mean,na.rm=T)
 sdmat <- apply(tempmat, 2, function(i) sqrt(var(i,na.rm=T)))
 
-#rnn programs usually require 3 dimensional arrays for X and Y
+# rnn programs usually require 3 dimensional arrays for X and Y
 X <- array(c(sc(data.mat$days.numeric),sc(data.mat$daysq), sc(data.mat$daycube), sc(data.mat$first),sc(data.mat$second), sc(data.mat$previous.day.count)), dim=c(1,nrow(data.mat),6))
 Y <- array(sc(time.series.day.counts[-c(1:3)]), dim=c(1,nrow(data.mat),1))
 
-#I tinkered with different settings for learningrate, momentum
+# I tinkered with different settings for learningrate, momentum
 #batchsize should not be greater than the size of the training set
 model <- trainr(Y = Y,
                 X = X,
@@ -1004,7 +1067,7 @@ Yp <- predictr(model, X)
 dv.Y <- (maxmat[7]-minmat[7])*Yp + minmat[7]
 dv.Y
 
-#when sq and cubing, center using day mean from training set [1], save.last.row.datamat use [2] or [3] for first and second,respectively
+# when sq and cubing, center using day mean from training set [1], save.last.row.datamat use [2] or [3] for first and second,respectively
 Xnew <- array(c((data_train[nrow(data_train),1]-minmat[1])/(maxmat[1]-minmat[1]), (data_train[nrow(data_train),1]^2-minmat[2])/(maxmat[2]-minmat[2]), (data_train[nrow(data_train),1]^3-minmat[3])/(maxmat[3]-minmat[3]), unlist((save.last.row.data.mat[2]-minmat[4])/(maxmat[4]-minmat[4])),unlist((save.last.row.data.mat[3]-minmat[5])/(maxmat[5]-minmat[5])), 
 (time.series.day.counts[length(time.series.day.counts)]-minmat[6])/(maxmat[6]-minmat[6])), dim=c(1,1,6))
 
@@ -1033,10 +1096,41 @@ I'll be the first to acknowledge that this example is just for demonstration pur
 
 There are more diagnostics to consider such as error in prediction and we can iterate over the tuning parameters to find optimal values that give good predictive validity without overfitting.  Note that between day 25 and 40 the overall "trend" of the open red circles is relatively flat (as an average) but the daily variability is increasing.  The current set of predictors I'm  using in this RNN doesn't have the ability to easily capture changes in the variability.  This is one clue for additional predictors (features, see next subsection) that could be added to the model.  This could be an interesting part of the story and something that can be addressed not only with machine learning models but also for the other models we considered in this chapter.  Models that are not capturing this change in variance are possibly missing something important about the underlying process (which could just be something as simple as not all juristictions in New York state are reporting daily but nonetheless an important property to understand if we want to use these approaches to make forecasts).  We could check whether this increasing variance occurs in other states and at different levels of analysis such as the county level. We could check whether this increase in variance is consistent with a multiplicative error model where error (the "plus $\epsilon$" term we discussed earlier) could provide a clue to the underlying process. The point is that there is a potential signal here that our current models are not capturing, and we need to figure out whether we need to move to a different class of models or whether this heterogeneity is due to a simple factor that can be easily addressed. 
 
-Note that this increasing variance was not easy to detect in the cumulative plots and models on cumulative data such as the log linear, exponential and logistic models we covered earlier in this chapter.  If you go back and look at those plots, even the ones using the curve fitting spline methods, they show systematic "under and over the curve" errors consistent with what we are seeing in the incidence plot.  The increasing variance is there but just difficult to spot in the way we examined these data previously. Sometimes converting data to different forms, such as cumulative and incidence forms, helps highlight different aspects of the same data.  It is not easy to see in the barplot of the New York incidence presented at the beginning of the RNN section. It is often useful to cross-check one's interpretation with different model forms and plots.
+The increasing variance was not easy to detect in the cumulative plots and models on cumulative data such as the log linear, exponential and logistic models we covered earlier in this chapter.  If you go back and look at those plots, even the ones using the curve fitting spline methods, they show systematic "under and over the curve" errors consistent with what we are seeing in the incidence plot.  The increasing variance is there but just difficult to spot in the way we examined these data previously. Sometimes converting data to different forms, such as cumulative and incidence forms, helps highlight different aspects of the same data.  It is not easy to see in the barplot of the New York incidence presented at the beginning of the RNN section. It is often useful to cross-check one's interpretation with different model forms and plots.
+
 
 There are many other approaches that fall under the large machine learning umbrella, these include extensions of RNNs such as long short-term memory deep learning models that can learn patterns further back in time than simple RNNs, general additive models with penalized smoothers, genetic algorithms,  and symbolic regression as well as several packages in R to compute these methods. Overall, I was underwhelmed by the effort so far.  Some of the R packages gave error messages even running the very examples supplied in the package or they made strange predictions.
-Part of the issue is that we don't have enough data to  allow these machine learning methods to shine. 
+Part of the issue is that we don't have enough data to  allow these machine learning methods to shine. For a more detailed and systematic discussion machine learning approaches for time series data see [Makridakis et al](https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0194889).
+
+### Gaussian Process Regression
+
+There are many  approaches that fall under the Machine Learning umbrella, with neural networks presented in the previous subsection being just one type of approach.  In this subsection I will consider a different approach that mingles Bayesian methods with machine learning approaches and standard statistical models.  The approach is to treat the function as a draw from a parent distribution of functions (see [Erickson](https://cran.r-project.org/web/packages/GauPro/vignettes/IntroductionToGPs.html) for a short introduction and [Rasmussen & Williams (2006)](http://www.gaussianprocess.org/gpml/chapters/RW.pdf) for a book length treatment).  I demonstrate one implementation using the GauPro package in R.  The default is a Gaussian kernel but other can be used as well.  In this demonstration I stick with the default settings but these can be tuned as with most machine learning algorithms.
+
+```{r warning=F, message=F, echo=longform}
+# warning: sometimes this plot can look strange
+# need to figure out how to get a more stable solution
+# using newest version on github
+# remotes::install_github("CollinErickson/GauPro")
+library(GauPro)
+
+first.order.train <- c(data_train[1,2],diff(data_train[,2]))
+first.order.test <- data_test[1,2]-data_train[nrow(data_train),2]
+
+
+gp <- GauPro(data_train[,1],first.order.train, parallel=F)
+plot(gp,n2=500,nn=1000)
+gp.predict <- predict(gp,c(nrow(data_train):(nrow(data_train)+5)), se.fit=T)
+
+x <- data_train[,1]
+plot(data_train[,1], first.order.train, xlim=c(0,nrow(data_train)+5))
+curve(gp$predict(x), add=T, col=2)
+curve(gp$predict(x)+2*gp$predict(x, se=T)$se, add=T, col=4)
+curve(gp$predict(x)-2*gp$predict(x, se=T)$se, add=T, col=4)
+points((nrow(data_train)+1):(nrow(data_train)+5), gp.predict[-1,1], col="green")
+
+```
+
+There are related approaches in the area of functional data analysis that also treat the function as a sample but they use different estimation approaches than those in used in Gaussian process models.
 
 ### Feature engineering
 
@@ -1047,26 +1141,27 @@ The concept of feature engineering is much like entering linear, quadratic, cubi
 As a simple illustration of feature extraction,  here is the output of the daily count variable for each of the 50 states.
 
 ```{r warning=F, message=F, echo=longform, results="hide"}
-#since this is a package I'm just using here for illustration I'll read it from github and load it here rather than in preliminary.Rmd;
-#if you want to download just uncomment the next line
-#devtools::install_github("nelsonroque/tsfeaturex")
+# since this is a package I'm just using here for illustration 
+# I'll read it from github and load it here rather than in preliminary.Rmd;
+# if you want to download just uncomment the next line
+# devtools::install_github("nelsonroque/tsfeaturex")
 library(tsfeaturex)
 
-#create just a submatrix of the allstates.long data frame
+# create just a submatrix of the allstates.long data frame
 tsdat <- allstates.long[,c("day.numeric", "state.abb", "count")]
 out.featurex <- extract_features(tsdat, group_var="state.abb", 
               value_var="count", features="all", verbose=F, return_timing=F)
 
-#list of features computed by tsfeaturex for each state
+# list of features computed by tsfeaturex for each state
 names(out.featurex)
 ```
 
 ```{r echo=longform}
-#example for just the median
+# example for just the median
 head(out.featurex$f.median)
 
-#double check we get the median if we had computed it by hand
-#median(allstates.long$count[allstates.long$state.abb == 
+# double check we get the median if we had computed it by hand
+# median(allstates.long$count[allstates.long$state.abb == 
 #                                        c("Alaska")], na.rm=T)
 
 ```
