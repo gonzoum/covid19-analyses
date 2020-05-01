@@ -276,8 +276,12 @@ It reports daily records by state on number of positive,  negative, pending, hos
 
 
 ```{r warning=F, message=F, echo=longform, tidy=F}
+#4/29/20 website changed url
+#covid.tracking <- 
+#  read_csv("https://covidtracking.com/api/states/daily.csv")
 covid.tracking <- 
-  read_csv("https://covidtracking.com/api/states/daily.csv")
+  read_csv("https://covidtracking.com/api/v1/states/daily.csv")
+
 head(covid.tracking)
 
 # focus just on the 50 states (i.e., drop DC and territories like American Samoa AS)
