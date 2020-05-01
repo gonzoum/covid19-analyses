@@ -224,8 +224,7 @@ uspopfrac <- 330/7800
 cv10frac <- uspopfrac*sum.world[nrow(sum.world),1]
 
 #had to add +1 to max date in scale_x_date
-p2 <- ggplot(allstates.long, aes(x=day,weight=count))  + geom_bar(na.rm=T,fill="steel blue") + ggtitle("US Counts") + scale_x_date(limits=c(sum.world$day[1], sum.world$day[nrow(sum.world)]+1))  + theme_minimal() + geom_hline(yintercept=cv10frac,col="red") + scale_y_continuous(labels=comma)
-#+ scale_y_continuous(limits=c(0,max(sum.world$count)))
+p2 <- ggplot(allstates.long, aes(x=day,weight=count))  + geom_bar(na.rm=T,fill="steel blue") + ggtitle("US Counts") + scale_x_date(limits=c(sum.world$day[1], sum.world$day[nrow(sum.world)]+1))  + theme_minimal() + geom_hline(yintercept=cv10frac,col="red") + scale_y_continuous(labels=comma,limits=c(0,max(sum.world$count)))
 #can print plot p2 by itself by uncommenting next line
 #p2
 
