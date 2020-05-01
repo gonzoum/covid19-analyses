@@ -14,9 +14,9 @@ I make use of the datacov.World file I read in from the Johns Hopkins git reposi
 
 
 ```{r warning=F, message=F, echo=longform}
-#for these code chunks I use the datacov.World data file
-#coding trick; by switching the definition of datacov I can keep my original code post the 3/23/20 change and just swap 
-#out which file, world or us, to drop into datacov.  Rest of code should remain the same as prior to the change.
+# for these code chunks I use the datacov.World data file
+# coding trick; by switching the definition of datacov I can keep my original code post the 3/23/20 change and just swap 
+# out which file, world or us, to drop into datacov.  Rest of code should remain the same as prior to the change.
 datacov <- datacov.World
 
 # cutoffs and labels to use in the plot based on the number of cases
@@ -121,52 +121,52 @@ It would be helpful to see the pattern over time of the world counts of confirme
 datacov.temp <- datacov.US
 allstates.temp <- subset(datacov.temp, `Province/State`%in% states)
 allstates.temp2 <- allstates.temp %>% group_by(`Province/State`) %>%  summarize_at(vars(`1/22/20`:(names(allstates.temp)[ncol(allstates.temp)])), sum,na.rm=T)
-#need state level long and lat (these are county) so just replace these sums with the ones in the old allstates
+# need state level long and lat (these are county) so just replace these sums with the ones in the old allstates
 
-#create subset of 50 states from original datacov in order to have the correct long and lat by state (rather than county)
-#this is a check that new code from 3/31/20 works with the older format
+# create subset of 50 states from original datacov in order to have the correct long and lat by state (rather than county)
+# this is a check that new code from 3/31/20 works with the older format
 datacov.ori <- 
  read_csv("/Users/gonzo/Dropbox/transfer/mac transfer/covid19-analyses/time_series_19-covid-Confirmed.csv")
 allstates <- subset(datacov.ori, `Province/State`%in% states)
 allstates.ori <- allstates
 
 allstates.temp2 <- allstates.temp2[order(match(allstates.temp2$`Province/State`,allstates$`Province/State`)),]
-#double check ordering of rows
+# double check ordering of rows
 #head(cbind(allstates$`Province/State`, allstates.temp2$`Province/State`))
 
-#use state level long and lat from datacov.ori
+# use state level long and lat from datacov.ori
 allstates.temp2$Lat <- allstates$Lat
 allstates.temp2$Long <- allstates$Long
 allstates.temp2$`Country/Region` <- allstates.ori$`Country/Region`
 
-#reorder columns to be like allstates.ori so subsequent code works
+# reorder columns to be like allstates.ori so subsequent code works
 allstates <- allstates.temp2[,c(1,ncol(allstates.temp2), ncol(allstates.temp2)-2, ncol(allstates.temp2)-1, 2:(ncol(allstates.temp2)-3))]
 
-#now everything is set so new data structure looks like the old data structure
+# now everything is set so new data structure looks like the old data structure
 
-#prettyval is an extra column appended at the end; it has population size and state abbreviation like "19.5 NY"
-#need to be sure the row orders of state.population that we downloaded from the census website
-#match the order of states in the allstates subset of the datacov data.frame
+# prettyval is an extra column appended at the end; it has population size and state abbreviation like "19.5 NY"
+# need to be sure the row orders of state.population that we downloaded from the census website
+# match the order of states in the allstates subset of the datacov data.frame
 allstates$prettyval <- state.population$prettyval[order(match(state.population$NAME,allstates$`Province/State`))]
 
-#likewise, save state populations from the census file to the allstates data.frame
+# likewise, save state populations from the census file to the allstates data.frame
 allstates$population <- state.population$value[order(match(state.population$NAME,allstates$`Province/State`))]
 
-#add poverty data
+# add poverty data
 allstates$povertyperc <- statepoverty$percent[order(match(statepoverty$state,allstates$`Province/State`))]
      
-#number of variables added (prettyval and population) to the allstates data.frame
+# number of variables added (prettyval and population) to the allstates data.frame
 cadded <- 3
-#counts by dates are in columns starting with `1/22/20` and ending in ncol(allstates)-3 because
-#we appended two columns at the end
+# counts by dates are in columns starting with `1/22/20` and ending in ncol(allstates)-3 because
+# we appended two columns at the end
 allstates.long <- gather(allstates, day, count, 
                          `1/22/20`:(names(allstates)[ncol(allstates)-cadded]))
 
-#reformat the day column to be Dates that R can understand
+# reformat the day column to be Dates that R can understand
 allstates.long$day <- as.Date(allstates.long$day, "%m/%d/%y")
 
-#in some analyses it may be helpful to look at first order differences in counts (day (t+1) - day (t))
-#so far I don't need this but I leave it here
+# in some analyses it may be helpful to look at first order differences in counts (day (t+1) - day (t))
+# so far I don't need this but I leave it here
 #allstates.long$count.diff <- c(0,diff(allstates.long$count))
 ```
 
@@ -177,18 +177,18 @@ More data manipulation needed.  Turns out that the Johns Hopkins data did not re
 ```{r warning=F, message=F, echo=longform}
 allstates.long <- subset(allstates.long, day > "2020-03-08")
 
-#in case we need the last dates for each state
+# in case we need the last dates for each state
 # data_set_ends <- allstates.long %>% group_by(`Province/State`) %>% top_n(1,day) %>% pull(prettyval)
 
-#create day.numeric starting with 3/09/20 as day 1.  in R, Dates have 01/01/1970 and 03/08/20 is 18330 days
-#from the origin so need to subtract 18330 from all the days. Essentially, I'm centering
-#at 03/08/20
+# create day.numeric starting with 3/09/20 as day 1.  in R, Dates have
+# 01/01/1970 and 03/08/20 is 18330 days from the origin so need to subtract
+# 18330 from all the days. Essentially, I'm centering at 03/08/20
 allstates.long$day.numeric <- as.numeric(allstates.long$day)-18330
 
-#make the variable with the state abbreviations a factor in R
+# make the variable with the state abbreviations a factor in R
 allstates.long$state.abb <- factor(allstates.long$`Province/State`)
 
-#create per capita (out of 100)
+# create per capita (out of 100)
 allstates.long$percap100 <- allstates.long$count/allstates$population * 100
 ```
 ```{asis echo=longform}
@@ -196,19 +196,20 @@ Now that we have allstates.long created we can compare cumulative counts in the 
 ```
 
 ```{r warning=F, message=F, fig.cap="Cumulative Counts of Positive Cases" , echo=longform}
-#compute sums for the entire world by day and store plot in object p1
+# compute sums for the entire world by day and store plot in object p1
 sum.world <- data.frame(count=apply(datacov.World[,5:ncol(datacov.World)],2,sum,na.rm=T))
 sum.world$day <- as.Date(rownames(sum.world), "%m/%d/%y")
 p1 <- ggplot(sum.world, aes(x=day,y=count))  + geom_bar(stat="identity",fill="steel blue") + ggtitle("World Wide Counts") + theme_minimal() + scale_y_continuous(labels=comma)
-#above line: labels=comma prints y axis labels as numbers rather than scientific notation
-#can print plot p1 by itself by uncommenting next line
+# above line: labels=comma prints y axis labels as numbers rather than scientific notation
+# can print plot p1 by itself by uncommenting next line
 #p1
 
-#using weight option rather than y so that bar stat_count can do the sum (saves having to compute sum and then do what I did for sum.world)
+# using weight option rather than y so that bar stat_count can do the sum (saves having to compute sum and then do what I did for sum.world)
 comparesums <- allstates.long %>% group_by(day) %>% summarize_at("count", sum,na.rm=T)
 #comparesums
-#seems coding was by US then by state at about 3/08
-#here is a command to produce total US counts for all days in the data set starting with 1/22/20 but it has lots of 0s
+# seems coding was by US then by state at about 3/08 here is a command to
+# produce total US counts for all days in the data set starting with 1/22/20 but
+# it has lots of 0s
 #data.frame(count=apply(allstates[,5:(ncol(allstates)-cadded)],2,sum,na.rm=T))
 ```
 
@@ -219,21 +220,23 @@ US fraction of the world population. If covid-19 cases were randomly distributed
 
 
 ```{r echo=longform}
-#assume 7.8 billion people in the world, the US has about 330 million
+# assume 7.8 billion people in the world, the US has about 330 million
 uspopfrac <- 330/7800
 cv10frac <- uspopfrac*sum.world[nrow(sum.world),1]
 
-#had to add +1 to max date in scale_x_date
+# had to add +1 to max date in scale_x_date
 p2 <- ggplot(allstates.long, aes(x=day,weight=count))  + geom_bar(na.rm=T,fill="steel blue") + ggtitle("US Counts") + scale_x_date(limits=c(sum.world$day[1], sum.world$day[nrow(sum.world)]+1))  + theme_minimal() + geom_hline(yintercept=cv10frac,col="red") + scale_y_continuous(labels=comma,limits=c(0,max(sum.world$count)))
-#can print plot p2 by itself by uncommenting next line
+# can print plot p2 by itself by uncommenting next line
 #p2
 
-#produce a single plot that has the world cumulative count at top and the US cumulative count at the botton, along with a
-#red line indicating the count that corresponds to the fraction of the world population that represents the US
-#if US counts are above the red line it means the counts of covid=19 are greater than what would be expected by a random 
-#process of covid-19 just appearing randomly based merely on population size alone
+#produce a single plot that has the world cumulative count at top and the US
+#cumulative count at the botton, along with a red line indicating the count that
+#corresponds to the fraction of the world population that represents the US if
+#US counts are above the red line it means the counts of covid=19 are greater
+#than what would be expected by a random process of covid-19 just appearing
+#randomly based merely on population size alone
 
-#the plot multiplot is defined in chapter preliminaries
+# the plot multiplot is defined in chapter preliminaries
 multiplot(p1,p2,cols=1)
 ```
 
@@ -242,18 +245,17 @@ multiplot(p1,p2,cols=1)
 I decided to plot percentage relative to population (i.e., counts/population * 100).  The numbers are small. I've seen people report this as cases per 100,000, but I decided to stick with cases per 100 to maintain the percentage interpretation.  This is just a scale issue and doesn't affect the plots or the analyses.   The labels in the plots, like "7.5 WA," mean Washington state with a population of 7.5 million. 
 
 ```{r fig.cap="Per Cap Positive Cases by State", echo=longform}
-#most recent date in file
+# most recent date in file
 max.day.numeric <- max(allstates.long$day.numeric)
 max.day <- max(allstates.long$day)
 
-#extend plot region on the right to allow room for state labels
+# extend plot region on the right to allow room for state labels
 extend.days <- 4
 
 allstates.long%>%mutate(label = if_else(day == max(day), as.character(prettyval), NA_character_)) %>%
 ggplot( aes(x=day, y=count/population*100,group=prettyval, color=prettyval)) + geom_line() +
  geom_label_repel(aes(label= label), nudge_x=2, na.rm=T,segment.color = 'grey50', label.size=.01, size=2.5, show.legend=F) +
-coord_cartesian(clip = 'off') + scale_x_date(limits=as.Date(c("2020-03-09", as.character(max.day+extend.days)))) + 
-    theme(legend.position="none", plot.margin = margin(0.1, 1, 0.1, 0.1, "cm"))
+coord_cartesian(clip = 'off') + scale_x_date(limits=as.Date(c("2020-03-09", as.character(max.day+extend.days)))) +  theme(legend.position="none", plot.margin = margin(0.1, 1, 0.1, 0.1, "cm"))
 ```
 
 Same plot but now putting the vertical axis on the log (base 10) scale.  An exponential process becomes linear when taking logs so we would expect to see a pattern that closely resembles straight lines if the count of confirmed cases follows an exponential form.  Each state can have a different growth rate, which will show up as different slopes, and different intercepts. 
@@ -401,23 +403,23 @@ For this plot I switched from the package I used earlier to the urbnmapr package
 #devtools::install_github("UrbanInstitute/urbnmapr")
 library(urbnmapr)
 
-#get county level data
+# get county level data
 newmap.US <- datacov.US[,c(1:11,dim(datacov.US)[2])]
 recent.col <- dim(newmap.US)[2]
 
-#set up the map
+# set up the map
 counties <- get_urbn_map(map="counties",sf=T)
 counties$FIPS <- as.numeric(counties$county_fips)
 counties <- counties %>% left_join(newmap.US, by=c("FIPS"))
 
-#which column contains the counts
+# which column contains the counts
 current.total <- which(names(counties)==names(newmap.US)[recent.col])
 
-#compute log10 of counts
+# compute log10 of counts
 counties$logcount <- log10(c(counties[,current.total])[[1]])
 counties$logcount <- ifelse(is.finite(counties$logcount), counties$logcount, 0)
 
-#here are the plot commands
+# here are the plot commands
 counties %>% ggplot() +
   geom_sf(mapping = aes(fill = logcount),
           size = 0.25, color="white") +
@@ -447,14 +449,14 @@ Here is the daily incidence rate using the same US data (starting on 3/10/20 and
 allstates.temp <- allstates[,c(1:4,52:(ncol(allstates)-cadded))]
 allstates.temp <- allstates.temp[,-5]
 
-#create new data frame with differences of total counts which equals daily totals
+# create new data frame with differences of total counts which equals daily totals
 day.sums <- dplyr::select(allstates.temp, `3/10/20`:ncol(allstates.temp)) %>% colSums(na.rm=T)
 day.sums <- data.frame(day = as.Date(names(day.sums),"%m/%d/%y"), count = day.sums)
-#this is the line that computes differences
+# this is the line that computes differences
 day.sums$daily <- c(NA,diff(day.sums$count))
 
-#make plot with nice labels
-#5th bar looks almost empty; the data show 61 cases that day 
+# make plot with nice labels 5th bar looks almost empty; the data show 61 cases
+# that day
 ggplot( day.sums, aes(x=day,y=daily)) +  geom_bar(stat="identity") +
     scale_x_date(date_breaks="1 week", date_labels = "%d %b") +
     labs(y="Daily incremental incidence",

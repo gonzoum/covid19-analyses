@@ -183,11 +183,11 @@ These are all fussy though as they require a clean java installation and I've be
 ```
 
 ```{r echo=F, eval=F}
-#assumes netlogo is installed
-#closely following example in man page
+# assumes netlogo is installed
+# closely following example in man page
 library(RNetLogo)
 library(nlrx)
-#dropped as I'm having problems with my rJava installation on my mac
+# dropped as I'm having problems with my rJava installation on my mac
 
 ```
 
