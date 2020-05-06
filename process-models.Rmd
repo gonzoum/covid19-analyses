@@ -36,6 +36,7 @@ Some UM researchers have started analyzing the covid-19 pandemic using SIR model
 
 3. [Marisa Eisenberg](https://sph.umich.edu/faculty-profiles/eisenberg-marisa.html) ([prediction dashboard](https://epimath.github.io/covid-19-modeling/#current-forecasts))
 
+More generally, a UM team of [Aaron King, Dao Nguyen and Ed Ionides](https://kingaa.github.io/pomp/vignettes/pompjss.pdf) have a general R package called pomp that can be used for simulation and estimation of SIR models, among other things.
 
 Here I present a simple description of a basic and standard SIR model.  Consider a population of size N that has S susceptible people, I infectious people and R recovered people such that the entire population size N must follow this restriction: N=S+I+R.
 
