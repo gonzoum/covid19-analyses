@@ -1,6 +1,6 @@
 # (APPENDIX) Appendix {-}
 
-# Appendix A: Using Git
+# Appendix A: Using Git {#usinggit}
 
 Git is a version control system that can be used to deliver software, program code, data files, and other useful files. It is also facilitates updating code. For example, if I make a change to a file, I push it to the repository, and then users of the repository can download the changes to their working copy. The system will keep track of versions and manage mergers without conflicts. If it can't resolve conflicts across versions, then the program let's you know about the conflicts and you can choose to keep the conflicts as is or update to the newer version.
 
