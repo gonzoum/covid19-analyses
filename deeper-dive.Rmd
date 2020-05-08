@@ -89,7 +89,11 @@ if we assume that the $R_0$ is relatively small and that people interact randoml
 $$
 a \;\;\mbox{sech}^2 (\kappa_0 + \kappa_1 t)
 $$
-where sech is the hyperbolic secant, its argument is a linear transformation of time t with a slope and intercept denoted by $\kappa$s, and parameter $a$ is a multiplier.  These parameters are each functions of the parameters of the SIR model (the $\beta_1$ and $\beta_2$ from Chapter \@ref(process)) as well as the starting count at time 0. The hyperbolic secant can be reexpresssed in terms of exponentials:  $\mbox{sech} (x) = \frac{2}{\exp^{x} + \exp^{-x}}$ Let's perform a direct fit to the daily death count, since death is a more appriate outcome for the SIR model.  For this section I'll use the covid.tracking data (see Chapter \@ref(readintro)). We haven't worked much with that data yet so I'll also need to do some data cleaning and formating to be consistent with the other analyses conducted in this book.
+where sech is the hyperbolic secant, its argument is a linear transformation of time t with a slope and intercept denoted by $\kappa$s, and parameter $a$ is a multiplier.  These parameters are each functions of the parameters of the SIR model (the $\beta_1$ and $\beta_2$ from Chapter \@ref(process)) as well as the starting count at time 0. The hyperbolic secant can be reexpresssed in terms of exponentials:  $\mbox{sech} (x) = \frac{2}{\exp^{x} + \exp^{-x}}$.
+To arrive at this expression one could work with the SIR equations presented in Chapter \@ref(process) directly,  but there is a simple way to get this form by assuming a Poisson distribution on the counts and showing that the probability that a randomly selected individual is not infected when the epidemic has an $R_0$ is $e^{\frac{-R_0}{N}}$ (i.e., a Poisson with k=0 and a rate of $R_0/N$); see Keeling and Rohani, 2008, Ch 2.
+
+
+Let's perform a direct fit to the daily death count, since death is a more appriate outcome for the SIR model.  For this section I'll use the covid.tracking data (see Chapter \@ref(readintro)). We haven't worked much with that data yet so I'll also need to do some data cleaning and formating to be consistent with the other analyses conducted in this book.
 
 ```{r message=F, warning=F, results=ifelse(longform, "markup", "hide"), echo=longform}
 # use this package just for sech 
@@ -111,14 +115,27 @@ covid.tracking.new$deathIncrease <- ifelse(is.na(covid.tracking.new$deathIncreas
 ```
 
 ```{r messages=F, warnings=F, results="hide", echo=longform}
-# something wrong with day 56 and 57 so need to double check this; omit for now
-covid.tracking.new <- subset(covid.tracking.new, day.numeric != 56 & day.numeric != 57)
+# something wrong with day 57 so need to double check this; omit for now
+covid.tracking.new <- subset(covid.tracking.new, day.numeric != 57)
 out <- nlme(deathIncrease ~ richfu.sir(day.numeric, a, b0,b1), fixed = a+b0+b1~1,
-            random =  a+b1~1, data=covid.tracking.new,start=c(a=46, b0=-2.8,b1=.1), verbose=T, groups=~state, control=nlmeControl(msMaxIter=500,opt="nlminb",pnlsTol=.001,msVerbose=T,minScale=.001, maxIter=500) )
+            random =  a+b1~1, data=covid.tracking.new,start=c(a=47, b0=-2.5,b1=.1), verbose=T, groups=~state, control=nlmeControl(msMaxIter=500,opt="nlminb",pnlsTol=.001,msVerbose=T,minScale=.001, maxIter=500) )
+```
+
+```{r eval=F, echo=F}
+#test function for additive constant
+#doesn't work well, ranef correlates 1 with other parameters
+richfu.sir2 <- function(d,a,b0,b1,b2){
+b2 + a*sech(b1*d + b0)^2
+}
+out <- nlme(deathIncrease ~ richfu.sir2(day.numeric, a, b0,b1,b2), fixed = a+b0+b1+b2~1,
+            random =  a+b1~1, data=covid.tracking.new,start=c(a=47.2, b0=-2.8,b1=.1, b2=500), verbose=T, groups=~state, control=nlmeControl(msMaxIter=500,opt="nlminb",pnlsTol=.001,msVerbose=T,minScale=.001, maxIter=500) )
+
 ```
 
 We see that this function (red curve) does a reasonable job of fitting the daily death counts (black points) in New York. 
- There is noise in these data that this form of the SIR model cannot easily pickup.
+ There is noise in these data that this form of the SIR model cannot easily pickup.  
+ 
+ 
  
  
 ```{r  messages=F, warnings=F, echo=longform}
@@ -166,7 +183,7 @@ The general form is
 $$
 \bigg[\frac{a}{\kappa_1 (1+e^{2(\kappa_0 + \kappa_1 t)} )}\bigg] \;\;\; \bigg[(e^{2(\kappa_0 + \kappa_1 t)} - 1)\bigg] + C
 $$
-The left square bracket term has the form of the logistic growth function and the right square bracket term has the form of an exponential growth function. The term $C$ is the integration constant that we will set so that the cumulative sum starts at 0.  Thus, this simplification of the SIR model yields a product of the two functions we explored in Chapter \@ref(descmodel).  It isn't one or the other as we explored earlier, but this model suggests the curves approximately follow a combination of both forms. This is an example of the advantage of doing some mathematical modeling to be able to examine the implications of your model.  In the earlier chapter we considered exponential and logistic growth models without careful attention to why we chose those functions.  This type of mathematical modeling allows you to justify the functional forms you want to test based on implications from your hypotheses. Here I'm referring to the change equations of the SIR model as a set of hypotheses that govern how change occurs among the susceptibles, the infecteds and recovered.  Those equations (with some additional assumptions and approximations) imply this product of both forms, which we can test and exmaine with data.  
+The left square bracket term has the form of the logistic growth function and the right square bracket term has the form of an exponential growth function. The term $C$ is the integration constant that we will set so that the cumulative sum starts at 0.  Thus, this simplification of the SIR model yields a product of the two functions we explored in Chapter \@ref(descmodel).  It isn't one or the other as we explored earlier, but this model suggests the curves approximately follow a combination of both forms. This is an example of the advantage of doing some mathematical modeling to be able to examine the implications of your model.  In the earlier chapter we considered exponential and logistic growth models without careful attention to why we chose those functions.  This type of mathematical modeling allows you to justify the functional forms you want to test based on implications from your hypotheses. Here I'm referring to the change equations of the SIR model as a set of hypotheses that govern how change occurs among the susceptibles, the infecteds and recovered.  Those equations (with some additional assumptions and approximations) imply this product of both forms, which we can test and exmaine with data.  Not counting the integration constant this approximation also has 3 parameters as we had in both the exponential form and the logistic growth form in Chapter \@ref(descmodel).
 
 ```{r warning=F, message=F, echo=longform}
 # pull out the coefficients from the nlme 
@@ -197,7 +214,9 @@ ggplot(subset(covid.tracking.new, state=="NY"), aes(x=day.numeric,y=death)) +
           strip.text.y = element_text(size=11))
 ```
 
-The fit is not great but likely due to some of the simplying assumptions that were made to derive this form, such as assuming that $R_0$ is small, and some of the approximations that were used to derive this form (see Keeling & Rohan, 2008).  It is helpful to estimate the logistic function directly on the cumulative death count  and superimpose that curve (blue) on the same graph.  We see that the pure logistic provides a better fit to these data. This shouldn't be too surprising since I fit the logistic form directly to the data, whereas the red curve corresponding to the approximate SIR model takes into account other processes, has additional simplifying assumptions and approximations. Nonetheless, we can use the data and the fit to the models, to decide if we want to reject the SIR model because that model implies a functional form that fits worse than a simpler logistic growth model, use this finding to decide whether we should relax those simplying assumptions and derive a new form, or use this finding to justify using the SIR model because the fit to the data is "close enough." Of course, close enough depends on different applications. If one wants to describe a bunch of points with a simple curve or one wants to use the model to make forecasts.  In the case of forecasting to inform public policy, then "close enough" better be pretty darn close because many people's lives will be affected.  Often, the disagreements between modelers about their predictions boils down to details of the assumptions each modeler makes and the kinds of simplifications they use.
+The fit is ok given the simplying assumptions that were made to derive this form, such as assuming that $R_0$ is small, independence in transmission and some of the approximations that were used to derive this form (see Keeling & Rohani, 2008). We can reject a Poisson outright because the $R_0$ value likely changed over time with different levels of social distancing.
+
+It is helpful to estimate the logistic function directly on the cumulative death count  and superimpose that curve (blue) on the same graph.  We see that the pure logistic provides a better fit to these data. This shouldn't be too surprising since I fit the logistic form directly to the data, whereas the red curve corresponding to the approximate SIR model takes into account other processes, has additional simplifying assumptions and approximations. Nonetheless, we can use the data and the fit to the models, to decide if we want to reject the SIR model because that model implies a functional form that fits worse than a simpler logistic growth model, use this finding to decide whether we should relax those simplying assumptions and derive a new form, or use this finding to justify using the SIR model because the fit to the data is "close enough." Of course, close enough depends on different applications. If one wants to describe a bunch of points with a simple curve or one wants to use the model to make forecasts.  In the case of forecasting to inform public policy, then "close enough" better be pretty darn close because many people's lives will be affected.  Often, the disagreements between modelers about their predictions boils down to details of the assumptions each modeler makes and the kinds of simplifications they use.
 
 ```{r warning=F, message=F, echo=longform, eval=F}
 # logistic on death; use same function as used for logistic growth on positive count data
