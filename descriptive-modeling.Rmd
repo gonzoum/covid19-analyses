@@ -1,19 +1,23 @@
 # Descriptive Modeling {#descmodel}
 
 The previous chapter presented several descriptive plots of raw data.  What I'd like to do in this chapter is show some simple modeling methods. 
-By no means is any of the modeling presented here considered breakthrough modeling. I call this descriptive modeling because all I do is describe the patterns using statistical methods. In the next chapter I'll give some examples of models that attempt to capture mechanism. Another way of explaining the difference between descriptive models and explanatory models is that the former are summaries of the data and can be used to forecast, but they do not provide  understanding of the underling mechanisms so they do not give insight into what would happen if a change was imposed on the system.  Descriptive models don't tell us the effect social distancing may have, for example, on the future rate of covid-19. They are fine for describing what has happened in the past but can be limited in helping us understand how the future will play out under various scenarios including interventions. I sometimes refer to descriptive modeling as "models of data."  Process models  are about modeling process, or underlying mechanism; they use data to estimate parameters and test predictions.
+By no means is any of the modeling presented here considered breakthrough modeling. I call this descriptive modeling because all I do is describe the patterns using statistical methods. In the next chapter I'll give some examples of models that attempt to capture mechanism. 
 
-I'll try to use only the R features necessary to make the points I want to highlight. There are more complicated approaches using time series packages that format the data differently (e.g., they use special time series objects in R). There are benefits of doing this because there are automatic plotting and estimation routines that can take time series objects and do relevant computations. But I think as you are learning this it makes more sense to learn how to do some of the programming and then you are in a better position to learn the value of more advanced approaches like those for time series data.
+One way of explaining the difference between descriptive models and explanatory models is that the former are summaries of the data and can be used to forecast, but they do not provide  understanding of the underling mechanisms so they do not give insight into what would happen if a change was imposed on the system.  Descriptive models don't tell us the effect social distancing may have, for example, on the future rate of covid-19. They are fine for describing what has happened in the past but can be limited in helping us understand how the future will play out under various scenarios including interventions. I sometimes refer to descriptive modeling as "models of data."  Process models  are about modeling underlying mechanism; they use data to estimate parameters and test predictions of the model.
 
-I won't cover commonly used descriptive summary methods such as smoothing techniques, mostly in the interest of time.  For more general treatments on working with time series data see [Hyndman & Athanasopoulos](https://otexts.com/fpp2/); [Holmes, Scheuerell & Ward](https://nwfsc-timeseries.github.io/atsa-labs/) and the classic [Box & Jenkins](https://www.amazon.com/Time-Analysis-Forecasting-George-Box/dp/0470272848), with additional authors in newer editions.
+I'll try to use the R features necessary to make the points I want to highlight. There are more complicated approaches using time series packages that format the data differently (e.g., they use special time series objects in R). There are benefits of doing this because there are automatic plotting and estimation routines that can take time series objects and do relevant computations. But I think as you are learning this it makes more sense to learn how to do some of the programming and then you are in a better position to learn the value of more advanced approaches like those for time series data. So I'll start with standard R objects and slowly introduce some elements unique to time series data.
 
-##  Regression on US State Percentages
+For more general treatments on working with time series data see [Hyndman & Athanasopoulos](https://otexts.com/fpp2/); [Holmes, Scheuerell & Ward](https://nwfsc-timeseries.github.io/atsa-labs/) and the classic [Box & Jenkins](https://www.amazon.com/Time-Analysis-Forecasting-George-Box/dp/0470272848), with additional authors in newer editions.
+
+##  Regression on US State Percentages: Linear Mixed Models on Logs
 
 In the chapter [Descriptive Plots](#descplots) I showed that on the log scale the curves look  like they can be approximated by straight lines by state for the count/population variable.
 
-These data are a natural candidate for a random effects linear regression.  Each state should have its own intercept and slope.  We could create a complicated interaction between day and state, so that we have a state factor with 50 levels (so 49 effect or contrast codes), giving us 49 intercepts and slopes but that is overkill. The random effects approach makes more sense.  Each state is modeled as a random draw from a multivariate normal distribution such that we draw 50 pairs of slopes and intercepts from that multivariate distribution of intercept and slope. Once we have those 50 slope and intercept pairs, then we compute the predicted scores for each state. The algorithm finds the mean and covariance matrix of that multivariate distribution to minimize the discrepancy (i.e., squared residuals) between the observed  and the predicted data.  As shown in the previous chapter, if logs are taken of the percentages, then the state-level data appear to follow straight lines.
+These data are a natural candidate for a random effects linear regression.  Each state should have its own intercept and slope on the log scale.  We could use standard regression (ordinary least squares) to create a complicated interaction between day and state, so that we have a state factor with 50 levels (so 49 effect or contrast codes), giving us 49 intercepts and slopes but that is overkill. The random effects approach to regression makes more sense.  Each state is modeled as a random draw from a multivariate normal distribution such that we draw 50 pairs of slopes and intercepts from that multivariate distribution of intercept and slope. Once we have those 50 slope and intercept pairs, then we compute the predicted scores for each state. The algorithm finds the mean and covariance matrix of that multivariate distribution to minimize the discrepancy (i.e., squared residuals) between the observed  and the predicted data.  As shown in the previous chapter, the log of the percentage of the state population follows an approximate line, though there was some evidence of curvature in the descriptive plots.
 
-Day is entered into the model as a linear time variable (1, 2, 3, etc). Our previous plots suggest that on the log scale we may be fine with linear time as a predictor.
+In the following analyses, the variable Day is entered into the model as a linear time variable (1, 2, 3, etc). Our previous plots suggest that on the log scale we may be fine with linear time as a predictor. In subsequent analyses we will consider more complicated treatments of the day variable to allow for additional nonlinearity.
+
+
 
 
 ```{r echo=longform}
@@ -28,14 +32,20 @@ allstates.long$percent <- allstates.long$count/allstates.long$population * 100
 allstates.long$percent.log10 <- log10(allstates.long$percent)
 ```
 
-It is good to check the distribution of the log percent variable to make sure there aren't major issues with symmetry. 
+### Examine distributional assumptions
+
+It is good to check the distribution of the log percent variable to make sure there aren't major issues with symmetry.  The log of the percent of the state population that tests positive will be the dependent variable in the regressions we will conduct.
 
 ```{r echo=longform}
 # histogram of percent.log10; not a bad looking distribution
 hist(allstates.long$percent.log10, xlab="log percent", main="Histogram")
 ```
 
-Run the linear mixed model on the log scale and examine the summary of the model.
+There is evidence of skewness in this variable, which can raises concern about the distributional assumptions. 
+
+### Linear mixed model
+
+Here are the results of this simple linear mixed model on the log scale.
 
 ```{r echo=longform}
 # run linear mixed model default optimizer didn't converge so switched to Nelder_Mead
@@ -54,12 +64,14 @@ if (is_latex_output())
 stargazer(out.lmer, header=F, type="latex")
 ```
 
-The estimates, se(est), CI, t and pvalue for the fixed effects are printed first, then the parameters of the random effect part. In order, they are the variance of the residuals, the variance of the random effect intercept, the variance of the random effect slope, the correlation between the random intercept and the random slope, the adjusted ICC, number of states, number of observations (recall 0s have been removed from this data file so the N refers to the number of days by state for which there was a nonzero number of positive covid-19 cases), and the R$^2$ values.  
+The estimates, se(est), CI, t and pvalue for the fixed effects are printed first, then the parameters of the random effect part are printed in the second part of the table. The random effect parameters, in order, are the variance of the residuals, the variance of the random effect intercept, the variance of the random effect slope, the correlation between the random intercept and the random slope, the adjusted ICC, number of states, number of observations (recall 0s have been removed from this data file so the N refers to the number of days by state for which there was a nonzero number of positive covid-19 cases), and the R$^2$ values.  
 ```{asis echo=longform}
 For more documentation on the computation of these terms see the help page for function tab_model().
 ```
 
-Now let's examine plots of residuals to diagnose potential issues.
+### Diagnostics
+
+Now let's examine plots of residuals to diagnose potential issues with this model.  The plot of the residuals against the fitted values should look like a random point cloud in the ideal case and the QQ plot should show a relatively straight line.  For a discussion of using residuals to diagnose model assumptions, see my [lecture notes](http://www-personal.umich.edu/~gonzo/coursenotes/file7.pdf).
 
 ```{r echo=longform}
 # plots of residuals
@@ -68,10 +80,10 @@ qqnorm(resid(out.lmer))
 qqline(resid(out.lmer))
 ```
 
-The residuals against the fitted values suggest a nonlinear pattern remains in the data. This suggests that we may not have completely linearized by the log transformation. The qqplot suggests there may be a long tail.  Both of these plots suggest there are issues that have to be addressed.  We probably don't want to jump right into doing another transformation right way as that may create new issues with interpretation (we selected the log transformation because we are checking for exponential growth and on the log scale the exponential growth should become linear). So maybe the exponential growth model may not be appropriate here.
+The residuals against the fitted values suggest a nonlinear pattern remains in the data. This suggests that we may not have completely linearized the data with the log transformation. The qqplot suggests some deviation from a typical normal distribution; that is, the residuals appear to have longer tails than expected by a normal distribution.  Both of these plots suggest there are issues that have to be addressed.  We probably don't want to jump right into doing another transformation right way as that may create new issues with interpretation. We selected the log transformation because we are checking for exponential growth and on the log scale the exponential growth should become linear. So maybe the exponential growth model may not be appropriate here, or there may be other issues with the data that are contaminating the exponential growth pattern.  Without additional modeling we cannot adjudicate between these possibilities just from this present regression alone.
 
 
-Let's look at the state-level slopes and intercepts more directly:  first with a table of each state and then with some plots.  Light gray points have confidence intervals that overlap 0 so those parameter estimates are not significantly different from zero. But here we did not do a correction like Bonferroni or Scheffe to address the 100 tests we just did (50 states on each of slope and intercept).  This would just require a small modification to the code to adjust the level of the CI to correspond, say, to the Bonferroni corrected levels.
+Even though there is suspicion about this model, let's examine the state-level slopes and intercepts more directly:  first with a table of each state and then with some plots.  Light gray points have confidence intervals that overlap 0 so those parameter estimates are not significantly different from zero. We did not perform a correction like Bonferroni or Scheffe to address the 100 tests we just did (50 states on each of slope and intercept).  This would just require a small modification to the code to adjust the level of the CI to correspond, say, to the Bonferroni corrected levels.
 
 ```{r echo=longform}
 # list of the set of 50 intercept/slope pairs
@@ -86,15 +98,19 @@ raeff <- REsim(out.lmer)
 plotREsim(raeff,labs=T, stat="mean",level=.95)
 ```
 
+```{exercise}
+Redo the plot of coefficients by altering the confidence interval to correspond to a Bonferroni correction for 50 tests within a "family" This way  the Bonferroni adjusts the confidence interval widths within family---50 confidence intervals around the intercepts and 50 confidence intervals around the slopes.
+```
 
 It turns out that computing standard errors for the prediction is not straightforward for linear mixed models and quite complicated for nonlinear mixed models that we will perform later.  You can read about the complexity [here](https://stats.stackexchange.com/questions/235018/r-extract-and-plot-confidence-intervals-from-a-lmer-object-using-ggplot).
 
-Here is one method for computing the predicted value and a prediction interval. To maintain clarity I'll focus just on two states, but one could do these plots for all 50 states.
+Here is one method for computing the predicted value and a prediction interval that relies on sampling. To maintain clarity I'll focus just on two states, but one could do these plots for all 50 states.  I'll first print the data for the state of New York. The table includes the day, the fit from the regression equation, the confidence interval around the fit, the fit placed back on the original scale (i.e., $10^{\mbox{fit}}$) and the original data on the percentage scale.
 
 ```{r warning=F, message=F, echo=longform}
 # First New York
 nydf <- allstates.long %>% filter(state.abb == "New York")
-pred <- data.frame(day.numeric= nydf$day.numeric, predictInterval(out.lmer, nydf, which="full", level=.95), percap100=nydf$percap100)
+pred <- data.frame(day.numeric= nydf$day.numeric, predictInterval(out.lmer, nydf, which="full", level=.95), 
+                   fit.per = 10^predictInterval(out.lmer, nydf)$fit, percap100=nydf$percap100)
 pred
 
 ggplot(pred) + 
@@ -117,14 +133,16 @@ ggplot(pred2) +
 
 ```
 
-Note that the linear pattern (line and prediction band) doesn't do a good job of capturing the actual data points. Some points are under predicted in the early days, then overpredicted, then underpredicted again. This would produce a pattern where the residuals are negative, then positive, then negative again as we saw in one of the residual plots.  The data looked approximately linear but upon close inspection a model that is actually linear in the log scale seems to systematically miss the pattern.  
+Note that the linear pattern (line and prediction band) doesn't do a good job of capturing the actual data points. Some points are over predicted in the early days, then under predicted, then over predicted again. This would produce a pattern where the residuals are negative, then positive, then negative again as we saw in one of the earlier residual plots.  The data looked approximately linear but upon close inspection a model that is actually linear in the log scale seems to systematically miss the pattern.  
 
-To check this is not just a fluke for New York, let's look at another state. For Michigan a similar story, where we see under, over and under prediction. These plots suggest while the linear model may seem ok at first pass, there may some systematic deviations form the line that are worth capturing.  We can see that if we forecast out five days or so, the line will continue to increase but it appears that the points are increasing at a slower rate.
+To check this is not just a fluke for New York, let's look at another state. For Michigan a similar story, where we see over, under and over prediction. These plots suggest while the linear model may seem ok at first pass, there may some systematic deviations form the line that are worth capturing.  We can see that if we forecast out five days or so, the line will continue to increase but it appears that the points are increasing at a slower rate.  In this case, forecasts will likely be systematically off the mark.
 
 ```{r  warning=F, message=F, echo=longform}
 # similarly for michigan
 midf <- allstates.long %>% filter(state.abb == "Michigan")
-pred <- data.frame(day.numeric=midf$day.numeric, predictInterval(out.lmer, midf), percap100=midf$percap100)
+pred <- data.frame(day.numeric=midf$day.numeric, predictInterval(out.lmer, midf), 
+                  fit.per = 10^predictInterval(out.lmer, midf)$fit,
+                                                          percap100=midf$percap100)
 pred
 
 ggplot(pred) + 
@@ -133,7 +151,7 @@ ggplot(pred) +
   geom_point(aes(day.numeric, y = log10(percap100))) + ggtitle("Michigan")
 ```
 
-So these plots suggest a major issue with this regression. The observation that the trajectories do not display a straight line in the log scale suggests these data do not follow an exponential growth model. It is more complicated than that.  We see similar violations of straight lines in the death data (e.g., see the New York Times [graphs on the number of deaths](https://www.nytimes.com/interactive/2020/03/21/upshot/coronavirus-deaths-by-country.html?action=click&module=moreIn&pgtype=Article&region=Footer&fbclid=IwAR3y14SlV9sBtQcAyugUc0LPU-mrIVJbTrzOi4t7rWuISt8A-xizCMEk_7Y) for a similar curvature away from a straight line).  The violation of the exponential could be due to many factors, such as interventions of social distancing, diseases tend to follow an exponential curve early but then switch to a different process (see below for logistic growth curves), etc.
+These plots suggest a major issue with this linear mixed model regression. The observation that the trajectories do not display a straight line in the log scale suggests these data do not follow an exponential growth model. It is more complicated than that.  We see similar violations of straight lines in the death data (e.g., see the New York Times [graphs on the number of deaths](https://www.nytimes.com/interactive/2020/03/21/upshot/coronavirus-deaths-by-country.html?action=click&module=moreIn&pgtype=Article&region=Footer&fbclid=IwAR3y14SlV9sBtQcAyugUc0LPU-mrIVJbTrzOi4t7rWuISt8A-xizCMEk_7Y) for a similar curvature away from a straight line).  The violation of the exponential could be due to many factors, such as interventions of social distancing, diseases tend to follow an exponential curve early but then switch to a different process (see below for logistic growth curves), additional sources of noise contaminating the data such as reporting bias, etc.
 
 Now that we understand the slopes and intercepts, let's make some predictions.  I'll go 5 days out.  The first plot will be on the log scale, but be mindful that these predictions are based on an exponential model that we just saw evidence that it may not hold for these data.
 
@@ -157,8 +175,8 @@ predmat %>% mutate(label = if_else(day.numeric == max(day.numeric), as.character
    geom_label_repel(aes(label= label), nudge_x=2, na.rm=T,segment.color = 'grey50', label.size=.01, size=2.5, show.legend=F) +
 coord_cartesian(clip = 'off') +  scale_x_continuous(limits=c(0,max.day.numeric+ days.ahead+3)) +
     theme(legend.position="none", plot.margin = margin(0.1, 1, 0.1, 0.1, "cm")) + geom_vline(xintercept=max.day.numeric+.5,color="red") +
-  annotate(geom="text",x=max.day.numeric-6,y=-5, label="Days with observations", color="red") +
-  annotate(geom="text",x=max.day.numeric+4,y=-5, label="Predictions", color="red") 
+  annotate(geom="text",x=max.day.numeric-10,y=-5, label="Days with observations", color="red") +
+  annotate(geom="text",x=max.day.numeric+6,y=-5, label="Predictions", color="red") 
 ```
 
 Using the same data I  take the exponential of those predictions to see the percentages with their predicted curves.  The Y axis is on the percentage scale (count/population * 100).
@@ -170,26 +188,29 @@ ggplot( aes(day.numeric,10^prediction,group=prettyval, color=prettyval )) +  geo
    geom_label_repel(aes(label= label), nudge_x=2, na.rm=T,segment.color = 'grey50', label.size=.01, size=2.5, show.legend=F) +
 coord_cartesian(clip = 'off') +  scale_x_continuous(limits=c(0,max.day.numeric+ days.ahead+3)) +
     theme(legend.position="none", plot.margin = margin(0.1, 1, 0.1, 0.1, "cm")) + geom_vline(xintercept=max.day.numeric+.5,color="red") +
-  annotate(geom="text",x=max.day.numeric-6,y=4, label="Days with observations", color="red") +
-  annotate(geom="text",x=max.day.numeric+4,y=4, label="Predictions", color="red") 
+  annotate(geom="text",x=max.day.numeric-10,y=16, label="Days with observations", color="red") +
+  annotate(geom="text",x=max.day.numeric+6,y=16, label="Predictions", color="red") 
 ```
 
-Other approaches I could have taken include using the state's population as a weight and computed weighted linear mixed models on the log of the count data, or, because I'm working in log scale, I could use the state population as an offset in the linear mixed model (as in offset(log(population))) and use log counts as the dependent variable.  These are alternative ways of taking population size into account.  Further checks include taking into the account possible correlated residuals. For example, it isn't reasonable to assume that the residual at day t is independent from the residual at day t+1 for a given state, which is what my model assumed in what I presented above.   There is clearly a lot more one would need to do in order to justify the use of the analytic strategy in this section.
+Other approaches I could have taken include using the state's population as a weight and computed weighted linear mixed models on the log of the count data, or, because I'm working in log scale, I could use the state population as an offset in the linear mixed model (as in offset(log(population))) and use log counts as the dependent variable.  These are alternative ways of taking population size into account.  Further checks include taking into the account possible correlated residuals. For example, it isn't reasonable to assume that the residual at day t is independent from the residual at day t+1 for a given state, which is what my model assumed in what I presented above.  I'll show how to include a correlation pattern on the residuals later in this chapter.  There is clearly a lot more one would need to do in order to justify the use of the analytic strategy in this section.
 
-Of course, once the basic structure of this linear mixed model on the log scale is set (e.g., error structure on residuals is determined, how best to use the state's population in the model, etc), then one could bring in additional predictors. We could, for example, take some of the data sets we downloaded that has the dates of when states took different measures and see if any of those changed, say, the slopes for the states.  At this point, once the complex error structure, linearity, and random effect structure are determined, then the rest is just routine regression that follows the analogous criteria in regression.
-```{asis echo=longform}
-For example, if you have interactions, center your variables; be careful using dummy codes; if you add covariates as control variables, check the parallelism assumption; double check the residuals to make sure they follow a normal distribution, don't show weird nonlinear patterns, don't exhibit outliers, etc.
+```{exercise}
+Rerun the linear mixed model on the log transform of the counts for each state and include population size as an offset. Compare these results to the previous regression on the log of the percentage.
 ```
+
+Of course, once the basic structure of this linear mixed model on the log scale is set (e.g., error structure on residuals is determined, how best to use the state's population in the model, etc), then one could bring in additional predictors. We could, for example, take some of the data sets we downloaded that have the dates of when states took different measures and see if any of those state mandates changed, say, the slopes for the states.  At this point, once the complex error structure, linearity, and random effect structure are determined, then the rest is just routine regression that follows the analogous criteria in regression.
+For example, if you can include interactions between predictors or controls using other predictors. 
+
 
 ### Comparison with polynomial regression
 
-In the previous model I showed that the linear mixed model (allowing for each state to have their own slope and intercept) on the log of the state-level percentages did a reasonable job of fitting the data.  Here I want to do a little tangent and illustrate how well a polynomial can mimic the exponential pattern we see in the data.  
+In the previous model I showed that the linear mixed model regression (allowing for each state to have their own slope and intercept) on the log of the state-level percentages can be used to model these data.  Here I want to go on a little tangent and illustrate how well a polynomial can mimic the exponential pattern we see in the data.  
 
 Let's take the case that in a particular locale the rate of covid-19 follows this general curve. In this subsection I made up the data so I know the curve follows exponential growth with an additive error term (the plus $\epsilon$) because I added random normally distributed noise with mean 0 and standard deviation .25.
 
-Overview of what follows in the remainder of this subsection: I'll run several regressions in order and produce one plot at the end.  The points on the graph are the observed data points, the colored curves emerge from different regression models.    The first regression is  a linear regression with just x (days 1-25) as a linear predictor. I added a violet straight line to indicate the best fitting straight line--not a good fit.  The second regression adds a quadratic term and will appear as a red curve. This is an improvement, but it is nonmonotonic and shows a decrease in the first few days (which is not a pattern displayed in the raw data).  The third regression adds a cubic term and fits the points very well.
+I'll run several regressions in order and produce one plot at the end.  The points on the graph are the observed data points, the colored curves emerge from different regression models.    The first regression is  a linear regression with just x (days 1-25) as a linear predictor. I added a violet straight line to indicate the best fitting straight line---not a good fit.  The second regression adds a quadratic term and will appear as a red curve. This is an improvement, but it is nonmonotonic and shows a decrease in the first few days (which is not a pattern displayed in the raw data).  The third regression adds a cubic term and fits the points relatively well.
 
-Next, I estimate the exponential directly using nonlinear regression. Instead of the parameter being a multiplier of the predictor (like in linear regression), the parameter serves as the growth factor. The green curve follows the data closely. Here only one parameter was estimated and it was .1502, very close to the actual .15 I used to estimate the data.  The polynomial did quite well but needed 4 parameters (intercept and three slopes); those parameters are not easy to interpret. The single parameter of the exponential yields a very good fit with only one _interpretable_ parameter.  Note that here I am using the nls() command, which estimates a nonlinear regression.
+Next, I estimate the exponential directly using nonlinear regression. Instead of the parameter being a multiplier of the predictor (like in linear regression), the parameter serves as the growth factor. The green curve follows the data closely. Here only one parameter was estimated and it was .1502, very close to the actual .15 I used to estimate the data.  The polynomial did quite well but needed 4 parameters (intercept and three slopes); those parameters are not easy to interpret. The single parameter of the exponential yields a very good fit with only one _interpretable_ parameter. This makes sense because these hypothetical data were generated from an exponential model. Note that here I am using the nls() command, which estimates a nonlinear regression.
 
 Finally, for comparison, I run a linear regression through these data after transforming the Y variable into the log, then re-expressing the predicted scores back to the original scale like I did in the predictions using the linear mixed model with the lmer() command above.  I'll draw that curve in black---very similar result to the nonlinear regression with the exponential and the third order polynomial.
 
@@ -199,52 +220,80 @@ Finally, for comparison, I run a linear regression through these data after tran
 set.seed(0101202019)
 x <- 1:25
 # here is the true model that generated the data
-y <- 1*exp(.15*x) + rnorm(length(x),0,.25)
+y <- 1*exp(.15*x) + rnorm(length(x),0,1.5)
 plot(x,y)
 
 # linear regression with one predictor, draw violet curve
-out <- lm(y~x)
-summary(out)
-lines(x,predict(out), col="violet")
+out.lm <- lm(y~x)
+summary(out.lm)
+lines(x,predict(out.lm), col="violet")
 
 # add quadratic term, draw red curve
-out <- lm(y~x + I(x^2))
-summary(out)
-lines(x,predict(out), col="red")
+out.q <- lm(y~x + I(x^2))
+summary(out.q)
+lines(x,predict(out.q), col="red")
 
 # add cubic term, draw blue curve
-out <- lm(y~x + I(x^2) + I(x^3))
-summary(out)
-lines(x,predict(out), col="blue")
+out.c <- lm(y~x + I(x^2) + I(x^3))
+summary(out.c)
+lines(x,predict(out.c), col="blue")
 
 
 # nonlinear exponential directly estimated, draw green curve
-out <- nls(y~exp(beta*x), start=list(beta=.5))
-summary(out)
-lines(x,predict(out), col="green")
+out.exp <- nls(y~exp(beta*x), start=list(beta=.5))
+summary(out.exp)
+lines(x,predict(out.exp), col="green")
 
 # log transform followed by linear regression, draw black curve
-out <- lm(log(y)~x)
-summary(out)
-lines(x,exp(predict(out)), col="black")
+out.ln <- lm(log(y)~x)
+summary(out.ln )
+lines(x,exp(predict(out.ln)), col="black")
 ```
 
-Polynomials can do a good job at capturing functions but they are not always easy to interpret. The third order polynomial got the pattern relatively closely. The quadratic though while it was close predicts that the counts in the early days will drop (the red curves is decreasing from day 1 to day 4) so that's not good because the data points don't see to be showing that pattern.  
+Polynomials can do a good job at capturing functions but they are not always easy to interpret without some additional work (e.g., [Cudek & du Toit, 2002](https://www.ncbi.nlm.nih.gov/pubmed/26816325)). The third order polynomial got close but good luck in interpreting the four parameters (intercept and three $\beta$s). The quadratic though while it was close predicts that the counts in the early days will drop (the red curves is decreasing from day 1 to day 4) so that's not good because the data points don't see to be showing that pattern.  
 ```{asis echo=longform}
-The nonlinear model (nls) estimated the parameters quite closely (the true multiplier was .15 and that is what we estimated; the standard error of the residuals was .25 and it was estimated as .29). The other highlight is that the linear model on the log data (black curve) was almost indistinghisable from the true exponential pattern as estimated by the fits of the green line.  The estimates from the linear model (lm) on the log transformed data are also quite close to the true value. The intercept in the log linear model should correspond to the multiplier in the true model, which is 1, and the exponential of the intercept is .98 (exp(-.0183)). The value of the multiplier in the log linear model (.1512) is close to the true multiplier in the model I created .15.
+The nonlinear model (nls) estimated the parameters quite closely (the true multiplier was .15 and that is what we estimated; the standard error of the residuals was .25 and it was estimated as .29). Another detail to highlight is that the linear model on the log data (black curve) was almost indistinghisable from the true exponential pattern as estimated by the fits of the green line.  The estimates from the linear model (lm) on the log transformed data are also quite close to the true value. The intercept in the log linear model should correspond to the multiplier in the true model, which is 1, and the exponential of the intercept is .98 (exp(-.0183)). The value of the multiplier in the log linear model (.1512) is close to the true multiplier in the model I created .15.
 ```
 
-I found this website that uses a [4th order polynomial to model data from Spain, Italy and US](https://www.mmogollon.com/corona-virus-2). This page also focuses on the daily incidence rate, a topic I mentioned earlier. Personally, I'm suspicious of using such high order terms to model such curves especially if they are used to forecast out from the data (i.e., extrapolation).
+While polynomials may do a good job of fitting data in hand, they may not be the useful for prediction and forecast---basically, extrapolating out of the range of the data. Here I take the same plot just examined but extend the prediction out 25 days beyond the data.  The vertical black line marks the region of data (left) and prediction (right). The green curve is the estimated exponential growth fit to the data and extended 25 days out.   The blue curve is the cubic form that fits the data relatively well (left side) but in extrapolation out 25 days from the data may not do a good job of predicting the actual curvature of the exponential function. The gray bands refer to the 95% prediction bands. Note that the bands for the exponential curve appear to be too narrow, and this is an outgrowth that the theory for such intervals in the nonlinear case is not clear cut.  A simulation-based approach to estimate the prediction interval may be better. 
 
-The polynomial idea to approximate functions can be extended in more complex ways. [Here](http://uc-r.github.io/mars) is a tutorial using the MARS package in R; this is probably the direction I'd go if I was interested in taking this type of approximation approach.
+```{r warning=F, message=F, echo=longform}
+x <- 1:50
+ #pad y with missing data from day 26 to 50
+y <- c(y, rep(NA,25))
+
+plot(x,y, ylim=c(0,1800))
+
+# lines(x,exp(predict(out.ln,newdata= data.frame(x=x))), col="black")
+title("Failure of polynomial extrapolation")
+abline(v=25.5, col="black")
+text(20,500, "Data")
+text(30,500,"Prediction")
+text(45, 1800, "True Exponential", col="green")
+text(45, 100, "Estimated Polynomial", col="blue")
+
+library(investr)
+pred.exp <- predFit(out.exp, newdata=data.frame(x=x[26:50]), se.fit=T, interval="prediction", level=.95)
+polygon(c(x[26:50],rev(x[26:50])), c(pred.exp$fit[,"lwr"], rev(pred.exp$fit[,"upr"])),col="gray", border=NA)
+pred.c <- predFit(out.c, newdata=data.frame(x=x[26:50]), se.fit=T, interval="prediction" , level=.95)
+polygon(c(x[26:50],rev(x[26:50])), c(pred.c$fit[,"lwr"], rev(pred.c$fit[,"upr"])),col="gray", border=NA)
+
+lines(x,predict(out.exp,newdata= data.frame(x=x)), col="green")
+lines(x,predict(out.c,newdata= data.frame(x=x)), col="blue")
+
+```
+
+Polynomials are frequently used.  I found this website that uses a [4th order polynomial to model covid-19  data from Spain, Italy and US](https://www.mmogollon.com/corona-virus-2). This page also focuses on the daily incidence rate, a topic I mentioned earlier. Personally, I'm suspicious of using such high order terms to model such curves especially if they are used to forecast out from the data (i.e., extrapolation).
+
+The polynomial idea to approximate functions can be extended in more complex ways. [Here](http://uc-r.github.io/mars) is a tutorial using the MARS package in R; this is probably the direction I'd go if I was interested in taking this type of approximation approach. But I'd rather stick to more interpretable functional forms for most of the remaining sections.
 
 ### Thoughts on the log transformation
 
-This type of model where we transform the dependent variable by converting to logs, creates an additive error term in the log scale (i.e., log(counts) = f(days) + $\epsilon$). But maybe that isn't the right error structure. We can study the residuals to see if there are nonlinearities. It may be that the error is added to the counts rather than the log of the counts (i.e., the data may exhibit a  counts = f(days) + $\epsilon$ structure, which is a different error structure than the one on the log scale).  
+This type of model where we transform the dependent variable by converting to logs, creates an additive error term in the log scale (i.e., log(counts) = f(days) + $\epsilon$). But maybe that isn't the right error structure. We can study the residuals to see if there are nonlinearities. It maybe  the error is added to the counts rather than the log of the counts (i.e., the data may exhibit a  counts = f(days) + $\epsilon$ structure, which is a different error structure than the one on the log scale).  
 
 We now turn to modeling the curvature directly, in a form that permits the counts = f(days) + $\epsilon$ model.
 
-## Exponential (Nonlinear) Regression 
+## Exponential Nonlinear Mixed Model  Regression 
 
 ```{asis echo=longform}
 In the previous section I illustrated how to run a nonlinear regression using the nls() command to estimate exponential growth. 
@@ -254,7 +303,7 @@ In the previous section I illustrated how to run a nonlinear regression using th
 
 For a good explanation of exponential growth and logistic growth (next subsection) see this [video](https://www.youtube.com/watch?v=Kas0tIxDvrg). 
 
-You can think of this model as being similar to a balance in a savings account that builds with compound interest. At each time step, a percentage is added to the current principal thus increasing the balance in the savings account. At the subsequent time step, the principal is now higher so the interest earned on that day will also be higher.  In the case of the covid-19 counts, each day the total grows by some percentage, analogous to the principal in the savings account.
+You can think of this model as being similar to a balance in a savings account that builds with compound interest. At each time step, a percentage is added to the current principal thus increasing the balance in the savings account. At the subsequent time step, the principal is now higher so the interest earned on that day will also be higher than the previous time step.  In the case of the covid-19 positive test counts, if each day the total count grows by some percentage, analogous to the principal in the savings account, then the growth is exponential.
 
 ```{r messages=F, warnings=F, echo=longform}
 allstates.long.new <- groupedData(count ~ day.numeric | state.abb, data=allstates.long)
@@ -266,7 +315,7 @@ ifelse(d<l,0,y*rate^(b1*(d-l)))
 }
 
 # example exponential growth model
-plot(0:max.day.numeric, richfu(0:max.day.numeric, 0, 1.23 , .000555 , 1)*19500000/100,type="l",xlab="days",ylab="counts",main="Hypothetical plot of counts following an exponential growth \n(tied to population of New York)")
+plot(0:max.day.numeric, richfu(0:max.day.numeric, 0, 1.15 , .000555 , 1)*19500000/100,type="l",xlab="days",ylab="counts",main="Hypothetical plot of counts following an exponential growth \n(tied to population of New York)")
 ```
 
 I'm using one form of the exponential where the "rate" parameter is the base and it is raised to the power t.  I did this to maintain a connection to the savings account analogy where the principal grows at rate x (where, say, a 5% interest rate has x = 1.05). The form is
@@ -276,9 +325,9 @@ $$
 \mbox{count} &= y r^t
 \end{aligned}
 $$
-where t is the day, r is the rate (i.e., an "interest rate" of 5% has rate = 1.05), and y is a scaling parameter. The hypothetical plot above used a rate of 1.23 and a multiplier of 108.225, which is in part based on the population of NY of 19.5M.
+where t is the day, r is the rate (i.e., an "interest rate" of 5% has rate = 1.05), and y is a scaling parameter. The hypothetical plot above used a rate of 1.15 and a multiplier of .000555, which is in part based on the population of NY of 19.5M. I estimated these numbers from data collected in mid March, early into the covid-19 pandemic, and extrapolated out 60 days. Back in mid-March the idea of having 350,000 cases  in New York within a couple of months seemed crazy. On May 7 New York reported 327,000 cases.
 
-There are other forms of the expontial that are equivalent, just on a different scale.  For example, in the natural log scale, the form I'm using $yr^t$ is equivalently expressed as $y*\exp{(log(r)t)}$ and in base 10 it is equivalently expressed as $y*10^{log10(r)t}$. These are all equivalent formulations, one just needs to keep track of the scale of the rate across these different choices of the base.
+There are other forms of the exponential that are equivalent, just on a different scale.  For example, in the natural log scale, the form I'm using $yr^t$ is equivalently expressed as $y*\exp{(log(r)t)}$ and in base 10 it is equivalently expressed as $y*10^{log10(r)t}$. These are  equivalent formulations, one just needs to keep track of the scale of the rate across these different choices of the base.
 
 
 ### Exponential: The Liftoff Parameter
@@ -315,9 +364,9 @@ There is a sense in which we didn't have to worry about liftoff in the linear mi
 
 ### Estimating the exponential with the nonlinear mixed model
 
-Let's estimate an exponential growth model using a nonlinear mixed model regression. This mimics the LMER model we ran earlier in these notes but rather than transforming with a log to convert the data into straight lines we model the curvature directly with an exponential function. To simplify things I constrain the liftoff parameter to 0 and the multiplier b1 to 1.  To estimate all four parameters simultaneously we need to move to a different R package [saemix](https://cran.r-project.org/web/packages/saemix/saemix.pdf) that uses a stochastic EM algorithm to estimate this nonlinear mixed model because nlme can't handle very complex models like this one without doing more ground work in setting up a self-starting function that has information about the gradient of the function.  But, if you do that be careful that the function I'm proposing can even be estimated. There may be a redundancy with the rate and the b1 parameters (related to the base of the exponent that I described earlier in the [Exponential Growth Background](#expoback) subsection when moving to different bases like base 10 or $\exp$).
+Let's estimate an exponential growth model using a nonlinear mixed model regression. This mimics the LMER model we ran earlier in these notes but rather than transforming with a log to convert the data into straight lines, this time we model the curvature directly with an exponential function. To simplify things I constrain the liftoff parameter to 0 and the multiplier b1 to 1.  To estimate all four parameters simultaneously we need to move to a different R package [saemix](https://cran.r-project.org/web/packages/saemix/saemix.pdf) that uses a stochastic EM algorithm to estimate this nonlinear mixed model because nlme can't handle very complex models like this one without doing more ground work in setting up a self-starting function that has information about the gradient of the function.  But, some additional work needs to be done to check that all four parameters can be estimated. There may be a redundancy with the rate and the b1 parameters (related to the base of the exponent that I described earlier in the [Exponential Growth Background](#expoback) subsection when moving to different bases like base 10 or $\exp$).  Sometimes parameters cannot be identified.
 
-For these estimations I'm using percent of positive cases in the state (count/population) rather than count.
+For these estimations I'm using percent of positive cases in the state (count/population) rather than the count.
 
 ```{r message=F, warning=F, results=ifelse(longform, "markup", "hide"), echo=longform}
 out <- nlme(percent ~ richfu(day.numeric, l=0, rate,y,b1=1), fixed = rate+y~1,
@@ -339,28 +388,10 @@ intervals(out.exponential)
 # https://stackoverflow.com/questions/55552080/how-to-obtain-confidence-intervals-for-non-linear-mixed-model-logistic-growth-c
 ```
 
-Checking residuals for assumptions.
+The fixed effects parameters refer to state-level parameters. You can think of these as the typical values for the states.  The random effects part refers to the variability across states in those parameters. For example, while the fixed effects rate parameter is estimated at `r round(fixef(out.exponential)[1], 2)`, the state deviations around `r round(fixef(out.exponential)[1], 2)` have a standard deviation of `r round(as.numeric(VarCorr(out.exponential)[1,2]),3)`.
 
-```{r echo=longform}
-plot(fitted(out.exponential), resid(out.exponential), main="New York in blue")
-# suspect weird points are new york; so put NY in blue points and connected dots with a curve
-points(fitted(out.exponential)[names(fitted(out.exponential))=="New York"],resid(out.exponential)[names(resid(out.exponential))=="New York"],col="blue")
-lines(fitted(out.exponential)[names(fitted(out.exponential))=="New York"],resid(out.exponential)[names(resid(out.exponential))=="New York"],col="blue")
 
-# let's drop outliers and look at the resid plot (zoom in for fits < .08 and abs(resid) < .01)
-# this helps us see the majority of the residual plot
-plot(fitted(out.exponential)[
-  fitted(out.exponential)<.08 & abs(resid(out.exponential)) < .01], 
-  resid(out.exponential)[fitted(out.exponential)<.08 & abs(resid(out.exponential)) < .01], 
-  xlab="fits < .08", ylab="abs(resid) < .01", main="zoom in ")
-
-qqnorm(resid(out.exponential))
-qqline(resid(out.exponential))
-```
-
-Some  issues with residuals as seen in the residual scatterplot against the fitted values and the QQ plot suggesting longer tails than expected if residuals were distributed normally.  The first plot above shows a relatively strange pattern in the residuals when plotted against the fitted values. The blue points correspond to New York (I connected them with line segments to they stand out).  The second zooms in and suggests there still is some structure in the residuals the model is not picking up.  The third plot is a QQ plot suggest extremely long tails.
-
-Let's plot  the fitted values of each state.  These are the predicted exponential curves according to the model. Note that these are model estimates, not a plot of the actual data.
+Let's plot  the fitted values of each state.  These are the predicted exponential curves according to the model. Note that this plot represents the model estimates rather than the actual data.
 
 ```{r fig.cap="Exponential Function Estimated through Nonlinear Mixed Model Regression", echo=longform}
 predmatnonlin <- data.frame(day.numeric=rep(c(0:max.day.numeric),50),state.abb=rep(rownames(coef(out.exponential)),each=max.day.numeric+1))
@@ -370,6 +401,7 @@ nonlinreg <- ggplot(predmatnonlin, aes(day.numeric,prediction,group=state.abb, c
 nonlinreg  
 ```
 
+We can examine specific states. The best fitting exponential curve for New York with the actual data points is shown in the next figure.
 
 ```{r echo=longform}
 nydf <- predmatnonlin[predmatnonlin$state.abb=="New York",]
@@ -379,7 +411,7 @@ nydf.exponential <- nydf
 ggplot(nydf, aes(day.numeric,prediction,group=state.abb, color=state.abb )) + geom_line() + geom_point(aes(x=day.numeric, y=percent), col="blue") + ggtitle("New York: Actual percentage in blue; exponential growth in red")
 ```
 
-Consistent to what we observed in the log transformed data, the points do not seem to follow an exponential curve (New York's poor fit being one example).  We will move to a different form that may be more appropriate for these data.
+Consistent to what we observed in the log transformed data and the linear mixed model, the points do not appear to follow an exponential curve, with the case of New York being one example.   
 
 <!-- Here one could run the same code above I used in the linear mixed model case on the log scale to produce tables of predicted counts, their confidence intervals, and the forecast plots with the confidence bands. This information could be compared with the previous ones to help us evaluate the models.  Some thought needs to go into writing code to simulate the confidence bands around the predictions from the nonlinear model. -->
 
@@ -404,8 +436,37 @@ temp %>%   ggplot(aes(x=day.numeric, y=fit)) + geom_point(data=subset(temp,day.n
 
 ```
 
+We now examine the residuals to evaluate whether there is any structure the model is failing to pick up. The overall plot of the residuals suggests some major issues. For example, I colored in blue the residuals corresponding to New York and connected them with line segments to help them stand out.  There is other structure in those residuals.
 
-## Logistic (Nonlinear) Regression 
+```{r echo=longform}
+plot(fitted(out.exponential), resid(out.exponential), main="New York in blue")
+# suspect weird points are new york; so put NY in blue points and connected dots with a curve
+points(fitted(out.exponential)[names(fitted(out.exponential))=="New York"],resid(out.exponential)[names(resid(out.exponential))=="New York"],col="blue")
+lines(fitted(out.exponential)[names(fitted(out.exponential))=="New York"],resid(out.exponential)[names(resid(out.exponential))=="New York"],col="blue")
+```
+
+Here is a zoomed in version of the residual plot focusing in on the major "clump" of points.
+
+```{r echo=longform}
+# let's drop outliers and look at the resid plot (zoom in for fits < .08 and abs(resid) < .01)
+# this helps us see the majority of the residual plot
+plot(fitted(out.exponential)[
+  fitted(out.exponential)<.08 & abs(resid(out.exponential)) < .01], 
+  resid(out.exponential)[fitted(out.exponential)<.08 & abs(resid(out.exponential)) < .01], 
+  xlab="fits < .08", ylab="abs(resid) < .01", main="zoom in ")
+``` 
+
+The QQ plot raises further suspicion on this model due to the long tails.
+
+```{r echo=longform}
+qqnorm(resid(out.exponential))
+qqline(resid(out.exponential))
+```
+
+Overall, the exponential curve does not appear to offer a solid representation of these data. This is consistent with the conclusion we reached from the linear mixed model on the log data. We will move to a different form that may be more appropriate for these data.
+
+
+## Logistic Nonlinear Mixed Regression 
 
 Let's switch to a logistic growth model (which is not the same as logistic regression for binary data).  The nlme package has some additional routines  to simplify the fitting of logistic growth models (e.g., SSlogis), which make it easier to set up starting values. I'll avoid that so as to be more transparent with the code I'm writing.  In other work I've seen more efficient estimation (and less fussiness around starting values) with the stochastic EM approach to fitting nonlinear regression models such as in the package saemix.
 
@@ -440,7 +501,8 @@ I could incorporate it by including a weight parameter (weights=varIdent(form= ~
 
 ```{r messages=F, warnings=F, results="hide", echo=longform}
 out <- nlme(count ~ richfu.logistic(day.numeric, l,y,b1), fixed = l+y+b1~1,
-            random =  l+y~1, data=na.omit(allstates.long.new),start=c( l=17500,y=170,b1=-.15), verbose=T, control=nlmeControl(msMaxIter=1000,opt="nlminb",pnlsTol=.01,msVerbose=T,minScale=.01, maxIter=1000, eval.mas=1000) )
+            random =  l+y~1, data=na.omit(allstates.long.new),start=c( l=25000,y=160,b1=-.1), verbose=T, control=nlmeControl(msMaxIter=1000,opt="nlminb",pnlsTol=.01,msVerbose=T,minScale=.01, maxIter=1000, eval.max=1000) )
+
 ```
 
 ```{r  messages=F, warnings=F, echo=longform}
@@ -512,7 +574,7 @@ diagplot
 ```
 
 
-Below is the plot of predicted curves according to the model. Notice that the fits for some states begin to taper off according to this model, but for the previous exponential growth model all the states showed exponential.  One could examine these differences to see which model performs better in predictive accuracy (i.e., see if the actual data for the state tapers off or continues to grow exponentially). Such patterns are testable and the ideal way to compare models and decide which one provides a better representation of the data.
+Below is the plot of the predicted curves for the model logistic growth model. Notice that the fits for some states begin to taper off according to the logistic growth model, whereas for the previous exponential growth model all the states showed exponential.  One could examine these differences to see which model performs better in predictive accuracy (i.e., see if the actual data for the state tapers off or continues to grow exponentially). Such patterns are testable and the ideal way to compare models and decide which one provides a better representation of the data.
 
 
 
@@ -524,7 +586,7 @@ nonlinreg.logistic <- ggplot(predmatnonlin, aes(day.numeric,prediction,group=sta
 nonlinreg.logistic
 ```
 
-Here is the predicted curve for New York. We know the residuals suggest the model is 'off' for NY (the residual plot systematically under and over predicting), but this plots suggests a logistic is a reasonable fit, and most of the part that is off is that it didn't capture the liftoff and sharp increase once the curve started to increase.
+Here is the predicted curve for New York with the actual data points in blue. We know from the analyses of the residuals that the model fit is not ideal, but this plots suggests a logistic growth pattern is a reasonable fit to the data and better than the pure exponential growth model. Where the model is not capturing the data well is the liftoff and the sharp increase once the curve started to increase.  There are also a pattern in the data around day 45 that is worth examining (e.g., checking what happened around that time in New York, such as a change in counting policy or a change in diagnostic test) and the actual data pattern is continuing to increase more rapidly than the predicted logistic growth model after day 55. 
 
 ```{r echo=longform}
 nydf <- predmatnonlin[predmatnonlin$state.abb=="New York",]
@@ -546,18 +608,18 @@ Rerun the logistic growth model using the weight parameter to allow each state t
 ```
 
 ```{exercise}
-Use the anova command to compare the fits of the regressions with equal and unequal state error variances. THis is is an increment in fit test comparing the reduced model (e.g., one residual variance for all states) to a full model (e.g., each state has its own residual variance). The command would be anova(reduced, full) where you replace reduced and full with the name of the object you saved the nlme (e.g., reduced = out.logistic in the example below).
+Use the anova command to compare the fits of the regressions with equal and unequal state error variances. This is is an increment in fit test comparing the reduced model (e.g., one residual variance for all states) to a full model (e.g., each state has its own residual variance). The command is anova(reduced, full) where you replace reduced and full with the name of the object you saved the nlme (e.g., reduced = out.logistic in the example below).
 ```
 
 ```{exercise}
-Re-run the logistic growth nonlinear mixed model using the percentage of the state population that tests positive. Compare these results to the logistic growth models computed on the count data with equal residual variance across states. How do you address the different scales of the dependent variable?
+Re-run the logistic growth nonlinear mixed model using the percentage of the state population that test positive. Compare these results to the logistic growth models computed on the count data with equal residual variance across states. How do you address the different scales of the dependent variable?
 ```
 
-Another consideration is that the residuals may not be independent given that these are time series data. Yestersday's residual may be correlated with today's residual.  Here I add a correlation structure to the nlme command using an autocorrelation lag of 1 (AR p =1) and a moving average lag of 1 (MA q = 1).  The ARMA implementation in nlme, though, operates completely on the residuals. So, the AR refers to the previous residual correlation and the MA refers to a set of independent and identically distributed noise terms apart from the residuals (see Pinhero & Bates, 2000, as this is not standard).  You can think of the MA noise parameters are "factors" that are added to produce an additional source of correlation across residuals, much like a common factor would, but separate from the serial correlation of resisuals.  I also use the ACF() command to display the autocorrelation function.  One could also try a heterogeneous residual variance model (the weight argument described above) along with the correlated error.  Much more diagnostics would be needed to settle on the appropriate correlational structure for the error term plus the usual checks on the residuals to ensure we are properly meeting the assumptions.
+Another consideration is that the residuals may not be independent given that these are time series data. Yesterday's residual may be correlated with today's residual.  Here I add a correlation structure to the nlme command using an autocorrelation lag of 1 (AR p =1) and a moving average lag of 1 (MA q = 1).  The ARMA implementation in nlme, though, operates completely on the residuals. So, the AR refers to the previous residual correlation and the MA refers to a set of independent and identically distributed noise terms apart from the residuals (see Pinhero & Bates, 2000, as this is not standard).  You can think of the MA noise parameters are "factors" that are added to produce an additional source of correlation across residuals, much like a common factor would in a factor analysis model, but separate from the serial correlation of residuals.   One could also try a heterogeneous residual variance model (the weight argument described above) along with the correlated error.  Much more diagnostics would be needed to settle on the appropriate correlational structure for the error term plus the usual checks on the residuals to ensure we are properly meeting the statistical assumptions.
 
 ```{r messages=F, warning=F, results="hide", echo=longform}
 out <- nlme(count ~ richfu.logistic(day.numeric, l,y,b1), fixed = l+y+b1~1,
-            random =  l+y~1, data=na.omit(allstates.long.new),start=c( l=14500,y=232,b1=-.2), verbose=T, correlation=corARMA(form=~1,p=1,q=1), control=nlmeControl(msMaxIter=1000,opt="nlminb",pnlsTol=.02,msVerbose=T,minScale=.02, maxIter=1000, eval.mas=1000) )
+            random =  l+y~1, data=na.omit(allstates.long.new),start=c( l=25000,y=160,b1=-.1), verbose=T, correlation=corARMA(form=~1,p=1,q=1), control=nlmeControl(msMaxIter=1000,opt="nlminb",pnlsTol=.01,msVerbose=T,minScale=.01, maxIter=1000, eval.max=1000) )
 ```
 
 ```{r messages=F, warning=F, echo=longform}
@@ -616,7 +678,7 @@ par(pty="m")
  
 ```{r messages=F, warning=F, results="hide", echo=longform}
 out <- nlme(count ~ richfu.logistic(day.numeric, l,y+b2*povertyperc,b1), fixed = l+y+b1 + b2~1,
-            random =  l+y~1, data=na.omit(allstates.long.new),start=c( l=17500,y=200,b1=-.15, b2=-4.5), verbose=T,  control=nlmeControl(msMaxIter=1000,opt="nlminb",pnlsTol=.02,msVerbose=T,minScale=.02, maxIter=1000, eval.mas=1000) )
+            random =  l+y~1, data=na.omit(allstates.long.new),start=c( l=17500,y=200,b1=-.15, b2=-4.5), verbose=T,  control=nlmeControl(msMaxIter=1000,opt="nlminb",pnlsTol=.02,msVerbose=T,minScale=.02, maxIter=1000, eval.max=1000) )
 ```
 
 
@@ -682,7 +744,7 @@ subset(out.temp,state.abb %in% c("New York","Michigan")) %>% ggplot(aes(x=day.nu
 ```
 
 The splines approach can be extended in the context of time series to permit forecasts.  Here I'll show the use 
-of the forecast package and the excellent outline book by [Hyndman and Athanasopoulos](https://otexts.com/fpp2/). I'll forecast 10 days out from the current date using New York data and compute an error band, show how to check reisudals with the  checkresiduals() command, and how to incorporate use hierarchical time series to model state trajectories within the US.  
+of the forecast package and the excellent outline book by [Hyndman and Athanasopoulos](https://otexts.com/fpp2/). I'll forecast 10 days out from the current date using New York data and compute an error band, show how to check residuals with the  checkresiduals() command, and how to incorporate use hierarchical time series to model state trajectories within the US.  
 
 ```{r echo=longform}
 # better to redo plots with dates like 4/1/20 and weekly markers
@@ -713,7 +775,7 @@ checkresiduals(splne.forecast.ny)
 
 ## Bayesian Estimation of Nonlinear Regression: Adding value to prediction and uncertainty
 
-I will illustrate the use of Bayesian nonlinear regression modeling to estimate prediction uncertainty. The Baysian approach also allows for more general models than the standard regression approaches described earlier in this chapter, these include expanding the assumptions limitations of the classic approach.  For example, within a Bayesian approach one can include predictors of the variance terms, which is not easy to do in the classic setting. This could be useful, for example, if a predictor influences not only the value of a random effect parameter but also its variance. Or, we may be able to do a better job of developing models that are more appropriate for the count data we are using throughout these notes.  We know that a normal distribution can provide a reasonable approximation to count data distributions but there may be cases, such as the present nonlinear random effects case, where that approximation breaks down and we would be better off modeling the count distribution directly.  Another example of something that is difficult to do in the classical framework is dealing with distribution of random effects that do not follow a normal distribution. Earlier we saw that there may be two clusters of states and that the joint distribution of random effect parameters appears to be skewed.  This makes suspect inferences based on random effects that assume a joint normal distribution. These nonstandard cases can be handled relatively easy in the Bayesian framework.
+I will illustrate the use of Bayesian nonlinear regression modeling to estimate prediction uncertainty. The Bayesian approach also allows for more general models than the standard regression approaches described earlier in this chapter, these include expanding the assumptions limitations of the classic approach.  For example, within a Bayesian approach one can include predictors of the variance terms, which is not easy to do in the classic setting. This could be useful, for example, if a predictor influences not only the value of a random effect parameter but also its variance. Or, we may be able to do a better job of developing models that are more appropriate for the count data we are using throughout these notes.  We know that a normal distribution can provide a reasonable approximation to count data distributions but there may be cases, such as the present nonlinear random effects case, where that approximation breaks down and we would be better off modeling the count distribution directly.  Another example of something that is difficult to do in the classical framework is dealing with distribution of random effects that do not follow a normal distribution. Earlier we saw that there may be two clusters of states and that the joint distribution of random effect parameters appears to be skewed.  This makes suspect inferences based on random effects that assume a joint normal distribution. These nonstandard cases can be handled relatively easy in the Bayesian framework.
 
 I co-wrote an [introductory chapter](http://www-personal.umich.edu/~gonzo/papers/feinberg-gonzalez-2012-bayesian.pdf) on Bayesian statistics with [Fred Feinberg](https://michiganross.umich.edu/faculty-research/faculty/fred-feinberg) that highlights some of the advantages and disadvantages of the Bayesian framework.  For a complete book on Bayesian statistics I very much like [Gelman et al. Bayesian Data Analysis](https://www.amazon.com/Bayesian-Analysis-Chapman-Statistical-Science-ebook/dp/B00I60M6H6/ref=sr_1_2?dchild=1&keywords=Gelman+Bayesian+statistics&qid=1587941657&sr=8-2).  Other textbooks include [Kruschke's Doing Bayesian Data Analysis](https://www.amazon.com/Doing-Bayesian-Data-Analysis-Tutorial-ebook/dp/B00PYZ2VR6/ref=sr_1_6?dchild=1&keywords=Krusce+bayesian+statistics&qid=1587941724&sr=8-6).
 
@@ -943,7 +1005,7 @@ outplot + geom_ribbon(data=bounds.df, aes(x, y=y, ymin = lwr, ymax = upr), alpha
 ```
 
 
-I will return to state-space models in Chapter \@ref(process) when discussiing process models. 
+I will return to state-space models in Chapter \@ref(process) when discussing process models. 
 
 ## Basic Machine Learning Examples
 
@@ -970,7 +1032,11 @@ par(mar = numeric(4))
 plotnet(mod)
 ```
 
-It is common to model time series using the counts for each day (such as with the [incidence plot](#incidenceplots) we saw in the Section \@ref(incidenceplots)) rather than the cumulative counts we have been using throughout most of these notes. I'll follow that convention here. Here is the incident plot for New York State.
+The RNN approach we will use is a simplified version. More appropriate approaches would be [long short-term memory](https://en.wikipedia.org/wiki/Long_short-term_memory) models.
+
+It is common to model time series using the counts for each day (such as with the [incidence plot](#incidenceplots) we saw in the Section \@ref(incidenceplots)) rather than the cumulative counts we have been using throughout most of these notes. I'll follow that convention here. 
+
+The incident plot for New York State.
 
 ```{r echo=longform}
 data.temp <- allstates.long %>% filter(state.abb == "New York")
@@ -1108,9 +1174,9 @@ text(nrow(data)+.5,0,"test")
 #plot(colMeans(model$error), type="l")
 ```
 
-I'll be the first to acknowledge that this example is just for demonstration purposes. Our data set is way, way too small to have any chance of estimating meaningful machine learning models, I created a kludgy set of predictors (aka features) without much thought, I haven't included more predictors to the model and I've only focused on number of positive tests (e.g., a better demonstration of machine learning methods would be to use postive testing rates as predictors of outcomes such as subsequent death rates).  the particular forms of the predictors I'm using (polynomial, first and second order differences) are known not to behave well when extrapolating beyond one's data, as we are doing here when predicting the subsequent day.  I also have not optimized for the various tuning parameters including the learning rate, so there is much one can do to improve the fit of this particular example.
+I'll be the first to acknowledge that this example is just for demonstration purposes. Our data set is way, way too small to have any chance of estimating meaningful machine learning models, I created a kludgy set of predictors (aka features) without much thought, I haven't included more predictors to the model and I've only focused on number of positive tests (e.g., a better demonstration of machine learning methods would be to use positive testing rates as predictors of outcomes such as subsequent death rates).  the particular forms of the predictors I'm using (polynomial, first and second order differences) are known not to behave well when extrapolating beyond one's data, as we are doing here when predicting the subsequent day.  I also have not optimized for the various tuning parameters including the learning rate, so there is much one can do to improve the fit of this particular example.
 
-There are more diagnostics to consider such as error in prediction and we can iterate over the tuning parameters to find optimal values that give good predictive validity without overfitting.  Note that between day 25 and 40 the overall "trend" of the open red circles is relatively flat (as an average) but the daily variability is increasing.  The current set of predictors I'm  using in this RNN doesn't have the ability to easily capture changes in the variability.  This is one clue for additional predictors (features, see next subsection) that could be added to the model.  This could be an interesting part of the story and something that can be addressed not only with machine learning models but also for the other models we considered in this chapter.  Models that are not capturing this change in variance are possibly missing something important about the underlying process (which could just be something as simple as not all juristictions in New York state are reporting daily but nonetheless an important property to understand if we want to use these approaches to make forecasts).  We could check whether this increasing variance occurs in other states and at different levels of analysis such as the county level. We could check whether this increase in variance is consistent with a multiplicative error model where error (the "plus $\epsilon$" term we discussed earlier) could provide a clue to the underlying process. The point is that there is a potential signal here that our current models are not capturing, and we need to figure out whether we need to move to a different class of models or whether this heterogeneity is due to a simple factor that can be easily addressed. 
+There are more diagnostics to consider such as error in prediction and we can iterate over the tuning parameters to find optimal values that give good predictive validity without overfitting.  Note that between day 25 and 40 the overall "trend" of the open red circles is relatively flat (as an average) but the daily variability is increasing.  The current set of predictors I'm  using in this RNN doesn't have the ability to easily capture changes in the variability.  This is one clue for additional predictors (features, see next subsection) that could be added to the model.  This could be an interesting part of the story and something that can be addressed not only with machine learning models but also for the other models we considered in this chapter.  Models that are not capturing this change in variance are possibly missing something important about the underlying process (which could just be something as simple as not all jurisdictions in New York state are reporting daily but nonetheless an important property to understand if we want to use these approaches to make forecasts).  We could check whether this increasing variance occurs in other states and at different levels of analysis such as the county level. We could check whether this increase in variance is consistent with a multiplicative error model where error (the "plus $\epsilon$" term we discussed earlier) could provide a clue to the underlying process. The point is that there is a potential signal here that our current models are not capturing, and we need to figure out whether we need to move to a different class of models or whether this heterogeneity is due to a simple factor that can be easily addressed. 
 
 The increasing variance was not easy to detect in the cumulative plots and models on cumulative data such as the log linear, exponential and logistic models we covered earlier in this chapter.  If you go back and look at those plots, even the ones using the curve fitting spline methods, they show systematic "under and over the curve" errors consistent with what we are seeing in the incidence plot.  The increasing variance is there but just difficult to spot in the way we examined these data previously. Sometimes converting data to different forms, such as cumulative and incidence forms, helps highlight different aspects of the same data.  It is not easy to see in the barplot of the New York incidence presented at the beginning of the RNN section. It is often useful to cross-check one's interpretation with different model forms and plots.
 
