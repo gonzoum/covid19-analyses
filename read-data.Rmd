@@ -324,13 +324,17 @@ A few research groups have started studying the public health implications of va
 
 ```{r echo=longform}
 # data set needs some cleaning if you download the data file you can manually
-# read it with this command distancingpolicy <-
+#read it with this command 
+#distancingpolicy <-
 # read.csv("USstatesCov19distancingpolicy.csv", header=T)
 
 # to get this URL go to github site in the link above, find the
 # USstatesCov19distanceingpolicy.csv file and click on "raw" then use that URL
 # below
-distancingpolicy <- read_csv(url("https://raw.githubusercontent.com/COVID19StatePolicy/SocialDistancing/master/data/USstatesCov19distancingpolicy.csv"))
+#broken 5/05/20
+#distancingpolicy <- read_csv(url("https://raw.githubusercontent.com/COVID19StatePolicy/SocialDistancing/master/data/USstatesCov19distancingpolicy.csv"))
+#05/06/20
+distancingpolicy <- read_csv(url("https://raw.githubusercontent.com/COVID19StatePolicy/SocialDistancing/master/data/USstatesCov19distancingpolicyBETA.csv"))
 
 head(distancingpolicy)
 ```
