@@ -513,6 +513,44 @@ ggplot( day.sums, aes(x=day,y=daily)) +  geom_bar(stat="identity") +
           strip.text.y = element_text(size=11))
 ```
 
+We can add  interactive capabilities to the gggraph by using the ggigraph package.  
+```{asis echo=longform}
+The package needs to be downloaded through github; the path is commented out in the R code chunk.
+```
+The html version of this book allows popups when the mouse hovers over the bars. You will notice that the number of positive deaths has a weekly pattern emerging on Monday April 5, 2020. There is a trough that occurs weekly on Mondays through at least May 4.  I will monitor on subsequent weeks.
+
+```{r warning=F, message=F, eval=knitr::is_html_output(), echo=longform&knitr::is_html_output()}
+# devtools::install_github('davidgohel/ggiraph')
+library(ggiraph)
+
+p <- ggplot( day.sums, aes(x=day,y=daily, tooltip = day,
+        data_id = day)) +  geom_bar_interactive(stat="identity") +
+    scale_x_date(date_breaks="1 week", date_labels = "%d %b") +
+    labs(y="Daily incremental incidence",
+                                   title="Positive US Covid-19 Cases")  +
+    theme(legend.position = "none",
+          strip.text.y = element_text(size=11))
+
+girafe(ggobj=p)
+```
+
+The weekly pattern is interesting and could be explained, for example, by fewer tests conducted on weekends with a delay in the reporting of tests results.  We can check this by examining another data set that reports the total number of tests conducted on a day, which is the sum of the number of positive tests, the number of negative tests and the number of pending tests. Of course, the number of positive tests will be correlated with this total measure, and this definition of total introduces some additional daily correlations due to some double counting (i.e., a pending today may show up as a negative tomorrow once the results are known). Further, this highlights the difficult of interpreting such data, for many reasons, including the issue that  tests vary in the length of time needed to achieve a result, so if states vary in which tests they use or there are changes over time in which tests are used, we would see such patterns reflected in these counts.  Such changes may say more about the decisions made on which tests to use than on the changing properties of the distribution of positive and negative test results.
+
+The bar plot of the total test results is presented in the next figure.  While the number of tests administered is increasing over the weeks, there is a slight pattern that fewer tests are reported on  Mondays relative to surrounding days, especially in recent weeks (e.g., April 27 and May 4).
+
+```{r warning=F, message=F, echo=longform}
+covid.tracking.date <- covid.tracking %>% subset(date>as.Date("2020-03-9", "%Y-%m-%d"))
+covid.tracking.date <- covid.tracking.date %>% group_by(date) %>% dplyr::summarize(date.sum = sum(total, na.rm=T)) 
+covid.tracking.date <- covid.tracking.date %>% mutate(sumdaily = c(date.sum[1], diff(date.sum)))
+
+ggplot( covid.tracking.date, aes(x=date,y=sumdaily)) +  geom_bar(stat="identity") +
+    scale_x_date(date_breaks="1 week", date_labels = "%d %b") +
+    labs(y="Daily incremental incidence",
+                                   title="Total US Tests (Pos, Neg and Pending")  +
+    theme(legend.position = "none",
+          strip.text.y = element_text(size=11))
+```
+
 
 ## Use of PCA to check for outliers
 
