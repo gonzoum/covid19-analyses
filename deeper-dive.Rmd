@@ -234,3 +234,22 @@ ggplot(subset(covid.tracking.new, state=="NY"), aes(x=day.numeric,y=death)) +
     theme(legend.position = "none",
           strip.text.y = element_text(size=11))
 ```
+
+```{r eval=F, ech0=F}
+#testing weibull
+covid.tracking.new <- groupedData(deathIncrease ~ day.numeric | state, data=covid.tracking.new)
+initialvals <- getInitial(death ~ SSweibull(day.numeric, Asym, Drop, lrc, pwr), data=covid.tracking.new)
+
+tempdata <- na.omit(data.frame(covid.tracking.new[,c("day.numeric", "death", "state")]))
+
+
+out <- nlme(death ~ SSweibull(day.numeric, Asym, Drop, lrc, pwr), fixed = Asym +  Drop+ lrc+ pwr~1, random= Asym + pwr ~1, groups=~state,
+            data=tempdata, start=initialvals, verbose=T, control=nlmeControl(msMaxIter=500,opt="nlminb",pnlsTol=.1,msVerbose=T,minScale=.1, maxIter=500) )
+
+plot(1:60, SSweibull(1:60, Asym=initialvals[1],Drop=initialvals[2],lrc=initialvals[3],pwr=initialvals[4] ),ylim=c(0,2000))
+points(unique(tempdata$day.numeric),c(unlist(by(tempdata$death,tempdata$day.numeric, mean,na.rm=T)))
+       ,col="blue")
+
+out <- nlme(deathIncrease ~ richfu.sir2(day.numeric, a, b0,b1,b2), fixed = a+b0+b1+b2~1,
+            random =  a+b1~1, data=covid.tracking.new,start=c(a=47.2, b0=-2.8,b1=.1, b2=500), verbose=T, groups=~state, control=nlmeControl(msMaxIter=500,opt="nlminb",pnlsTol=.001,msVerbose=T,minScale=.001, maxIter=500) )
+```
