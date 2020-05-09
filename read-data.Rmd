@@ -322,7 +322,7 @@ head(schooldata)
 
 A few research groups have started studying the public health implications of various state-level measures around social distancing.  One such team is at the [University of Washington](https://faculty.washington.edu/cadolph/papers/AABFW2020.pdf) and their [git repository](https://github.com/COVID19StatePolicy/SocialDistancing) for the most up-to-date information.  
 
-```{r echo=longform}
+```{r message=F, warning=F, echo=longform}
 # data set needs some cleaning if you download the data file you can manually
 #read it with this command 
 #distancingpolicy <-
