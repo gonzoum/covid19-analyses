@@ -470,7 +470,10 @@ Overall, the exponential curve does not appear to offer a solid representation o
 
 Let's switch to a logistic growth model (which is not the same as logistic regression for binary data).  The nlme package has some additional routines  to simplify the fitting of logistic growth models (e.g., SSlogis), which make it easier to set up starting values. I'll avoid that so as to be more transparent with the code I'm writing.  In other work I've seen more efficient estimation (and less fussiness around starting values) with the stochastic EM approach to fitting nonlinear regression models such as in the package saemix.
 
-The nlme() command has a difficult time with the three parameters of the logistic growth model. I did a little bit of tinkering with starting values and the three parameters.  I was able to get a reasonable fit with fitting three parameters of the logistic growth model and having two of them be random effects (i.e., they are allowed to vary by state).  A more careful analysis would need to be done to make this publishable, including exploring other parameterizations of logistic growth that may behave better with nlme. I give hints in the commented out sections of the R code.
+The nlme() command has a difficult time with the three parameters of the logistic growth model. I did a little bit of tinkering with starting values and the three parameters.  I was able to get a reasonable fit with fitting three parameters of the logistic growth model and having two of them be random effects (i.e., they are allowed to vary by state).  A more careful analysis would need to be done to make this publishable, including exploring other parameterizations of logistic growth that may behave better with nlme. 
+```{asis echo=longform}
+I give hints in the commented out sections of the R code.
+```
 
 The logistic growth model starts off being close to an exponential at first but eventually tapers off. Many biological systems follow a logistic growth function. Here is a link to a relatively simple explanation of [logistic growth](https://courses.lumenlearning.com/ivytech-collegealgebra/chapter/use-logistic-growth-models/).
 
@@ -481,10 +484,9 @@ $$
 count &= \frac{asymptote}{1 + e^{\beta_1(day.mid - day)}}
 \end{aligned}
 $$
-The asymptote parameter controls the maximum value the function reaches, the day.mid parameter is both the day at which the function is half way to the asymptote and is also the inflection point and $\beta_1$ is a scaling parameter defined to be the distance between the inflection point day.mid and point at which the count is 73% of the asymptote (basically, the difference between day.mid and the day corresponding to the count asymptote*$\frac{1}{1+exp(-1)}$, see Pinhero & Bates).
+The asymptote parameter controls the maximum value the function reaches, the day.mid parameter is both the day at which the function is half way to the asymptote and is also the inflection point and $\beta_1$ is a scaling parameter defined to be the distance between the inflection point day.mid and point at which the count is 73% of the asymptote (basically, the difference between day.mid and the day corresponding to the count asymptote*$\frac{1}{1+exp(-1)}$, see Pinhero & Bates).  This is fine for descriptive purposes but there is something not satisfying about using the data to estimate key properties such as the asymptote.
 
 ```{r messages=F, warnings=F, echo=longform}
-
 richfu.logistic <- function(d,l,y,b1){
 l/(1+y*exp(b1*d))
 }
@@ -494,15 +496,14 @@ plot(0:max.day.numeric, richfu.logistic(0:max.day.numeric, 3880, 133.45, -.332),
   ylab="counts",main="Hypothetical plot of counts following a logistic growth function")
 ```
 
-Let's fit the logistic function to these data.  Note that I do not use state population size in this model.  
+Let's fit the logistic function to these data.  Note that I reverted to counts and do not use state population size in this model.  
 ```{asis echo=longform}
-I could incorporate it by including a weight parameter (weights=varIdent(form= ~1|state.abb)), which allows each state to have its own residual variance, or change the dependent variable from raw counts to, say, per capita counts.  I'll leave that as an exercise to see whether it changes the results. 
+I could incorporate population by including a weight parameter (weights=varIdent(form= ~1|state.abb)), which allows each state to have its own residual variance, or change the dependent variable from raw counts to, say, per capita counts.  I'll leave that as an exercise for the reader to check on how that changes the results. 
 ```
 
 ```{r messages=F, warnings=F, results="hide", echo=longform}
 out <- nlme(count ~ richfu.logistic(day.numeric, l,y,b1), fixed = l+y+b1~1,
             random =  l+y~1, data=na.omit(allstates.long.new),start=c( l=25000,y=160,b1=-.1), verbose=T, control=nlmeControl(msMaxIter=1000,opt="nlminb",pnlsTol=.01,msVerbose=T,minScale=.01, maxIter=1000, eval.max=1000) )
-
 ```
 
 ```{r  messages=F, warnings=F, echo=longform}
@@ -682,7 +683,8 @@ out <- nlme(count ~ richfu.logistic(day.numeric, l,y+b2*povertyperc,b1), fixed =
 ```
 
 
-```{r echo=longform, results=ifelse(longform, "markup", "hide")}
+```{r echo=longform}
+# results=ifelse(longform, "markup", "hide")
 out.logistic.poverty <- out
 
 if (is_html_output())
@@ -696,7 +698,7 @@ intervals(out.logistic.poverty)
 
 The $\beta$ associated with poverty is not statistically significant in this example so we do not have sufficient justification to claim that the state variability in the y parameter of this logistic growth model is related to the state's poverty level.  Anyways, this example illustrates how one goes about adding predictors to such a nonlinear model.  One could use more complicated predictors, even test differences across groups on parameter values (e.g., do states with democratic governors have different parameter values than states with republican governors); one follows the same principles for testing predictors and groups in a standard regression model. While the presentation has focused on associations, the overall framework can be extended to strengthen inference using various methods including instrumental variables (e.g., [Carrol et al, 2004](https://www.stat.tamu.edu/~carroll/ftp/2004.papers.directory/iv_jasa_2004.pdf)) and newer approaches (e.g., [Runge et al, 2019](https://advances.sciencemag.org/content/5/11/eaau4996)), though much theoretical work remains to be done to move these nonlinear mixed models from mere description to stronger inferences by allowing more direct tests of possible alternative explanations.  For an introduction to some basic modern methods in causal inference see [Bauer and Cohen](https://bookdown.org/paul/applied-causal-analysis/).
 
-More diagnostic checking is needed, however, to have confidence in this logistic growth model, with or without predictors. The two random effect parameters in the nonlinear mixed logistic growth model are assumed to follow a bivariate normal distribution, which does not seem to be the case.  Here is a 2D density plot (I know, a lot to ask for when there are only 50 pairs of points, one for each state), separate qqplots and boxplots for the asymptote and y parameters.  The qqplot for the asymptote parameter l has a long tail, mostly due to New York and New Jersey; the one for the y parameter looks symmetric. 
+More diagnostic checking is needed, however, to have confidence in this logistic growth model, with or without predictors. The two random effect parameters in the nonlinear mixed logistic growth model are assumed to follow a bivariate normal distribution, which does not seem to be the case.  Here is a 2D density plot (I know, a lot to ask for when there are only 50 pairs of points, one for each state), separate qqplots and boxplots for the asymptote and y parameters.  The qqplot for the asymptote parameter l has a long tail, mostly due to New York and New Jersey; the one for the y parameter looks asymmetric. 
 
 ```{r echo=longform}
 ggplot(coef(out.logistic), aes(x=l, y=y)) + stat_density_2d(aes(fill = ..level..), geom = "polygon", colour="white") + xlab("l = asymptote")
@@ -716,14 +718,63 @@ par(mfcol=c(1,1))
 
 We'll have to use more sophisticated approaches to model these data given that assuming a nonlinear model with normally distributed parameters may not be tenable for these data.  
 
-The overall point is that testing whether the data fit an exponential growth model,  a logistic growth model, or various other plausible growth trajectories is not merely a modeling fitting exercise. There is much diagnostic testing one needs to do in order to figure out in what ways is a model working well and where it is messing up.  The model selection game is more complex than merely selecting the model that has the best fit value on a standard metric such as AIC or BIC or predictive accuracy.  To me, there is deeper insight that emerges from understanding the type of growth that is underlying the processes under investigation. We are in a better position to understand how to intervene if we understand the growth process that underlies a data set.  Just because a model achieves relatively good performance on measures of fit does not imply that the model is following the same mechanisms of the processes that generated the actual data.  This is where the diagnostic tests come in to help us diagnose such situations.  
+The overall point is that testing whether the data fit an exponential growth model,  a logistic growth model, or various other plausible growth trajectories is not merely a modeling fitting exercise. There is much diagnostic testing one needs to do in order to figure out in what ways is a model working well and where it is messing up.  The model selection game is more complex than merely selecting the model that has the best fit value on a standard metric such as AIC or BIC or predictive accuracy.  To me, there is deeper insight that emerges from understanding the type of growth that is underlying the processes under investigation. We are in a better position to understand how to intervene if we understand the growth process that underlies a data set.  Just because a model achieves relatively good performance on measures of fit does not imply that the model is following the same mechanisms of the processes that generated the actual data.  This is where the diagnostic tests come in to help us diagnose such situations.
+
+Let me illustrate what I mean by deeper implications.  We know that if a growth pattern follows an exponential function, then the plot should be linear in the log scale.  Think, if p, then q.  Now our data suggest that in the log scale we do not see linearity.  What can we conclude?  Well, through the logical contrapositive the observation of not q, implies not p.  In other words, the data rule out the simple exponential. Concluding that we can rule out an entire functional form from consideration is a more powerful result than merely claiming one model fits better than another. 
 
 To get deeper in such process models of growth, we need to develop some additional machinery including differential equations, which are equations that govern changes over time.  I'll briefly touch on these models in the next chapter.
 
 ## Generalized nonlinear mixed models
 
 
-Pending:  examine the nonlinear mixed model with a Poisson distribution
+Pending:  examine the nonlinear mixed model with a Poisson distribution; code needs to be checked;
+
+```{r echo=longform}
+library(gnm)
+
+Logistic <- function(x){
+list(predictors = list(Asym = 1, xmid = 1, scal = 1),
+variables = list(substitute(x)),
+term = function(predLabels, varLabels) {
+paste(predLabels[1], "/(1 + exp((", predLabels[2], "-",
+varLabels[1], ")/", predLabels[3], "))")
+}
+,
+start = function(theta){
+#theta[1] <- 24750
+#theta[2] <- 160
+theta[3] <- -.1
+theta
+}
+)
+}
+
+class(Logistic) <- "nonlin"
+
+#not clear why day.numeric as a linear predictor is needed for convergence
+out.gnm <- gnm(count ~ day.numeric + Logistic(day.numeric), family = poisson, eliminate=state.abb,
+                     data = allstates.long.new)
+summary(out.gnm)
+
+
+plot(out.gnm, ask=F, which=1:2)
+
+predmatnonlin <- data.frame(day.numeric=allstates.long.new$day.numeric,state.abb=allstates.long.new$state.abb, count=allstates.long.new$count)
+predmatnonlin$prediction <- predict(out.gnm, newdata=data.frame(day.numeric=predmatnonlin$day.numeric, state.abb=predmatnonlin$state.abb),
+                                     type="response")
+predmatnonlin.logistic <- predmatnonlin
+nonlinreg.logistic <- ggplot(predmatnonlin, aes(day.numeric,prediction,group=state.abb, color=state.abb )) +  geom_line()   
+nonlinreg.logistic
+
+nydf <- predmatnonlin[predmatnonlin$state.abb=="New York",]
+
+nydf.logistic <- nydf
+ggplot(nydf, aes(day.numeric,prediction,group=state.abb, color=state.abb )) + geom_line() + geom_point(aes(x=day.numeric, y=count), col="blue") + ggtitle("New York: Actual counts in blue; logistic growth in red")
+
+state.mean <- c(unlist(by(allstates.long.new$count, allstates.long.new$state.abb, mean,na.rm=T)))
+state.var <- c(unlist(by(allstates.long.new$count, allstates.long.new$state.abb, var,na.rm=T)))
+
+```
 
 ## Splines, Smoothers and Time Series {#splines}
 
