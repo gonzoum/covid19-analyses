@@ -108,7 +108,11 @@ The behavior of the variable names I am showing here follows the default of R on
 
 
 ```{r}
-colnames(datacov.US)
+# first 14 column names
+head(colnames(datacov.US), 14)
+
+# last 6 column names
+tail(colnames(datacov.US))
 ```
 
 ```{r echo=longform, linewidth=linewidth, tidy=F}
@@ -236,11 +240,12 @@ head(state.population,10)
 
 Another important piece of information we need are the number of tests that have been conducted. Is the total count in a region high or low because the infection rate is high or because more or fewer tests (respectively) have been conducted?
 
-As of 3/21/20 this information is spotty.  We can go to the CDC website to collect this information.  The website  lists testing data for both CDC and Public Health Labs.  After scraping the data off the CDC website I had to do some cleaning, parsing data into numbers as some cells had extra characters that are the footnote symbols appearing on the website, and had to change the format of the date column to be compatible with the date format I'm using elsewhere in these notes.
+As of 3/21/20 this information has been spotty.  We can go to the CDC website to collect this information.  The website  lists testing data for both CDC and Public Health Labs.  After scraping the data off the CDC website I had to do some cleaning, parsing data into numbers as some cells had extra characters that are the footnote symbols appearing on the website, and had to change the format of the date column to be compatible with the date format I'm using elsewhere in these notes.  But the table up until 5/11/20 only reported about a tenth of the total test conducted in the US. On 5/12/20 the CDC website changed to report all viral tests and the number of positive test cases.
 
 
 ```{r warning=F, message=F, echo=longform, tidy=F}
-URL <- "https://www.cdc.gov/coronavirus/2019-ncov/cases-updates/testing-in-us.html"
+# obsolete portion
+URL <- "https://www.cdc.gov/coronavirus/2019-ncov/cases-updates/previous-testing-in-us.html"
 
 wikipage <- read_html(URL)
 
@@ -249,19 +254,17 @@ table <- wikipage %>% html_nodes("table") %>%
  table <- table[[1]]
 
 
+# obsolete fixes;
 # drop extra character from 2nd and 3rd columns k is a temporary placeholder to
 # make the code more readable as k appears multiple times in the 2nd line
-k <- table[,2]
+#k <- table[,2]
 # nice function readr package to extract the numerical part of a string
-table[,2] <- parse_number(k)
-
-k <- table[,3]
-table[,3] <- parse_number(k)
-
-
+#table[,2] <- parse_number(k)
+#k <- table[,3]
+#table[,3] <- parse_number(k)
 #fix date
-k <- table[,1]
-table[,1] <- as.Date(paste0(k,"/20"), "%m/%d/%y")
+#k <- table[,1]
+#table[,1] <- as.Date(paste0(k,"/20"), "%m/%d/%y")
 
 cdc.testing <- table
 
@@ -273,10 +276,24 @@ apply(cdc.testing[,c(2,3)],2,sum,na.rm=T)
 
 # day totals: testing totals regardless of CDC or Public Health Lab
 cdc.testing$total.tests <- apply(cdc.testing[,c(2,3)],1,sum,na.rm=T)
+
+# new portion
+# post 5/12/20 changes
+URL <- "https://www.cdc.gov/coronavirus/2019-ncov/cases-updates/testing-in-us.html"
+
+wikipage <- read_html(URL)
+
+table <- wikipage %>% html_nodes("table") %>%
+ html_table(fill=TRUE, header=T)
+
+# total tests and total postive results
+ kable(unlist(list(table[[1]],table[[2]],table[[3]])))
 ```
 
 There is another site I found that reports positive and negative results by state. This is the [COVID tracking project](https://covidtracking.com).  I don't know how reputable this source is but I'll keep an eye on it. 
-It reports daily records by state on number of positive,  negative, pending, hospitalized, death, and total number of tests.  This page points out specifics about each state (e.g., Maryland stopped reporting negative cases as of 3/12, MA numbers include repeated testing on the same individual, not all states include data from commercial labs) showing that it is challenging to interpret such data at the aggregate level when there is so much heterogeneity across units. See, for example, [state-level details](https://covidtracking.com/data/). As mentioned elsewhere in this document, positive test results need to be interpreted cautiously for several reasons including taking into account the specificity and sensitivity of the tests as well as selection bias in who receives the test. For example, the incidence rate will be biased upward if testing only occurs for people who exhibit symptoms.  Death rates have analogous issues, such as some units only report hospital deaths.  It is possible to develop complex models that take into account these various factors and arrive at corrected estimates, but these additional modeling efforts require additional assumptions for which there aren't always solid data to backing up those assumptions.  This is one of many reasons why different modeling groups can arrive at such diverse estimates and forecasts.   There are methods that aggregate across multiple models, creating an [ensemble of models](https://www.climateprediction.net/climate-science/climate-ensembles/), which have been used successfully in climate science to predict hurricanes.
+It reports daily records by state on number of positive,  negative, pending, hospitalized, death, and total number of tests.  This page points out specifics about each state (e.g., Maryland stopped reporting negative cases as of 3/12, MA numbers include repeated testing on the same individual, not all states include data from commercial labs) showing that it is challenging to interpret such data at the aggregate level when there is so much heterogeneity across units. See, for example, [state-level details](https://covidtracking.com/data/). As mentioned elsewhere in this document, positive test results need to be interpreted cautiously for several reasons including taking into account the specificity and sensitivity of the tests as well as selection bias in who receives the test. For example, the incidence rate will be biased upward if testing only occurs for people who exhibit symptoms.  Death rates have analogous issues, such as some units only report hospital deaths.  
+
+It is possible to develop complex models that take into account these various factors and arrive at corrected estimates, but these additional modeling efforts require additional assumptions for which there aren't always solid data to backing up those assumptions.  This is one of many reasons why different modeling groups can arrive at such diverse estimates and forecasts.   There are methods that aggregate across multiple models, creating an [ensemble of models](https://www.climateprediction.net/climate-science/climate-ensembles/), which have been used successfully in climate science to predict hurricanes.  An effort to use ensemble methods in the case of covid-19 data is [underway](https://reichlab.io/covid19-forecast-hub/).  I see the value in aggregating over multiple models to make better predictions but a limitation of such ensemble methods is that they do not always inform about the underlying mechanisms.  Prediction is one metric used in science, but there are other metrics such as the ability for a model to aid in understanding the underlying mechanisms that are also important. We sometimes want the best prediction of where the eye of a hurricane will make landfall even if we don't necessarily understand why.
 
 
 
@@ -364,6 +381,8 @@ head(statepoverty)
 These are other sources that came on-line after I was well into building these notes. 
 
 1. [covdata:](https://kjhealy.github.io/covdata/) A git repository that includes some of the data sources I've already covered plus some others, such as the CDC Surveillance Network Data, which includes additional information in various tables such as total deaths (i.e., even the non-covid-19 deaths), number of pneumonia deaths, number of influenza deaths, etc.,  as well as data by age category.
+
+2. [New York City data](https://github.com/nychealth/coronavirus-data) A git repository with data tables by age, sex, zip code and other useful information.
 
 
 ## Summary
