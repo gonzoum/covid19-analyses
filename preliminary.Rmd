@@ -18,7 +18,7 @@ A variable that I set up in the index.Rmd file is longform. This is set either t
 ```
 
 ```{r setup, echo=longform}
-#assumes knitr is installed in R
+# assumes knitr is installed in R
 library(knitr)
 
 linewidth <- 50
@@ -28,8 +28,8 @@ options(htmltools.dir.version = FALSE, formatR.indent = 2,
 
 opts_chunk$set(tidy.opts=list(width.cutoff=linewidth),tidy=TRUE)
 
-#coupled with linewidth=xx argument to chunk will make R code fit 
-#within the width of the page
+# coupled with linewidth=xx argument to chunk will make R code fit 
+# within the width of the page
 hook_output = knit_hooks$get('output')
 knit_hooks$set(output = function(x, options) {
   # this hook is used only when the linewidth option is not NULL
@@ -42,8 +42,8 @@ knit_hooks$set(output = function(x, options) {
   hook_output(x, options)
 })
 
-#cache=F to redo the lengthy analyses for new data, 
-#otherwise set to T for daily runs
+# cache=F to redo the lengthy analyses for new data, 
+# otherwise set to T for daily runs
 cache <- T
 ```
 
@@ -96,7 +96,7 @@ if(!("pacman" %in% installed.packages()[,"Package"])) {
   install.packages("pacman")
 }
 library(pacman)
-#double check all the libraries listed above are listed here too
+# double check all the libraries listed above are listed here too
 p_load("bookdown","readr","tidyverse","rvest","magrittr",
    "stringr","tidycensus","ggplot2","gganimate","ggeffects", 
    "scales", "maps","ggthemes","viridis","ggrepel","sjPlot",
