@@ -201,7 +201,11 @@ Here is a video of a screen capture while I interacted with netlogo. I used the 
 
 ## Public Policy Models
 
-Pending
+A major aspect of public policy models involves scenario planning to facilitate decision making in a manner that considers objectives as well as minimizing unintended consequences. This can be done using qualitative or quantitative methods.  [Here](https://covid19.qventus.com/modeling/hospitals) is a link to one example of a quantitative approach using simulation methods.  You can search for a specific hospital in their data base or enter assumptions, sliders allow you to vary attributes such as the effectiveness of social distancing policies, the percentage of elective surgeries that are cancelled,, number of ventilators available, etc., in order to model the available capacity of various resources such as available hospital beds, available ventilators, and numer of PPE equipped nursing staff.  Think a game like [SimCity](https://www.ea.com/games/simcity).
+
+Another scenario planning tool is through Rush University with the [interactive calculator](http://covid19forecast.rush.edu/) I described in Chapter \@ref(descmodel).  Below the modeling of positive test cases section the user has the ability to vary assumptions such as the percentage admitted to critical care and the lag time in days between onset of symptoms and the hospital visit to forecast number of beds needed (both critical and non-critical care) and the number of PPE supplies needed.
+
+While the interactive tools are useful to gain an intuitive understanding of the role each factor plays, a more systematic approach is used where a program cycles through many levels of each of the factors, examining all the possible combinations (possibly weighting them by their probabilities and uncertainty), to arrive at a distribution of possible outcomes.  These models are useful to run several "what-if" scenarios and understand the overall picture.  There is a balance one needs to strike between making this modeling simple, tractable and interpretable versus growing the number of variables to enhance realism.  The best case is if the model is mature and has been evaluated against other data, such as historical data, to see how well it does.  In the middle of a pandemic we don't have the luxury of performing years of research to evaluate different modeling approaches.
 
 ## Summary
 
