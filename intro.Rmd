@@ -73,3 +73,7 @@ Here are some interesting covid-19 related sites:
 10. [Penn States Epidemics Course](https://www.coursera.org/learn/epidemics)
 
 11. [Societal Experts Action Network (SEAN) COVID-19 Survey Archive](https://covid-19.parc.us.com/client/index.html#/)
+
+12. [University of Washington Covid-19 Projections](https://covid19.healthdata.org/united-states-of-america)
+
+13. [American Hospital Association's List of Models](https://www.aha.org/guidesreports/2020-04-09-compendium-models-predict-spread-covid-19)
