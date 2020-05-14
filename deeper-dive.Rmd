@@ -10,7 +10,7 @@ Pending:  I'll plot the data for Georgia by county 3 weeks before the 24th and 3
 
 This example will illustrate the use of the regression discontinuity (RD) design, though before the causality police get on my case for not clarifying my assumptions I'll point out that I won't be using this to claim I have estimated the causal effect of social distancing.  I'll illustrate the idea of this design, its characteristic plot and  point to papers where the reader can learn about the various approaches to extracting additional information from this type of research design.
 
-The city of Atlanta is in Fulton county, which is the top line.
+The city of Atlanta is in Fulton county, which is the top curve
 
 ```{r warning=F, message=F, echo=longform}
 datacov.US.long <- gather(datacov.US, day, count, `1/22/20`:(names(datacov.US)[ncol(datacov.US)]))
@@ -61,11 +61,24 @@ ggplot(aes(day,count, group=Admin2, color=Admin2)) + geom_line() + ggtitle("Alab
     theme(legend.position="none", plot.margin = margin(0.1, 1, 0.1, 0.1, "cm"))
 ```
 
+While I have a preference for examining incidence plots, the county-level data are too noisy to make incidence plots useful. But, at least, they do highlight the noise unlike the cumulative count data that acts like a smoother to the data patterns in terms of the visual effect on the curves. Here is the incidence plot for Fulton county in Georgia.  The red vertical line marks April 24, 2020, when many restrictions in Georgia were lifted.
 
+```{r warning=F, message=F, echo=longform}
+county.level <- georgia.df %>% subset(Admin2=="Fulton") %>% mutate(daily=c(NA, diff(count)))
+
+ggplot(county.level, aes(x=day,y=daily)) +  geom_bar(stat="identity") +
+    scale_x_date(date_breaks="1 week", date_labels = "%d %b") +
+    labs(y="Daily incremental incidence",
+                                   title="Fulton County, Georgia: Positive US Covid-19 Cases")  +
+    theme(legend.position = "none",
+          strip.text.y = element_text(size=11)) + 
+    geom_vline(xintercept=as.Date("2020/04/24"), color="red")
+
+```
 
 ## Hospital Readmission Data
 
-My colleague Jack Iwashyna who you will learn more about in the concluding chapter, suggested a hypothesis in  mid April 2020.  [Research](https://www.ncbi.nlm.nih.gov/pubmed/28550403) suggests that 40% of  ARDS patients are re-admitted to the hospitial within 1 year of discharge. This estiamte came from a national, multicenter study with 839 ARDS survivors.  Most covid-19 deaths are related to ARDS (more on this in the concluding chapter).   Granted traditional ARDS patients may be different than covid-19-related ARDS patients but let's use this as a plausible estimate of hospital re-admission.  If we will see roughly a 40% chance of hospital readmission, it means that we may see additional hospitalizations in the coming months on top of the already steady stream of new covid-19 hospitalizations. And in the fall, if the predicted "second covid-19 wave" hits that could be compounded by additional hospital readmissions of people recently discharged or currently in the hospital. As the months progress, I'll present analyses examining this hypothesis along with models that will assess second waves.
+My colleague Jack Iwashyna, who you will learn more about in the concluding chapter, suggested a hypothesis in  mid April 2020.  [Research](https://www.ncbi.nlm.nih.gov/pubmed/28550403) suggests that 40% of  ARDS patients are re-admitted to the hospital within 1 year of discharge. This estimate came from a national, multicenter study with 839 ARDS survivors.  Most covid-19 deaths are related to ARDS (more on this in the concluding chapter).   Granted traditional ARDS patients may be different than covid-19-related ARDS patients but let's use this as a plausible estimate of hospital re-admission.  If we will see roughly a 40% chance of hospital readmission, it means that we may see additional hospitalizations in the coming months on top of the already steady stream of new covid-19 hospitalizations. And in the fall, if the predicted "second covid-19 wave" hits that could be compounded by additional hospital readmissions of people recently discharged or currently in the hospital. As the months progress, I'll present analyses examining this hypothesis along with models that will assess second waves.
 
 The good news is that the study found that patient-reported physical activity and quality of life status is associated with fewer re-admissions.  So if we can get these  covid-19-related ARDS survivors walking and exercising we may have some hope. Unfortunately, many ARDS survivors have trouble merely standing up from a chair let alone going for a walk around the block wearing a mask.
 
@@ -81,7 +94,7 @@ ggplot(subset(covid.tracking, date > as.Date("2020/03/20")), aes(date, hospitali
 
 The SIR model can be explored in more detail and its implications can be examined. Here I'll focus on the simple SIR model without any of the  bells-and-whistles I discussed in Chapter \@ref(process).  The three primary equations of the SIR model are not easy to work with directly and they require numerical methods to approximate.
 
-I'll pursue one approach that avoids numerical methods by making some assumptions that will  simplying these expressions.  As you will see, this simplification provides a reasonable fit to the data but their primary importance is in providing intuition into how to interpret these equations.
+I'll pursue one approach that avoids numerical methods by making some assumptions that will  simplifying these expressions.  As you will see, this simplification provides a reasonable fit to the data but their primary importance is in providing intuition into how to interpret these equations.
 
 Following Keeling and Rohani (2008), 
 if we assume that the $R_0$ is relatively small and that people interact randomly, then the incidence curve from the SIR model can be approximated with this form
@@ -93,7 +106,7 @@ where sech is the hyperbolic secant, its argument is a linear transformation of 
 To arrive at this expression one could work with the SIR equations presented in Chapter \@ref(process) directly,  but there is a simple way to get this form by assuming a Poisson distribution on the counts and showing that the probability that a randomly selected individual is not infected when the epidemic has an $R_0$ is $e^{\frac{-R_0}{N}}$ (i.e., a Poisson with k=0 and a rate of $R_0/N$); see Keeling and Rohani, 2008, Ch 2.
 
 
-Let's perform a direct fit to the daily death count, since death is a more appriate outcome for the SIR model.  For this section I'll use the covid.tracking data (see Chapter \@ref(readintro)). We haven't worked much with that data yet so I'll also need to do some data cleaning and formating to be consistent with the other analyses conducted in this book.
+Let's perform a direct fit to the daily death count, since death is a more appropriate outcome for the SIR model.  For this section I'll use the covid.tracking data (see Chapter \@ref(readintro)). We haven't worked much with that data yet so I'll also need to do some data cleaning and formatting to be consistent with the other analyses conducted in this book.
 
 ```{r message=F, warning=F, results=ifelse(longform, "markup", "hide"), echo=longform}
 # use this package just for sech 
@@ -116,9 +129,9 @@ covid.tracking.new$deathIncrease <- ifelse(is.na(covid.tracking.new$deathIncreas
 
 ```{r messages=F, warnings=F, results="hide", echo=longform}
 # something wrong with day 57 so need to double check this; omit for now
-covid.tracking.new <- subset(covid.tracking.new, day.numeric != 57)
+#covid.tracking.new <- subset(covid.tracking.new, day.numeric != 57)
 out <- nlme(deathIncrease ~ richfu.sir(day.numeric, a, b0,b1), fixed = a+b0+b1~1,
-            random =  a+b1~1, data=covid.tracking.new,start=c(a=47, b0=-2.5,b1=.1), verbose=T, groups=~state, control=nlmeControl(msMaxIter=500,opt="nlminb",pnlsTol=.001,msVerbose=T,minScale=.001, maxIter=500) )
+            random =  a+b1~1, data=covid.tracking.new,start=c(a=47.2, b0=-2.3,b1=.02), verbose=T, groups=~state, control=nlmeControl(msMaxIter=1000,opt="nlminb",pnlsTol=.001,msVerbose=T,minScale=.001, maxIter=1000) )
 ```
 
 ```{r eval=F, echo=F}
@@ -145,36 +158,72 @@ out.nlme.deaths <- out
 # add predicted values to the data frame
 covid.tracking.new$predicted <- predict(out, level=1)
 
-ggplot( subset(covid.tracking.new, state=="NY"), aes(x=day.numeric,y=deathIncrease)) +  #geom_bar(stat="identity") +
+ggplot( subset(covid.tracking.new, state=="NY"), aes(x=day.numeric,y=deathIncrease)) + 
   #  scale_x_date(date_breaks="1 week", date_labels = "%d %b") +
   geom_line(aes(day.numeric, predicted), color="red") + geom_point() +
     labs(y="Daily incidence ",
-                                   title="Daily Covid-19 Deaths in  New York")  +
+                                   title="Daily Covid-19 Deaths in New York")  +
     theme(legend.position = "none",
-          strip.text.y = element_text(size=11))
+          strip.text.y = element_text(size=11)) 
 ```
 
-The data for death is quite noisy, for example, here are plots for both New Jersy and Michigan.
+The data for death is quite noisy, for example, here are plots for both New Jersey and Michigan.
 
 ```{r  messages=F, warnings=F, echo=longform}
-p1 <- ggplot( subset(covid.tracking.new, state=="NJ"), aes(x=day.numeric,y=deathIncrease)) +  #geom_bar(stat="identity") +
+p1 <- ggplot( subset(covid.tracking.new, state=="NJ"), aes(x=day.numeric,y=deathIncrease)) +
   #  scale_x_date(date_breaks="1 week", date_labels = "%d %b") +
   geom_line(aes(day.numeric, predicted), color="red") + geom_point() +
     labs(y="Daily incidence ",
-                                   title="Daily Covid-19 Deaths in  New Jersey")  +
+                                   title="Daily Covid-19 Deaths in New Jersey")  +
     theme(legend.position = "none",
-          strip.text.y = element_text(size=11))
+          strip.text.y = element_text(size=11)) 
 
-p2 <- ggplot( subset(covid.tracking.new, state=="MI"), aes(x=day.numeric,y=deathIncrease)) +  #geom_bar(stat="identity") +
+p2 <- ggplot( subset(covid.tracking.new, state=="MI"), aes(x=day.numeric,y=deathIncrease)) +  
   #  scale_x_date(date_breaks="1 week", date_labels = "%d %b") +
   geom_line(aes(day.numeric, predicted), color="red") + geom_point() +
     labs(y="Daily incidence ",
-                                   title="Daily Covid-19 Deaths in  Michigan")  +
+                                   title="Daily Covid-19 Deaths in Michigan")  +
     theme(legend.position = "none",
           strip.text.y = element_text(size=11))
 
 multiplot(p1,p2,cols=1)
 ```
+
+
+
+This large daily variability is troubling.   One possibility is the way some states report deaths.  In Michigan, if a death is determined to be covid-related it will be added to the day's count even if the actual death occurred days earlier. To illustrate, on Saturday May 9, 2020, Michigan reported 133 deaths but 67 of those "deaths occurred in recent days" and determined to be covid-related after the fact were added to the Saturday total [see](https://www.mlive.com/public-interest/2020/05/michigans-new-coronavirus-cases-continue-daily-downward-trend-recoveries-exceed-22000.html). New York City, on the other hand, counts covid deaths when a positive test result and "probable" if the death certificate lists covid-19 as the cause of death (even if not verified with a known positive lab test). You may also be wondering about the single outlier for New York on May 6, 2020. That was due to how the state reconciled deaths from nursing home ([see](https://www.nbcnewyork.com/news/coronavirus/subway-shutdown-begins-infection-rates-spike-outside-new-york-amid-devastating-toll-at-home/2404295/)). Determining the number of deaths is not an easy task as this [New York Times article](https://www.nytimes.com/interactive/2020/05/05/us/coronavirus-death-toll-us.html) shows.  This also points out how we must examine data very carefully; our models and inferences will suffer greatly if we are too careless.
+
+To be fair, these three plots (New York, New Jersey and Michigan) have different scales for the Y-axes, which may exaggerate the variability.  I'll redo the three plots with the same scale on the Y axis to check that possibility.
+
+```{r  messages=F, warnings=F, echo=longform}
+p1 <- ggplot( subset(covid.tracking.new, state=="NY"), aes(x=day.numeric,y=deathIncrease)) + 
+  #  scale_x_date(date_breaks="1 week", date_labels = "%d %b") +
+  geom_line(aes(day.numeric, predicted), color="red") + geom_point() +
+    labs(y="Daily incidence ",
+                                   title="Daily Covid-19 Deaths in New York")  +
+    theme(legend.position = "none",
+          strip.text.y = element_text(size=11))  + ylim(0,1000)
+
+p2 <- ggplot( subset(covid.tracking.new, state=="NJ"), aes(x=day.numeric,y=deathIncrease)) +  
+  #  scale_x_date(date_breaks="1 week", date_labels = "%d %b") +
+  geom_line(aes(day.numeric, predicted), color="red") + geom_point() +
+    labs(y="Daily incidence ",
+                                   title="Daily Covid-19 Deaths in New Jersey")  +
+    theme(legend.position = "none",
+          strip.text.y = element_text(size=11)) + ylim(0,1000)
+
+p3 <- ggplot( subset(covid.tracking.new, state=="MI"), aes(x=day.numeric,y=deathIncrease)) + 
+  #  scale_x_date(date_breaks="1 week", date_labels = "%d %b") +
+  geom_line(aes(day.numeric, predicted), color="red") + geom_point() +
+    labs(y="Daily incidence ",
+                                   title="Daily Covid-19 Deaths in Michigan")  +
+    theme(legend.position = "none",
+          strip.text.y = element_text(size=11)) + ylim(0,1000)
+
+multiplot(p1,p2,p3,cols=1)
+```
+
+
 
 But a more interesting result emerges by examining this approximate functional form.  We can integrate this approximation over t to see what form emerges  for the cumulative death count. In this context, integration is analogous to summing the daily counts to create a cumulative count but we do this symbolically on the function rather than the data in order to learn the form of the function on the cumulative count. 
 
@@ -183,7 +232,7 @@ The general form is
 $$
 \bigg[\frac{a}{\kappa_1 (1+e^{2(\kappa_0 + \kappa_1 t)} )}\bigg] \;\;\; \bigg[(e^{2(\kappa_0 + \kappa_1 t)} - 1)\bigg] + C
 $$
-The left square bracket term has the form of the logistic growth function and the right square bracket term has the form of an exponential growth function. The term $C$ is the integration constant that we will set so that the cumulative sum starts at 0.  Thus, this simplification of the SIR model yields a product of the two functions we explored in Chapter \@ref(descmodel).  It isn't one or the other as we explored earlier, but this model suggests the curves approximately follow a combination of both forms. This is an example of the advantage of doing some mathematical modeling to be able to examine the implications of your model.  In the earlier chapter we considered exponential and logistic growth models without careful attention to why we chose those functions.  This type of mathematical modeling allows you to justify the functional forms you want to test based on implications from your hypotheses. Here I'm referring to the change equations of the SIR model as a set of hypotheses that govern how change occurs among the susceptibles, the infecteds and recovered.  Those equations (with some additional assumptions and approximations) imply this product of both forms, which we can test and exmaine with data.  Not counting the integration constant this approximation also has 3 parameters as we had in both the exponential form and the logistic growth form in Chapter \@ref(descmodel).
+The left square bracket term has the form of the logistic growth function and the right square bracket term has the form of an exponential growth function. The term $C$ is the integration constant that we will set so that the cumulative sum starts at 0.  Thus, this simplification of the SIR model yields a product of the two functions we explored in Chapter \@ref(descmodel).  It isn't one or the other as we explored earlier, but this model suggests the curves approximately follow a combination of both forms. This is an example of the advantage of doing some mathematical modeling to be able to examine the implications of your model.  In the earlier chapter we considered exponential and logistic growth models without careful attention to why we chose those functions.  This type of mathematical modeling allows you to justify the functional forms you want to test based on implications from your hypotheses. Here I'm referring to the change equations of the SIR model as a set of hypotheses that govern how change occurs among the susceptibles, the infecteds and recovered.  Those equations (with some additional assumptions and approximations) imply this product of both forms, which we can test and examine with data.  Not counting the integration constant this approximation also has 3 parameters as we had in both the exponential form and the logistic growth form in Chapter \@ref(descmodel).
 
 ```{r warning=F, message=F, echo=longform}
 # pull out the coefficients from the nlme 
@@ -214,9 +263,9 @@ ggplot(subset(covid.tracking.new, state=="NY"), aes(x=day.numeric,y=death)) +
           strip.text.y = element_text(size=11))
 ```
 
-The fit is ok given the simplying assumptions that were made to derive this form, such as assuming that $R_0$ is small, independence in transmission and some of the approximations that were used to derive this form (see Keeling & Rohani, 2008). We can reject a Poisson outright because the $R_0$ value likely changed over time with different levels of social distancing.
+The fit is ok given the simplifying assumptions that were made to derive this form, such as assuming that $R_0$ is small, independence in transmission and some of the approximations that were used to derive this form (see Keeling & Rohani, 2008). We can reject a Poisson outright because the $R_0$ value likely changed over time with different levels of social distancing.
 
-It is helpful to estimate the logistic function directly on the cumulative death count  and superimpose that curve (blue) on the same graph.  We see that the pure logistic provides a better fit to these data. This shouldn't be too surprising since I fit the logistic form directly to the data, whereas the red curve corresponding to the approximate SIR model takes into account other processes, has additional simplifying assumptions and approximations. Nonetheless, we can use the data and the fit to the models, to decide if we want to reject the SIR model because that model implies a functional form that fits worse than a simpler logistic growth model, use this finding to decide whether we should relax those simplying assumptions and derive a new form, or use this finding to justify using the SIR model because the fit to the data is "close enough." Of course, close enough depends on different applications. If one wants to describe a bunch of points with a simple curve or one wants to use the model to make forecasts.  In the case of forecasting to inform public policy, then "close enough" better be pretty darn close because many people's lives will be affected.  Often, the disagreements between modelers about their predictions boils down to details of the assumptions each modeler makes and the kinds of simplifications they use.
+It is helpful to estimate the logistic function directly on the cumulative death count  and superimpose that curve (blue) on the same graph.  We see that the pure logistic provides a better fit to these data. This shouldn't be too surprising since I fit the logistic form directly to the data, whereas the red curve corresponding to the approximate SIR model takes into account other processes, has additional simplifying assumptions and approximations. Nonetheless, we can use the data and the fit to the models, to decide if we want to reject the SIR model because that model implies a functional form that fits worse than a simpler logistic growth model, use this finding to decide whether we should relax those simplifying assumptions and derive a new form, or use this finding to justify using the SIR model because the fit to the data is "close enough." Of course, close enough depends on different applications. If one wants to describe a bunch of points with a simple curve or one wants to use the model to make forecasts.  In the case of forecasting to inform public policy, then "close enough" better be pretty darn close because many people's lives will be affected.  Often, the disagreements between modelers about their predictions boils down to details of the assumptions each modeler makes and the kinds of simplifications they use.
 
 ```{r warning=F, message=F, echo=longform, eval=F}
 # logistic on death; use same function as used for logistic growth on positive count data
@@ -235,7 +284,27 @@ ggplot(subset(covid.tracking.new, state=="NY"), aes(x=day.numeric,y=death)) +
           strip.text.y = element_text(size=11))
 ```
 
-```{r eval=F, ech0=F}
+```{r eval=F, echo=F}
+# trying asymetric version, can't find good start values
+# not working
+richfu.sir3 <- function(d,a,b01,b11, b02,b12){
+a*4/(exp(b11*d + b01) + exp(1*(b12*d + b02)))^2
+}
+
+out.nls <- nls(deathIncrease ~ richfu.sir3(day.numeric, a, b01,b11,b02,b12), data=na.omit(subset(covid.tracking.new[,c("state","deathIncrease","day.numeric")], state=="NY")), start=list(a=720, b01=-2.29,b11=.06, b02=3, b12=.06))
+
+out.nls <- nls(deathIncrease ~ richfu.sir3(day.numeric, a, b01,b11,b01,b11), data=na.omit(subset(covid.tracking.new[,c("state","deathIncrease","day.numeric")], state=="NY")), start=list(a=800, b01=-2,b11=.08))
+
+ with(temp, plot(day.numeric, richfu.sir3(day.numeric,1200, -2, .08, -2.75,.09)))
+ with(temp, points(day.numeric, deathIncrease,col="red"))
+
+out <- nlme(deathIncrease ~ richfu.sir3(day.numeric, a, b0,b1), fixed = a+b0+b1~1,
+            random =  a+b1~1, data=covid.tracking.new,start=c(a=43, b0=-2.,b1=.04), verbose=T, groups=~state, control=nlmeControl(msMaxIter=500,opt="nlminb",pnlsTol=.001,msVerbose=T,minScale=.001, maxIter=500) )
+
+```
+
+
+```{r eval=F, echo=F}
 #testing weibull
 covid.tracking.new <- groupedData(deathIncrease ~ day.numeric | state, data=covid.tracking.new)
 initialvals <- getInitial(death ~ SSweibull(day.numeric, Asym, Drop, lrc, pwr), data=covid.tracking.new)
