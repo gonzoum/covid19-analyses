@@ -34,7 +34,7 @@ Another student reported success using SSH instead of https. This involved setti
 
 I wish I had a simpler set of instructions for Mac users. I'm a Mac user too and I've never had these problems so I'm going mostly with what I'm hearing from students.
 
-## Once Installed Run these Commands (both PC and Mac)
+## Git Commands (both PC and Mac)
 
 Some things to check include running git config -l to see your local configuration. These commands are typed in the "terminal" section of RStudio (not the R console where you type R commands). You could also type them into the terminal window on your Mac or PC.
 
