@@ -109,7 +109,7 @@ ggplot(datacov.long) +  borders("world", colour = "gray90", fill = "gray85") +
   transition_time(day) + ease_aes('linear')
 ```
 
-While counts are useful (see the [Introduction](#intro) for a discussion of London's cholera epidemic) they have their limitations. The help address issues with different countries having different populations, it is common to normalize counts by the population and report numbers per capita (e.g., 62 cases out of 100,000).  One would have to track down the populations of each country, download the relevant population data using methods described in Chapter \@ref(readdata) and merge that information into this animation.  Later in this chapter, I develop the analogous animation for the US and I already downloaded the state populations so will illustrate the difference in this animation in counts versus per capita   However, raw counts still have a role in helping to inform the impact of covid-19.  If a city has 1500 available hospital beds (and presumably the staff and supplies to provide care for  those  beds), but there are 2000 people in need of hospitalization, then there is a public health issue and the 'per capita" concern becomes moot.
+While counts are useful (see the [Introduction](#intro) for a discussion of London's cholera epidemic) they have their limitations. The help address issues with different countries having different populations, it is common to normalize counts by the population and report numbers per capita (e.g., 62 cases out of 100,000).  One would have to track down the populations of each country, download the relevant population data using methods described in Chapter \@ref(readintro) and merge that information into this animation.  Later in this chapter, I develop the analogous animation for the US and I already downloaded the state populations so will illustrate the difference in this animation in counts versus per capita   However, raw counts still have a role in helping to inform the impact of covid-19.  If a city has 1500 available hospital beds (and presumably the staff and supplies to provide care for  those  beds), but there are 2000 people in need of hospitalization, then there is a public health issue and the 'per capita" concern becomes moot.
 
 For more information on working with maps see [Gimond](https://mgimond.github.io/Spatial/index.html).
 
@@ -239,6 +239,7 @@ p2 <- ggplot(allstates.long, aes(x=day,weight=count))  + geom_bar(na.rm=T,fill="
 # the plot multiplot is defined in chapter preliminaries
 multiplot(p1,p2,cols=1)
 ```
+
 
 ## US State-Level Plots
 
@@ -390,7 +391,7 @@ ggplot(allstates.long) +  borders("usa", colour = "gray90", fill = "gray85") +
   transition_time(day) + ease_aes('linear')
 ```
 
-I don't like these plots because they use latitude and longitude to place a point on the graph to represent the entire state. It may be better to do this plot so that the entire area of the state is colored in rather than a single point.  Here is one example using the count of positive tests per state.  
+I don't like these plots because they use latitude and longitude to place a point on the graph to represent the entire state. It may be better to do this plot so that the entire area of the state is colored in according to the positive count rather than representing count as a single point.  Here is one example using the count of positive tests per state.  
 ```{asis echo=longform}
 For this plot I used the fiftystater R package, which not only allows the shape of the state to be filled in but also includes an inset with Alaska and Hawaii.
 ```
@@ -487,6 +488,8 @@ Download the county-level population data from the US census following the examp
 Animate the county-level plot using the previous US animations as a template.
 ```
  
+The county-level plot suggests some hypotheses to test. For example, in May there has been an increase in the number of protests over state social distancing restrictions and business closures.  One could examine associations between the number of protests and properties of the states such as the political party affiliation of the governor.  But with respect to county-level data, it appears in skimming the map of the US that some states have quite a bit of variability across counties in the positive test counts, whereas other states have relatively little variability with most counties having relatively high or relatively low positive test counts.  One hypothesis to check is whether protests are more common in states with greater variability across counties (that is, some counties not experiencing as many cases as other counties in the state).
+ 
 ## Incidence Plots {#incidenceplots}
 
 With time series data it is common to work with what are called first order differences. Rather than examine cumulative counts you look at day to day differences in the cumulative counts, or equivalently, the number of new cases each day.  This is what give rise to the "curves" when people talk about "flattening the curve". Think of this as daily counts and we merely compute histograms.  This section was adapted from [Tim Chruches Blog](https://timchurches.github.io/blog/posts/2020-02-18-analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1/).
@@ -513,17 +516,27 @@ ggplot( day.sums, aes(x=day,y=daily)) +  geom_bar(stat="identity") +
           strip.text.y = element_text(size=11))
 ```
 
-We can add  interactive capabilities to the gggraph by using the ggigraph package.  
+We can add  interactive capabilities to the ggplot by using the ggigraph package.  
 ```{asis echo=longform}
 The package needs to be downloaded through github; the path is commented out in the R code chunk.
 ```
-The html version of this book allows popups when the mouse hovers over the bars. You will notice that the number of positive deaths has a weekly pattern emerging on Monday April 5, 2020. There is a trough that occurs weekly on Mondays through at least May 4.  I will monitor on subsequent weeks.
+The html version of this book allows popups when the mouse hovers over the bars. You will notice that the number of positive deaths has a weekly pattern emerging on Monday April 13, 2020. There is a trough that occurs weekly on Mondays through at least May 4.  I will monitor on subsequent weeks.
 
 ```{r warning=F, message=F, eval=knitr::is_html_output(), echo=longform&knitr::is_html_output()}
 # devtools::install_github('davidgohel/ggiraph')
 library(ggiraph)
 
-p <- ggplot( day.sums, aes(x=day,y=daily, tooltip = day,
+# code to format a table to display on mouse hover
+str_model <- paste0("<tr><td>date</td><td>%s</td></tr>", 
+                    "<tr><td>day</td><td>%s</td></tr>", 
+                   "<tr><td>count</td><td>%s</td></tr>")
+day.sums$tooltip <- sprintf(str_model, day.sums$day, 
+                            weekdays(day.sums$day),
+                            day.sums$daily)
+day.sums$tooltip <- paste0( "<table>", 
+                            day.sums$tooltip, "</table>" )
+
+p <- ggplot( day.sums, aes(x=day,y=daily, tooltip = tooltip,
         data_id = day)) +  geom_bar_interactive(stat="identity") +
     scale_x_date(date_breaks="1 week", date_labels = "%d %b") +
     labs(y="Daily incremental incidence",
@@ -546,13 +559,14 @@ covid.tracking.date <- covid.tracking.date %>% mutate(sumdaily = c(date.sum[1], 
 ggplot( covid.tracking.date, aes(x=date,y=sumdaily)) +  geom_bar(stat="identity") +
     scale_x_date(date_breaks="1 week", date_labels = "%d %b") +
     labs(y="Daily incremental incidence",
-                                   title="Total US Tests (Pos, Neg and Pending")  +
+                                   title="Total US Tests (Pos, Neg and Pending)")  +
     theme(legend.position = "none",
           strip.text.y = element_text(size=11))
 ```
 
+Overall, we see that the number of daily tests has been increasing over recent weeks. This adds an important caveat moving forward as we interpret positive tests results in the remainder of this book.  We may see an increase in positive tests not because virus contamination is increasing but because there are more tests being conducted.  Of course, if the number of positive cases decreases in spite of the number of tests increasing, this suggests the virus rate is decreasing. Such a conclusion assumes the characteristics of the tests remain the same. If over time, the quality of the tests  changes in terms of false positives and false negatives, that would add an additional layer of complexity in interpreting such testing data.
 
-## Use of PCA to check for outliers
+## Using PCA to check for outliers
 
 Principal components analysis (PCA) has many uses.  In interesting use of PCA in time series data is that it can be used to detect outliers in a complicated data set. Let's take the 50 states and the time series from 3/09/20 to present, to create a 50 by day data matrix of positive counts.  Then compute a PCA of the correlation matrix between states. This correlation matrix is 50 x 50 and represents how similar each state's cumulative trajectory is to another state's cumulative trajectory for all possible pairs of states.  Plot the factor scores of the 50 states on the first two PCs.  The majority of the states will cluster together. The outlier states, those with very different trajectories, appear far away from the primary cluster suggesting they have a very different trajectory. The three candidate outliers are the 4 states with early covid-19 cases:  NY, WA, NJ and CA. Recall that the numbers in front of the state abbreviation correspond to the state population in millions.  This type of PCA is commonly done in biological modeling to check for outliers, sometimes not on the raw data like I did here, but on the set of parameters that are estimated for each unit. For example, if you run regressions for each state, gather the betas from those regressions as data (such as 8 betas per state if you had 8 state-level predictors),  compute a correlation matrix across states, then run a PCA on that correlation matrix to detect states with an outlier pattern across their betas relative to other states. 
 
