@@ -85,7 +85,7 @@ datacov <-
 
 We read in the two files with world and US cumulative data.
 
-```{r warning=F, message=F, linewidth=linewidth, tidy=F}
+```{r warning=F, message=F, tidy=F}
 #data for World and US county/states are in separate files
 
 #path to folder with the data git repository
@@ -115,7 +115,7 @@ head(colnames(datacov.US), 14)
 tail(colnames(datacov.US))
 ```
 
-```{r echo=longform, linewidth=linewidth, tidy=F}
+```{r echo=longform, tidy=F}
 #fix variable names in US to match World file
 names(datacov.US)[7] <- names(datacov.World)[1]
 names(datacov.US)[8] <- names(datacov.World)[2]
@@ -287,7 +287,7 @@ table <- wikipage %>% html_nodes("table") %>%
  html_table(fill=TRUE, header=T)
 
 # total tests and total postive results
- kable(unlist(list(table[[1]],table[[2]],table[[3]])))
+kable(unlist(list(table[[1]],table[[2]],table[[3]])), "pandoc")
 ```
 
 There is another site I found that reports positive and negative results by state. This is the [COVID tracking project](https://covidtracking.com).  I don't know how reputable this source is but I'll keep an eye on it. 
@@ -350,8 +350,8 @@ A few research groups have started studying the public health implications of va
 # below
 #broken 5/05/20
 #distancingpolicy <- read_csv(url("https://raw.githubusercontent.com/COVID19StatePolicy/SocialDistancing/master/data/USstatesCov19distancingpolicy.csv"))
-#05/06/20
-distancingpolicy <- read_csv(url("https://raw.githubusercontent.com/COVID19StatePolicy/SocialDistancing/master/data/USstatesCov19distancingpolicyBETA.csv"))
+#05/06/20, 5/18/20 changed back to not having BETA
+distancingpolicy <- read_csv(url("https://raw.githubusercontent.com/COVID19StatePolicy/SocialDistancing/master/data/USstatesCov19distancingpolicy.csv"))
 
 head(distancingpolicy)
 ```
@@ -365,7 +365,7 @@ distancingpolicy %>% subset(StateName=="Michigan") %>% dplyr::select(DateIssued,
 
 ### State-level poverty percentage
 
-The Department of Agriculture lists percentage of state residents living in poverty. I downloaded the data and saved to a spreadsheet. It lists both percentage of all residents and percent of children in poverty.
+The Department of Agriculture lists percentage of state residents living in poverty. I downloaded the data and saved to a local spreadsheet. It lists both percentage of all residents and percent of children in poverty.
 
 
 ```{r echo=longform}
@@ -374,6 +374,39 @@ statepoverty <- read_excel("state.poverty.xlsx")
 # delete DC and row with "National"
 statepoverty <- statepoverty[!statepoverty$state %in% c("District of Columbia", "National"),]
 head(statepoverty)
+```
+
+### ADL
+
+University of Wisconsin's [Neighborhood Atlas](https://www.neighborhoodatlas.medicine.wisc.edu/) area deprivation index. This index is developed at the census block level and assesses income, education, employment, and housing quality.  I manually downloaded these data and stored them locally so use the usual R command read.csv() to read this file.  I aggregated over block by computing medians for each county in order to connect with other data I'm using here at the state and county levels.  The ADI website suggests that the block-level "is considered the closest approximation to a `neighborhood'".
+
+```{r echo=longform}
+neighborhood.data <- read.csv("../COVID-19/adi-download/US_blockgroup_15.txt", colClasses="character")
+
+# convert ranks to numeric
+neighborhood.data$adi_natrank <- as.numeric(neighborhood.data$adi_natrank)
+neighborhood.data$adi_staternk <- as.numeric(neighborhood.data$adi_staternk)
+
+# pull out state and county fips codes
+neighborhood.data$state <- substr(neighborhood.data$fips,1,2)
+neighborhood.data$county <- substr(neighborhood.data$fips,3,5)
+neighborhood.data$state.county <- substr(neighborhood.data$fips,1,5)
+
+# drop Puerto Rico
+neighborhood.data <- neighborhood.data %>% subset(state != "72")
+
+# compute medians of percentages by state within county; 
+# slice selects one row per state.county
+neighborhood.data.median <- neighborhood.data %>% group_by(state.county) %>% 
+  mutate(adi_nat_median = median(adi_natrank, na.rm=T), adi_st_median = median(adi_staternk,na.rm=T)) %>% 
+  slice(which.min(adi_nat_median))
+
+
+# match state names and drop DC
+neighborhood.data.median<- left_join(neighborhood.data.median, fips_codes, by=c("state"="state_code", "county"="county_code")) %>% 
+  subset(state_name != "District of Columbia")
+
+head(neighborhood.data.median)
 ```
 
 ## Other data sources
