@@ -101,7 +101,7 @@ It is useful to consider what is called a phase plot. There are several forms of
 
 Here is the characteristic plot of a standard change process following an exponential form.  I'll use our best fitting exponential function across the the 50 states that we computed in the previous chapter.  The numbers in the plot refer to the day variable and each point is (count(t), count(t+1)) meaning the count for time t and the count for time t+1. 
 
-```{r echo=longform}
+```{r}
 exp.pred.ts <- ts(diff(nydf.exponential$prediction))
 plot(exp.pred.ts, stats::lag(exp.pred.ts, 1), cex = .8, col = "blue",
      main = "Phase plot of New York Positive Counts for the Exponential Model",
@@ -111,7 +111,7 @@ abline(0,1)
 
 Sometimes this plot is produced in the form of a cobweb by including the step function movements of this trajectory. It looks like a step function because the current output count(t+1) becomes the next time's input. So the trajectory moves to the left and up at each time step.  Here is the same figure redrawn with the step function in red.
 
-```{r echo=longform}
+```{r}
 exp.pred.ts <- ts(diff(nydf.exponential$prediction))
 plot(exp.pred.ts, stats::lag(exp.pred.ts, 1), cex = .8, col = "blue", 
      main = "Phase plot of New York Positive Counts for the Exponential Model",
@@ -123,7 +123,7 @@ This plot illustrates the key property of exponential growth.  Movement in phase
 
 We can also examine the analogous phase plot for the logistic growth model that we estimated on the 50 states in the previous chapter. Recall that for the logistic growth model we used actual the count rather than the percentage of the state population as we did for the exponential function, so I'll maintain that here.  This is a busy plot but take the two pieces separately.  The blue trajectory numbered 1 to maximum t is the path the logistic growth model follows in this phase plot.  Note that the blue trajectory lookis similar to an exponential growth model up to about the  22nd time step or so, and then begins to move closer to the identity line and eventually changes direction to the last set of time steps is moving back to starting point.  This is the characteristic pattern of the logistic growth model. The red step function is there to remind us that the movement follows a step function because we have discrete time. 
 
-```{r logistic.pred.phase.plot, echo=longform}
+```{r logistic.pred.phase.plot}
 logistic.pred.ts <- ts(diff(nydf.logistic$prediction))
 plot(logistic.pred.ts, stats::lag(logistic.pred.ts, 1), cex = .8, col = "blue",
      main = "Phase plot of New York Positive Counts for the Logistic Model",
@@ -134,7 +134,7 @@ lines(c(logistic.pred.ts), c(stats::lag(logistic.pred.ts, 1)),col="red",type="S"
 
 Now that we have a clear understanding of the phase plots the exponential and logistic growth models produce we can examine the phase plot of the actual data.
 
-```{r data.phase.plot, echo=longform}
+```{r data.phase.plot}
 data <- data.frame(days= actualny$x[-1], counts= actualny$y[-1])
 time.series.day.counts <- ts(diff(data$counts))
 plot(time.series.day.counts, stats::lag(time.series.day.counts, 1), cex = .8, col = "blue",
@@ -205,7 +205,7 @@ A major aspect of public policy models involves scenario planning to facilitate 
 
 Another scenario planning tool is through Rush University with the [interactive calculator](http://covid19forecast.rush.edu/) I described in Chapter \@ref(descmodel).  Below the modeling of positive test cases section the user has the ability to vary assumptions such as the percentage admitted to critical care and the lag time in days between onset of symptoms and the hospital visit to forecast number of beds needed (both critical and non-critical care) and the number of PPE supplies needed.
 
-While the interactive tools are useful to gain an intuitive understanding of the role each factor plays, a more systematic approach is used where a program cycles through many levels of each of the factors, examining all the possible combinations (possibly weighting them by their probabilities and uncertainty), to arrive at a distribution of possible outcomes.  These models are useful to run several "what-if" scenarios and understand the overall picture.  There is a balance one needs to strike between making this modeling simple, tractable and interpretable versus growing the number of variables to enhance realism.  The best case is if the model is mature and has been evaluated against other data, such as historical data, to see how well it does.  In the middle of a pandemic we don't have the luxury of performing years of research to evaluate different modeling approaches.
+While the interactive tools are useful to gain an intuitive understanding of the role each factor plays, a more systematic approach is used where a program cycles through many levels of each of the factors, examining all the possible combinations (possibly weighting them by their probabilities and uncertainty), to arrive at a distribution of possible outcomes.  These models are useful to run several "what-if" scenarios and understand the overall picture.  There is a balance one needs to strike between making this modeling simple, tractable and interpretable versus growing the number of variables to enhance realism.  The best case is if the model is mature and has been evaluated against other data, such as historical data, to see how well it does.  In the middle of a pandemic we don't have the luxury of performing years of research to evaluate different modeling approaches. An example of this type of modeling is being conducted by a group based at Northeastern University using the [GLEAM model (see fig 2)](https://uploads-ssl.webflow.com/58e6558acc00ee8e4536c1f5/5e8bab44f5baae4c1c2a75d2_GLEAM_web.pdf).
 
 ## Summary
 
