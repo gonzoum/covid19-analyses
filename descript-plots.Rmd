@@ -528,7 +528,7 @@ We can add  interactive capabilities to the ggplot by using the ggigraph package
 ```{asis echo=longform}
 The package needs to be downloaded through github; the path is commented out in the R code chunk.
 ```
-The html version of this book allows popups when the mouse hovers over the bars. You will notice that the number of positive deaths has a weekly pattern emerging on Monday April 13, 2020. There is a trough that occurs weekly on Mondays through at least May 4.  I will monitor on subsequent weeks.  This is an important part of the variability these data exhibit, which is lost if we "smooth" the data by computing moving averages as shown in the blue curve of the previous graph.
+The html version of this book allows popups when the mouse hovers over the bars. You will notice that the number of positive deaths has a weekly pattern emerging on Monday April 13, 2020. There is a trough that occurs weekly on Mondays through at least May 11.  I will monitor on subsequent weeks.  This is an important part of the variability these data exhibit, which is lost if we "smooth" the data by computing moving averages as shown in the blue curve of the previous graph.
 
 ```{r eval=knitr::is_html_output(), echo=longform&knitr::is_html_output()}
 # devtools::install_github('davidgohel/ggiraph')

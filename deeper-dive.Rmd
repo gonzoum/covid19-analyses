@@ -61,7 +61,7 @@ ggplot(aes(day,count, group=Admin2, color=Admin2)) + geom_line() + ggtitle("Alab
     theme(legend.position="none", plot.margin = margin(0.1, 1, 0.1, 0.1, "cm"))
 ```
 
-While I have a preference for examining incidence plots, the county-level data are too noisy to make incidence plots useful. But, at least, they do highlight the noise unlike the cumulative count data that acts like a visual smoother to the data patterns in terms of the visual effect on the curves. Here is the incidence plot for Fulton county in Georgia.  The red vertical line marks April 24, 2020, when many restrictions in Georgia were lifted.
+While I have a preference for examining incidence plots, the county-level data are too noisy to make incidence plots useful. But, at least, they do highlight the noise unlike the cumulative count data that acts like a visual smoother to the data patterns in terms of the visual effect on the curves. Here is the incidence plot for Fulton county in Georgia.  The red vertical line marks April 24, 2020, when many restrictions in Georgia were lifted. For comparison, I also show Montgomery county in Alabama. We see that the trend remains the same for Fulton county George post restrictions but the comparison county in Alabama exhibits a higher rate of Covid-19 cases. This is opposite to hypothesis.
 
 ```{r}
 county.level <- georgia.df %>% subset(Admin2=="Fulton" & day > as.Date("2020/03/11")) %>% mutate(daily=c(NA, diff(count)))
@@ -74,6 +74,16 @@ ggplot(county.level, aes(x=day,y=daily)) +  geom_bar(stat="identity") +
           strip.text.y = element_text(size=11)) + 
     geom_vline(xintercept=as.Date("2020/04/24"), color="red")
 
+county.level <- alabama.df %>% subset(Admin2=="Montgomery" & day > as.Date("2020/03/11")) %>% mutate(daily=c(NA, diff(count)))
+
+ggplot(county.level, aes(x=day,y=daily)) +  geom_bar(stat="identity") +
+    scale_x_date(date_breaks="1 week", date_labels = "%d %b") +
+    labs(y="Daily incremental incidence",
+                                   title="Montgomery County, Alabama: Positive US Covid-19 Cases")  +
+    theme(legend.position = "none",
+          strip.text.y = element_text(size=11)) + 
+    geom_vline(xintercept=as.Date("2020/04/24"), color="red")
+
 ```
 
 ## Hospital Readmission Data
@@ -82,11 +92,15 @@ My colleague Jack Iwashyna, who you will learn more about in the concluding chap
 
 The good news is that the study found that patient-reported physical activity and quality of life status is associated with fewer re-admissions.  So if we can get these  covid-19-related ARDS survivors walking and exercising we may have some hope. Unfortunately, many ARDS survivors have trouble merely standing up from a chair let alone going for a walk around the block wearing a mask.
 
-More on this to come.
+More on this to come.  Here are some initial plots but the data are suspect with various missing days and implausible values such as New York reporting 9 consecutive days of reporting 5016, which suggests lack of daily update.
 
 
-```{r eval=F, echo=F}
-ggplot(subset(covid.tracking, date > as.Date("2020/03/20")), aes(date, hospitalizedCurrently, group=state, color=state)) + geom_line()
+```{r}
+ggplot(subset(covid.tracking, date > as.Date("2020/03/20")), aes(date, hospitalizedCurrently, group=state, color=state)) + geom_line() + ggtitle("Number Currently Hospitalized By State")
+
+ggplot(subset(covid.tracking, date > as.Date("2020/03/20")), aes(date, inIcuCurrently, group=state, color=state)) + geom_line() + ggtitle("Number Currently in ICU By State")
+
+ggplot(subset(covid.tracking, date > as.Date("2020/03/20")), aes(date, onVentilatorCurrently, group=state, color=state)) + geom_line() + ggtitle("Number Currently on Ventilator By State")
 
 ```
 
@@ -125,14 +139,21 @@ covid.tracking.new$deathIncrease <- ifelse(is.na(covid.tracking.new$deathIncreas
 ```
 
 ```{r results="hide"}
+#out <- nls(deathIncrease ~ richfu.sir(day.numeric, a, b0,b1), data=covid.tracking.new,start=c(a=155, b0=-1.9,b1=.001), algorithm="port")
 out <- nlme(deathIncrease ~ richfu.sir(day.numeric, a, b0,b1), fixed = a+b0+b1~1,
-            random =  a+b1~1, data=covid.tracking.new,start=c(a=47.2, b0=-2.3,b1=.02), verbose=T, groups=~state, control=nlmeControl(msMaxIter=1000,opt="nlminb",pnlsTol=.0001,msVerbose=T,minScale=.0001, maxIter=1000) )
+            random =  a+b1~1, data=covid.tracking.new,start=c(a=40, b0=-1.8,b1=.03), verbose=T, groups=~state, control=nlmeControl(msMaxIter=1000,opt="nlminb",pnlsTol=.0001,msVerbose=T,minScale=.0001, maxIter=1000) )
 
 #refit omiting the outlier
 out.nooutlier <- nlme(deathIncrease ~ richfu.sir(day.numeric, a, b0,b1), fixed = a+b0+b1~1,
-            random =  a+b1~1, data=subset(covid.tracking.new, deathIncrease<800),start=c(a=47.2, b0=-2.3,b1=.02), verbose=T, groups=~state, control=nlmeControl(msMaxIter=1000,opt="nlminb",pnlsTol=.0001,msVerbose=T,minScale=.0001, maxIter=1000) )
+            random =  a+b1~1, data=subset(covid.tracking.new, deathIncrease<800),start=c(a=40, b0=-2,b1=.01), verbose=T, groups=~state, control=nlmeControl(msMaxIter=1000,opt="nlminb",pnlsTol=.0001,msVerbose=T,minScale=.0001, maxIter=1000) )
 temp.data <- covid.tracking.new
 dropped.data <- which(covid.tracking.new$deathIncrease>=800)
+
+out.first42days <- nlme(deathIncrease ~ richfu.sir(day.numeric, a, b0,b1), fixed = a+b0+b1~1,
+            random =  a+b1~1, data=subset(covid.tracking.new, day.numeric<43),start=c(a=115, b0=2.1,b1=-.01), verbose=T, groups=~state, control=nlmeControl(msMaxIter=1000,opt="nlminb",pnlsTol=.0001,msVerbose=T,minScale=.0001, maxIter=1000) )
+
+
+
 ```
 
 ```{r eval=F, echo=F}
@@ -147,7 +168,7 @@ out <- nlme(deathIncrease ~ richfu.sir2(day.numeric, a, b0,b1,b2), fixed = a+b0+
 ```
 
 We see that this function (red curve) does a reasonable job of fitting the daily death counts (black points) in New York. 
- There is noise in these data that this form of the SIR model cannot easily pickup.  
+ There is noise in these data that this form of the SIR model cannot easily pickup.  I show an additional estimation using only the data up through day 42 (in green). This curve shows that the functional form fits reasonably well up through the peak but does not capture the asymmetry  in terms of the slow decline in the frequency of new cases.  This suggests there are additional processes that this simple implementation of the SIR model does not capture, and provides a clue for additional modeling changes one could implement.
  
  
  
@@ -163,10 +184,18 @@ temp.predict <- predict(out.nooutlier, level=1)
 if (length(dropped.data)==1) 
 covid.tracking.new$predicted.nooutlier <- c(temp.predict[1:(dropped.data-1)], NA, temp.predict[dropped.data:length(temp.predict)])
 
+# just first 42 days
+covid.tracking.new$predicted.42 <- predict(out.first42days, newdata=data.frame(state=covid.tracking.new$state, day.numeric=covid.tracking.new$day.numeric), level=1)
+
+# after 42 days
+#covid.tracking.new$predicted.43plus <- predict(out.after43days, #newdata=data.frame(state=covid.tracking.new$state, day.numeric=covid.tracking.new$day.numeric), level=1)
+
 ggplot( subset(covid.tracking.new, state=="NY"), aes(x=day.numeric,y=deathIncrease)) + 
   #  scale_x_date(date_breaks="1 week", date_labels = "%d %b") +
   geom_line(aes(day.numeric, predicted), color="red") + geom_point() +
   geom_line(aes(day.numeric, predicted.nooutlier), color="blue") +
+    geom_line(aes(day.numeric, predicted.42), color="green") +
+ #   geom_line(aes(day.numeric, predicted.43plus), color="black") +
     labs(y="Daily incidence ",
                   title="Daily Covid-19 Deaths in New York (red curve all data estimate; blue curve omitting single outlier")  +
     theme(legend.position = "none",

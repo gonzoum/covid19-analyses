@@ -3,11 +3,11 @@
 The previous chapter presented several descriptive plots of raw data.  What I'd like to do in this chapter is show some simple modeling methods. 
 By no means is any of the modeling presented here considered breakthrough modeling. I call this descriptive modeling because all I do is describe the patterns using statistical methods. In the next chapter I'll give some examples of models that attempt to capture mechanism. 
 
-One way of explaining the difference between descriptive models and explanatory models is that the former are summaries of the data and can be used to forecast, but they do not provide  understanding of the underling mechanisms so they do not give insight into what would happen if a change was imposed on the system.  Descriptive models don't tell us the effect social distancing may have, for example, on the future rate of covid-19. They are fine for describing what has happened in the past but can be limited in helping us understand how the future will play out under various scenarios including interventions. I sometimes refer to descriptive modeling as "models of data."  Process models  are about modeling underlying mechanism; they use data to estimate parameters and test predictions of the model.
+The difference between descriptive models and explanatory models is that the former are summaries of the data and can be used to forecast, but they do not provide  understanding of the underling mechanisms so they do not give insight into what would happen if a change was imposed on the system.  Descriptive models don't tell us the effect social distancing may have, for example, on the future rate of covid-19. They are fine for describing what has happened in the past but can be limited in helping us understand how the future will play out under various scenarios including interventions. I sometimes refer to descriptive modeling as "models of data."  Process models  are about modeling underlying mechanism; they use data to estimate parameters and test predictions of the model but their goal is to  model process.
 
-I'll try to use the R features necessary to make the points I want to highlight. There are more complicated approaches using time series packages that format the data differently (e.g., they use special time series objects in R). There are benefits of doing this because there are automatic plotting and estimation routines that can take time series objects and do relevant computations. But I think as you are learning this it makes more sense to learn how to do some of the programming and then you are in a better position to learn the value of more advanced approaches like those for time series data. So I'll start with standard R objects and slowly introduce some elements unique to time series data.
+I'll try to use the minimum R features necessary to make the points I want to highlight. There are more complicated approaches using time series packages that format the data differently (e.g., they use special time series objects in R). There are benefits of doing this because there are automatic plotting and estimation routines that can take time series objects and do relevant computations. But I believe that as you are beginning it makes more sense to learn how to do some of the programming and then you are in a better position to learn the value of more advanced approaches like those for time series data, which use even more complex programming capabilities.  It is best to learn how to program with simpler problems and then gradually add complexity rather than jump immediately to complex cases. So I'll start with standard R objects and slowly introduce some elements unique to time series data.
 
-For more general treatments on working with time series data see [Hyndman & Athanasopoulos](https://otexts.com/fpp2/); [Holmes, Scheuerell & Ward](https://nwfsc-timeseries.github.io/atsa-labs/) and the classic [Box & Jenkins](https://www.amazon.com/Time-Analysis-Forecasting-George-Box/dp/0470272848), with additional authors in newer editions.
+For more general treatments on working with time series data see [Hyndman & Athanasopoulos](https://otexts.com/fpp2/); [Holmes, Scheuerell & Ward](https://nwfsc-timeseries.github.io/atsa-labs/) and the classic [Box & Jenkins](https://www.amazon.com/Time-Analysis-Forecasting-George-Box/dp/0470272848), with additional authors in newer editions of the book.
 
 ##  Regression on US State Percentages: Linear Mixed Models on Logs
 
@@ -61,7 +61,7 @@ tab_model(out.lmer, show.se=T, show.stat=T)
 
 ```{r results="asis", echo=is_latex_output(), eval=is_latex_output() }
 if (is_latex_output())
-stargazer(out.lmer, header=F, type="latex")
+    stargazer(out.lmer, header=F, type="latex",omit.stat="n")
 ```
 
 The estimates, se(est), CI, t and pvalue for the fixed effects are printed first, then the parameters of the random effect part are printed in the second part of the table. The random effect parameters, in order, are the variance of the residuals, the variance of the random effect intercept, the variance of the random effect slope, the correlation between the random intercept and the random slope, the adjusted ICC, number of states, number of observations (recall 0s have been removed from this data file so the N refers to the number of days by state for which there was a nonzero number of positive covid-19 cases), and the R$^2$ values.  
@@ -83,7 +83,7 @@ qqline(resid(out.lmer))
 The residuals against the fitted values suggest a nonlinear pattern remains in the data. This suggests that we may not have completely linearized the data with the log transformation. The qqplot suggests some deviation from a typical normal distribution; that is, the residuals appear to have longer tails than expected by a normal distribution.  Both of these plots suggest there are issues that have to be addressed.  We probably don't want to jump right into doing another transformation right way as that may create new issues with interpretation. We selected the log transformation because we are checking for exponential growth and on the log scale the exponential growth should become linear. So maybe the exponential growth model may not be appropriate here, or there may be other issues with the data that are contaminating the exponential growth pattern.  Without additional modeling we cannot adjudicate between these possibilities just from this present regression alone.
 
 
-Even though there is suspicion about this model, let's examine the state-level slopes and intercepts more directly:  first with a table of each state and then with some plots.  Light gray points have confidence intervals that overlap 0 so those parameter estimates are not significantly different from zero. We did not perform a correction like Bonferroni or Scheffe to address the 100 tests we just did (50 states on each of slope and intercept).  This would just require a small modification to the code to adjust the level of the CI to correspond, say, to the Bonferroni corrected levels.
+Even though the residual plots raise concern about this model, let's examine the state-level slopes and intercepts more directly:  first with a table of each state and then with some plots.  Light gray points have confidence intervals that overlap 0 so those parameter estimates are not significantly different from zero. We did not perform a correction like Bonferroni or Scheffe to address the 100 tests we just did (50 states on each of slope and intercept).  This would just require a small modification to the code to adjust the level of the CI to correspond, say, to the Bonferroni corrected levels.
 
 ```{r}
 # list of the set of 50 intercept/slope pairs
@@ -98,7 +98,7 @@ raeff <- REsim(out.lmer)
 plotREsim(raeff,labs=T, stat="mean",level=.95)
 ```
 
-```{exercise}
+```{exercise echo=T}
 Redo the plot of coefficients by altering the confidence interval to correspond to a Bonferroni correction for 50 tests within a "family" This way  the Bonferroni adjusts the confidence interval widths within family---50 confidence intervals around the intercepts and 50 confidence intervals around the slopes.
 ```
 
@@ -194,12 +194,12 @@ coord_cartesian(clip = 'off') +  scale_x_continuous(limits=c(0,max.day.numeric+ 
 
 Other approaches I could have taken include using the state's population as a weight and computed weighted linear mixed models on the log of the count data, or, because I'm working in log scale, I could use the state population as an offset in the linear mixed model (as in offset(log(population))) and use log counts as the dependent variable.  These are alternative ways of taking population size into account.  Further checks include taking into the account possible correlated residuals. For example, it isn't reasonable to assume that the residual at day t is independent from the residual at day t+1 for a given state, which is what my model assumed in what I presented above.  I'll show how to include a correlation pattern on the residuals later in this chapter.  There is clearly a lot more one would need to do in order to justify the use of the analytic strategy in this section.
 
-```{exercise}
+```{exercise echo=T}
 Rerun the linear mixed model on the log transform of the counts for each state and include population size as an offset. Compare these results to the previous regression on the log of the percentage.
 ```
 
 Of course, once the basic structure of this linear mixed model on the log scale is set (e.g., error structure on residuals is determined, how best to use the state's population in the model, etc), then one could bring in additional predictors. We could, for example, take some of the data sets we downloaded that have the dates of when states took different measures and see if any of those state mandates changed, say, the slopes for the states.  At this point, once the complex error structure, linearity, and random effect structure are determined, then the rest is just routine regression that follows the analogous criteria in regression.
-For example, if you can include interactions between predictors or controls using other predictors. 
+For example, one could include interactions between predictors or controls using other predictors. 
 
 
 ### Comparison with polynomial regression
@@ -289,9 +289,10 @@ The polynomial idea to approximate functions can be extended in more complex way
 
 ### Thoughts on the log transformation
 
-This type of model where we transform the dependent variable by converting to logs, creates an additive error term in the log scale (i.e., log(counts) = f(days) + $\epsilon$). But maybe that isn't the right error structure. We can study the residuals to see if there are nonlinearities. It maybe  the error is added to the counts rather than the log of the counts (i.e., the data may exhibit a  counts = f(days) + $\epsilon$ structure, which is a different error structure than the one on the log scale).  
+This type of model where we transform the dependent variable by converting to logs, creates an additive error term in the log scale; that is, log(counts) = f(days) + $\epsilon$. But maybe that isn't the right error structure. Maybe  the error is added to the counts rather than the log of the counts; that is, the data may exhibit a  counts = f(days) + $\epsilon$ structure, which is a different error structure than the one on the log scale.  The point here is that while one may think about using a transformation to linearize a model, that transformation also has an implicit set of assumptions and has potential side-effects on the modeling such as introducing particular error structure.
 
-We now turn to modeling the curvature directly, in a form that permits the counts = f(days) + $\epsilon$ model.
+We now turn to modeling the curvature directly using nonlinear regression methods that not only permits complicated functioanl forms such as exponentials but also permits modeling the error as an additive effect on the counts as in the form:
+counts = f(days) + $\epsilon$ model.
 
 ## Exponential Nonlinear Mixed Model  Regression 
 
@@ -301,9 +302,9 @@ In the previous section I illustrated how to run a nonlinear regression using th
 
 ### Exponential Background {#expoback}
 
-For a good explanation of exponential growth and logistic growth (next subsection) see this [video](https://www.youtube.com/watch?v=Kas0tIxDvrg). 
+For a good explanation of exponential growth and logistic growth (which will be described in the next subsection) see this [video](https://www.youtube.com/watch?v=Kas0tIxDvrg). 
 
-You can think of this model as being similar to a balance in a savings account that builds with compound interest. At each time step, a percentage is added to the current principal thus increasing the balance in the savings account. At the subsequent time step, the principal is now higher so the interest earned on that day will also be higher than the previous time step.  In the case of the covid-19 positive test counts, if each day the total count grows by some percentage, analogous to the principal in the savings account, then the growth is exponential.
+You can think of this exponential form as being similar to a balance in a savings account that builds with compound interest. At each time step, a percentage is added to the current principal thus increasing the balance in the savings account. At the subsequent time step, the principal is now higher so the interest earned on that day will also be higher than the previous time step.  In the case of the covid-19 positive test counts, if each day the total count grows by some percentage, analogous to the principal in the savings account, then the growth is exponential.
 
 ```{r}
 allstates.long.new <- groupedData(count ~ day.numeric | state.abb, data=allstates.long)
@@ -511,7 +512,7 @@ I could incorporate population by including a weight parameter (weights=varIdent
 
  starts <- getInitial(count~ SSlogis(day.numeric, Asym=1, xmid=1, scal=1), data=allstates.long.new)
  out <- nlme(count ~ SSlogis(day.numeric, Asym, xmid,scal), fixed =  Asym + xmid + scal  ~1,
-           random =  Asym + scal + xmid~ 1, data=na.omit(allstates.long.new),start=c(Asym=25000, xmid=35, scal=9), verbose=T, control=nlmeControl(msMaxIter=500))
+           random =  Asym + scal + xmid~ 1, data=na.omit(allstates.long.new),start=c(Asym=starts[1], xmid=starts[2], scal=starts[3]), verbose=T, control=nlmeControl(msMaxIter=500))
 #c(Asym=starts[1], xmid=starts[2],scal=starts[3])
 ```
 
@@ -520,10 +521,17 @@ out.logistic <- out
 
 if (is_html_output())
 summary(out.logistic)
+```
 
+```{r results="asis"}
 if (is_latex_output())
-  texreg(out.logistic, booktabs=T, dcolumn = T)
+   texreg(out.logistic, booktabs=T, dcolumn = T, use.packages=F, float.pos="h", single.row=T)
+if (is_latex_output())
+   stargazer(out.logistic, header=F, type="latex",report="vcst",single.row=T,omit.stat="n",  omit.table.layout = "n", digits=2, digits.extra=2)
 
+```
+
+```{r}
 # confidence intervals of the parameters
 intervals(out.logistic)
 
@@ -703,11 +711,16 @@ par(pty="m")
  <!-- https://cran.r-project.org/web/packages/brms/vignettes/brms_multilevel.pdf -->
  
 ```{r results="hide"}
-out <- nlme(count ~ richfu.logistic(day.numeric, l,y+b2*povertyperc,b1,0), fixed = l+y+b1 + b2~1,
-            random =  l+b1~1, data=na.omit(allstates.long.new),start=c( l=17500,y=200,b1=-.15, b2=-4.5), verbose=T,  control=nlmeControl(msMaxIter=1000,opt="nlminb",pnlsTol=.02,msVerbose=T,minScale=.02, maxIter=1000, eval.max=1000) )
+#out <- nlme(count ~ richfu.logistic(day.numeric, l,y+b2*povertyperc,b1,0), fixed = l+y+b1 + b2~1,
+#            random =  l+b1~1, data=na.omit(allstates.long.new),start=c( l=17500,y=200,b1=-.15, b2=-4.5), verbose=T,  #control=nlmeControl(msMaxIter=1000,opt="nlminb",pnlsTol=.02,msVerbose=T,minScale=.02, maxIter=1000, eval.max=1000) )
+
+# use earlier estimates as starting values
+start.vals <-  fixef(out.logistic)
 
 out <- nlme(count ~ SSlogis(day.numeric, Asym, xmid+b2*povertyperc, scal), fixed = Asym + xmid + scal+b2~1,
-            random =  Asym  + xmid~1, data=na.omit(allstates.long.new),start=c( Asym=28500,xmid=50,scal=9, b2=-.5), verbose=T,  control=nlmeControl(msMaxIter=1000,opt="nlminb",pnlsTol=.01,msVerbose=T,minScale=.01, maxIter=1000, eval.max=1000) )
+            random =  Asym  + xmid~1, data=na.omit(allstates.long.new),
+            start=c( Asym=start.vals[1],xmid=start.vals[2],scal=start.vals[3], b2=-.5), verbose=T,  
+            control=nlmeControl(msMaxIter=1000,opt="nlminb",pnlsTol=.01,msVerbose=T,minScale=.01, maxIter=1000, eval.max=1000) )
 ```
 
 
@@ -795,7 +808,7 @@ nydays <- allstates.long$day[allstates.long$state.abb=="New York"]
 nycount.ts <- ts(nydf$count, start=1, end=max(nydf$day.numeric)+1, frequency = 1)
 autoplot(nycount.ts) 
 
-plot(forecast(nycount.ts), xlab="Day", ylab="count")
+plot(forecast::forecast(nycount.ts), xlab="Day", ylab="count")
 
 # splines, h= number days predicted
 h <- 10
