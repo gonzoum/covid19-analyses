@@ -246,7 +246,7 @@ multiplot(p1,p2,cols=1)
 
 I decided to plot the percentage relative to population (i.e., counts/population * 100).  The numbers are small. I've seen people report this as cases per 100,000, but I decided to stick with cases per 100 to maintain the percentage interpretation.  This is just a scale issue and doesn't affect the plots or the analyses.   The labels in the plots, like "7.5 WA," mean Washington state with a population of 7.5 million. 
 
-```{r fig.cap="Per Cap Positive Cases by State"}
+```{r usstates, fig.cap="Per Cap Positive Cases by State"}
 # most recent date in file
 max.day.numeric <- max(allstates.long$day.numeric)
 max.day <- max(allstates.long$day)
@@ -264,7 +264,7 @@ Let's take the same plot but rescale the vertical axis on the log (base 10) scal
 
 A straight line seems to approximate the pattern but there  is a suggestion that some curvature remains, which implies these may not follow an exponential pattern. West Virginia (WV) didn't show its first case until 3/17/20 so that is why the green curve (lowest) looks different than the rest.
 
-```{r fig.cap="Per Cap Positive Cases by State (log10 scale)"}
+```{r usstates-log, fig.cap="Per Cap Positive Cases by State (log10 scale)"}
 subset(allstates.long, day.numeric!=0) %>%mutate(label = if_else(day == max(day), as.character(prettyval), NA_character_)) %>%
 ggplot( aes(x=day, y=count/population*100,group=prettyval, color=prettyval)) + geom_line() +
  geom_label_repel(aes(label= label), nudge_x=2, na.rm=T,segment.color = 'grey50', label.size=.01, size=2.5, show.legend=F) +
@@ -275,7 +275,7 @@ coord_cartesian(clip = 'off') + scale_x_date(limits=as.Date(c("2020-03-09", as.c
 
 To help see the state by state structure in these curves (e.g., whether or not they are linear in the log scale), I partitioned the 50 states by population (sample sizes in each panel, yielding 12 or 13 states per panel). The states with larger populations (two lower panels) show relatively linear patterns.  The states with smaller population sizes (the two upper panels) show patterns suggesting the per capita rate may still be increasing, whereas states with larger populations may be leveling off.   We would need statistical analyses to verify the observations in these descriptive plots.
 
-```{r fig.cap="Per Cap Positive Cases by State (log10 scale); Panels are based on Population"}
+```{r usstates-log-grid, fig.cap="Per Cap Positive Cases by State (log10 scale); Panels are based on Population"}
 subset(allstates.long, day.numeric!=0) %>%mutate(label = if_else(day == max(day), as.character(prettyval), NA_character_)) %>%
 ggplot( aes(x=day, y=count/population*100,group=prettyval, color=prettyval)) + geom_line() +
  geom_label_repel(aes(label= label), nudge_x=2, na.rm=T,segment.color = 'grey50', label.size=.01, size=2.5, show.legend=F) +
@@ -401,6 +401,7 @@ For this plot I used the fiftystater R package, which not only allows the shape 
 ```{r echo=longform}
 # libraries just for this plot
 library(RColorBrewer)
+#devtools::install_github("wmurphyrd/fiftystater")
 library(fiftystater)
 
 temp <- subset(allstates.long, day==max.day)
@@ -557,7 +558,7 @@ girafe(ggobj=p)
 
 The weekly pattern is interesting and could be explained, for example, by fewer tests conducted on weekends with a delay in the reporting of tests results.  We can check this by examining another data set that reports the total number of tests conducted on a day, which is the sum of the number of positive tests, the number of negative tests and the number of pending tests. Of course, the number of positive tests will be correlated with this total measure, and this definition of total introduces some additional daily correlations due to some double counting (i.e., a pending today may show up as a negative tomorrow once the results are known). Further, this highlights the difficult of interpreting such data, for many reasons, including the issue that  tests vary in the length of time needed to achieve a result, so if states vary in which tests they use or there are changes over time in which tests are used, we would see such patterns reflected in these counts.  Such changes may say more about the decisions made on which tests to use than on the changing properties of the distribution of positive and negative test results.
 
-The bar plot of the total test results is presented in the next figure.  While the number of tests administered is increasing over the weeks, there is a slight pattern that fewer tests are reported on  Mondays relative to surrounding days, especially in recent weeks (e.g., April 27 and May 4).
+The bar plot of the total test results is presented in the next figure.  While the number of tests administered is increasing over the weeks, there is a slight pattern that fewer tests are reported on  Mondays relative to surrounding days (e.g., April 27, May 4, May 10). The dip at the end of May can be attributable to the Memorial Day Weekend and delay in reporting.
 
 ```{r}
 covid.tracking.date <- covid.tracking %>% subset(date>as.Date("2020-03-9", "%Y-%m-%d"))
@@ -567,9 +568,31 @@ covid.tracking.date <- covid.tracking.date %>% mutate(sumdaily = c(date.sum[1], 
 ggplot( covid.tracking.date, aes(x=date,y=sumdaily)) +  geom_bar(stat="identity") +
     scale_x_date(date_breaks="1 week", date_labels = "%d %b") +
     labs(y="Daily incremental incidence",
-                                   title="Total US Tests (Pos, Neg and Pending)")  +
+                                   title="Total US Tests: Pos, Neg and Pending")  +
     theme(legend.position = "none",
           strip.text.y = element_text(size=11))
+
+# mouse hover
+if (knitr::is_html_output()) {
+str_model <- paste0("<tr><td>date</td><td>%s</td></tr>", 
+                    "<tr><td>day</td><td>%s</td></tr>", 
+                   "<tr><td>count</td><td>%s</td></tr>")
+covid.tracking.date$tooltip <- sprintf(str_model, covid.tracking.date$date, 
+                            weekdays(covid.tracking.date$date),
+                            covid.tracking.date$sumdaily)
+covid.tracking.date$tooltip <- paste0( "<table>", 
+                           covid.tracking.date$tooltip, "</table>" )
+
+p <- ggplot( covid.tracking.date, aes(x=date,y=sumdaily, tooltip = tooltip,
+        data_id = date)) +  geom_bar_interactive(stat="identity") +
+    scale_x_date(date_breaks="1 week", date_labels = "%d %b") +
+    labs(y="Daily incremental incidence",
+                                   title="Total US Tests: Pos, Neg and Pending (mouse hover in html")  +
+    theme(legend.position = "none",
+          strip.text.y = element_text(size=11))
+
+girafe(ggobj=p)
+} #end mouse hover for html
 ```
 
 Overall, we see that the number of daily tests has been increasing over recent weeks. This adds an important caveat moving forward as we interpret positive tests results in the remainder of this book.  We may see an increase in positive tests not because virus contamination is increasing but because there are more tests being conducted.  Of course, if the number of positive cases decreases in spite of the number of tests increasing, this suggests the virus rate is decreasing. Such a conclusion assumes the characteristics of the tests remain the same. If over time, the quality of the tests  changes in terms of false positives and false negatives, that would add an additional layer of complexity in interpreting such testing data.
@@ -578,7 +601,7 @@ Overall, we see that the number of daily tests has been increasing over recent w
 \index{PCA}
 \index{outliers}
 
-Principal components analysis (PCA) has many uses.  In interesting use of PCA in time series data is that it can be used to detect outliers in a complicated data set. Let's take the 50 states and the time series from 3/09/20 to present, to create a 50 by day data matrix of positive counts.  Then compute a PCA of the correlation matrix between states. This correlation matrix is 50 x 50 and represents how similar each state's cumulative trajectory is to another state's cumulative trajectory for all possible pairs of states.  Plot the factor scores of the 50 states on the first two PCs.  The majority of the states will cluster together. The outlier states, those with very different trajectories, appear far away from the primary cluster suggesting they have a very different trajectory. The three candidate outliers are the 4 states with early covid-19 cases:  NY, WA, NJ and CA. Recall that the numbers in front of the state abbreviation correspond to the state population in millions.  This type of PCA is commonly done in biological modeling to check for outliers, sometimes not on the raw data like I did here, but on the set of parameters that are estimated for each unit. For example, if you run regressions for each state, gather the betas from those regressions as data (such as 8 betas per state if you had 8 state-level predictors),  compute a correlation matrix across states, then run a PCA on that correlation matrix to detect states with an outlier pattern across their betas relative to other states. 
+Principal components analysis (PCA) has many uses.  In interesting use of PCA in time series data is that it can be used to detect outliers in a complicated data set. Let's take the 50 states and the time series from 3/09/20 to present, to create a 50 by day data matrix of positive counts.  Then compute a PCA of the correlation matrix between states. This correlation matrix is 50 x 50 and represents how similar each state's cumulative trajectory is to another state's cumulative trajectory for all possible pairs of states.  Plot the factor scores of the 50 states on the first two PCs.  The majority of the states will cluster together. The outlier states, those with very different trajectories, appear far away from the primary cluster suggesting they have a very different trajectory. Four candidate outliers are the 4 states with early covid-19 cases:  NY, WA, NJ and CA. Recall that the numbers in front of the state abbreviation correspond to the state population in millions.  This type of PCA is commonly done in biological modeling to check for outliers, sometimes not on the raw data like I did here, but on the set of parameters that are estimated for each unit. For example, if you run regressions for each state, gather the betas from those regressions as data (such as 8 betas per state if you had 8 state-level predictors),  compute a correlation matrix across states, then run a PCA on that correlation matrix to detect states with an outlier pattern across their betas relative to other states. 
 
 ```{r fig.cap="PCA to identify states with candidate outliers"}
 temporal.data <- allstates[,53:(ncol(allstates)-cadded)]

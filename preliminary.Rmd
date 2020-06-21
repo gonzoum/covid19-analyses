@@ -4,7 +4,7 @@
 
 I want these notes to serve as an example of how to keep your analyses organized and reproducible.  Analysis projects have many common elements, which include gathering data, cleaning and organizing data, preparing descriptive summaries, testing hypotheses, writing reports, and dissemination.  The end product should be a complete pipeline that takes you from soup to nuts with clear documentation.   These notes provide one example of how to prepare a workflow.  Such workflows typically make use of many software tools, and I would like to highlight some of the tools I used.  All the tools used to produce this book were open-source.
 
-These notes are written completely in [Rmarkdown](https://rmarkdown.rstudio.com/), a scripting language that allows one to weave text, R statistical commands, and R output to create a document. They are organized across several Rmd files (like this one) that are executed in a particular order. For example, the file that reads the data and cleans the data is sourced before the file that produces the descriptive summaries of the data.    See Appendix \@ref{learnr) to learn some basic details about R and find links to tutorials. The formatting of the files into both html and pdf was enabled by the [bookdown R package](https://bookdown.org/), which makes use of html constructs as well as [LaTeX](https://www.latex-project.org/) document formatting.  See Appendix \ref(bookdown) for some basic information about the bookdown package.  I also made use of the [RStudio](https://rstudio.com/products/rstudio/) integrated editor that allowed me to type all these words and commands in a way that enabled debugging of code and natural weaving in of statistical output and figures.
+These notes are written completely in [Rmarkdown](https://rmarkdown.rstudio.com/), a scripting language that allows one to weave text, R statistical commands, and R output to create a document. They are organized across several Rmd files (like this one) that are executed in a particular order. For example, the file that reads the data and cleans the data is sourced before the file that produces the descriptive summaries of the data.    See Appendix \@ref(learnr) to learn some basic details about R and find links to tutorials. The formatting of the files into both html and pdf was enabled by the [bookdown R package](https://bookdown.org/), which makes use of html constructs as well as [LaTeX](https://www.latex-project.org/) document formatting.  See Appendix \@ref(bookdown) for some basic information about the bookdown package.  I also made use of the [RStudio](https://rstudio.com/products/rstudio/) integrated editor that allowed me to type all these words and commands in a way that enabled debugging of code and natural weaving in of statistical output and figures.
 
 I can reproduce all my analyses and so can you. I put the files for this project (except for the data downloads) in a [git repository](https://github.com/gonzoum/covid19-analyses) that you can clone and follow along. I tried to be diligent in using git commits and writing clear comments so you can see how these notes developed; edits I made to the text; code I edited, de-bugged and re-edited; turns I took in my analyses that were dead ends so I didn't pursue them; etc.  This is all part of the regular scientific process.  In the "old days" scientists maintained lab notebooks where they recorded everything they did. A git repository serves the analogous role of an electronic library when conducting analyses. It keeps track of everything I did for this project.  You can read the final product (the notes you are currently reading) but you are free to see my thought process, see how I edited these documents, and see the order in which I actually wrote things rather than the order they are presented.  All you have to do is visit the [github site for this project](https://github.com/gonzoum/covid19-analyses).  To learn about git see Appendix \@ref(usinggit).
 
@@ -21,7 +21,7 @@ A variable that I set up in the index.Rmd file is longform. This is set either t
 # assumes knitr is installed in R
 library(knitr)
 
-htmllinewidth <- 80
+htmllinewidth <- 55
 pdflinewidth <- 55
 
 opts_chunk$set(tidy.opts=list(width.cutoff=pdflinewidth),
@@ -87,8 +87,10 @@ library(gamm4)
 library(splines)
 library(mgcv)
 library(nlrx)
+library(pander)
 # use this package just for sech 
 library(pracma)
+library(ggforce)
 ```
 
 ```{asis echo=longform}
@@ -107,7 +109,7 @@ p_load("bookdown","readr","tidyverse","rvest","magrittr",
    "scales", "maps","ggthemes","viridis","ggrepel","sjPlot",
    "sjmisc", "sjlabelled","lme4","nlme","merTools","Hmisc",
    "readxl","rnn","stargazer","texreg","gamm4","splines","mgcv",
-   "nlrx", "pracma")
+   "nlrx", "pander", "pracma","ggforce")
 ```
 
 

@@ -12,7 +12,7 @@ This example will illustrate the use of the regression discontinuity (RD) design
 
 The city of Atlanta is in Fulton county, which is the top curve
 
-```{r}
+```{r georgia.county}
 datacov.US.long <- gather(datacov.US, day, count, `1/22/20`:(names(datacov.US)[ncol(datacov.US)]))
 datacov.US.long$day <- as.Date(datacov.US.long$day, "%m/%d/%y")
 datacov.US.long$day.numeric <- as.numeric(datacov.US.long$day)-18283
@@ -24,7 +24,7 @@ georgia.df <- subset(datacov.US.long, `Province/State`=="Georgia") %>% filter(!A
 # all county plot
 # ggplot(subset(georgia.df, day > as.Date("2020/04/1")), aes(day,count, group=Admin2, color=Admin2)) + geom_line() + ggtitle("Georgia counties") 
 
-# focus just on counties with cases > 400 as of the compilation of the report
+# focus just on counties with cases > 100 as of the compilation of the report
 # red vertical line at 4/24 and blue vertical line at 4/27
 georgia.df.max <- georgia.df %>% group_by(Admin2) %>% mutate(maxcount = max(count,na.rm=T)) %>% ungroup()
 range.ylim <- range(georgia.df.max$maxcount)
@@ -32,9 +32,9 @@ range.ylim <- range(georgia.df.max$maxcount)
 # add two regression lines to plot before/after cutoff
 georgia.df.max$cutoff <- factor(ifelse(georgia.df.max$day<=as.Date("2020/04/24"),"before","after"))
 
-subset(georgia.df.max, day > as.Date("2020/04/1") & maxcount>=400) %>% 
+subset(georgia.df.max, day > as.Date("2020/04/1") & maxcount>=1000) %>% 
   mutate(label = if_else(day.numeric == max(day.numeric), as.character(Admin2), NA_character_)) %>%
-ggplot(aes(day,count, group=Admin2, color=Admin2)) + geom_line() + ggtitle("Georgia counties with greater than 400 cases")  + geom_vline(xintercept=as.Date("2020/04/24"), color="red") + ylim(range.ylim) + theme_bw() +
+ggplot(aes(day,count, group=Admin2, color=Admin2)) + geom_line() + ggtitle("Georgia counties with greater than 1000 cases")  + geom_vline(xintercept=as.Date("2020/04/24"), color="red") + ylim(range.ylim) + theme_bw() +
    geom_label_repel(aes(label= label), nudge_x=2, na.rm=T,segment.color = 'grey90', label.size=.01, size=2.5, show.legend=F) + scale_x_date(limits=c(as.Date("2020/04/1"), as.Date(max.day+5))) +
     theme(legend.position="none", plot.margin = margin(0.1, 1, 0.1, 0.1, "cm")) #+
 #    stat_smooth(data=subset(georgia.df.max, Admin2=="Fulton"),aes(x=day,y=count,group=cutoff), method="lm")
@@ -42,7 +42,7 @@ ggplot(aes(day,count, group=Admin2, color=Admin2)) + geom_line() + ggtitle("Geor
 
 For comparison, I'll pick an adjacent state that has not relaxed their restrictions.  Alabama seems a safe comparison as both South Carolina and Florida have begin partial openings (e.g., Florida opened beaches prior to April 24). One could also examine Tennessee and North Carolina, which also border with Georgia.
 
-```{r}
+```{r alabama.county}
 # drop two counties because unassigned or out of GA; total 159 counties per wiki 
 #https://en.wikipedia.org/wiki/List_of_counties_in_Georgia
 alabama.df <- subset(datacov.US.long, `Province/State`=="Alabama") %>% filter(!Admin2 %in% c("Out of AL", "Unassigned") )
@@ -50,13 +50,13 @@ alabama.df <- subset(datacov.US.long, `Province/State`=="Alabama") %>% filter(!A
 # all county plot
 #ggplot(subset(alabama.df, day > as.Date("2020/04/1")), aes(day,count, group=Admin2, color=Admin2)) + geom_line() + ggtitle("Alabama counties") 
 
-# focus just on counties with cases > 400 as of the compilation of the report
+# focus just on counties with cases > 1000 as of the compilation of the report
 # red vertical line at 4/24 and blue vertical line at 4/27
 alabama.df.max <- alabama.df %>% group_by(Admin2) %>% mutate(maxcount = max(count,na.rm=T)) %>% ungroup()
 
-subset(alabama.df.max, day > as.Date("2020/04/1") & maxcount>=400) %>% 
+subset(alabama.df.max, day > as.Date("2020/04/1") & maxcount>=1000) %>% 
   mutate(label = if_else(day.numeric == max(day.numeric), as.character(Admin2), NA_character_)) %>%
-ggplot(aes(day,count, group=Admin2, color=Admin2)) + geom_line() + ggtitle("Alabama counties with greater than 400 cases")  + geom_vline(xintercept=as.Date("2020/04/24"), color="red") + ylim(range.ylim) + theme_bw() +
+ggplot(aes(day,count, group=Admin2, color=Admin2)) + geom_line() + ggtitle("Alabama counties with greater than 1000 cases")  + geom_vline(xintercept=as.Date("2020/04/24"), color="red") + ylim(range.ylim) + theme_bw() +
    geom_label_repel(aes(label= label), nudge_x=2, na.rm=T,segment.color = 'grey90', label.size=.01, size=2.5, show.legend=F) + scale_x_date(limits=c(as.Date("2020/04/1"), as.Date(max.day+5))) +
     theme(legend.position="none", plot.margin = margin(0.1, 1, 0.1, 0.1, "cm"))
 ```
@@ -120,7 +120,7 @@ where sech is the hyperbolic secant, its argument is a linear transformation of 
 To arrive at this expression one could work with the SIR equations presented in Chapter \@ref(process) directly,  but there is a simple way to get this form by assuming a Poisson distribution on the counts and showing that the probability that a randomly selected individual is not infected when the epidemic has an $R_0$ is $e^{\frac{-R_0}{N}}$ (i.e., a Poisson with k=0 and a rate of $R_0/N$); see Keeling and Rohani, 2008, Ch 2.
 
 
-Let's perform a direct fit to the daily death count, since death is a more appropriate outcome for the SIR model.  For this section I'll use the covid.tracking data (see Chapter \@ref(readintro)). We haven't worked much with that data yet so I'll also need to do some data cleaning and formatting to be consistent with the other analyses conducted in this book.
+Let's perform a direct fit to the daily death count, since death is a more appropriate outcome for the SIR model.  For this section I'll use the covid tracker data (see Chapter \@ref(readintro)). We haven't worked much with that data yet so I'll also need to do some data cleaning and formatting to be consistent with the other analyses conducted in this book.
 
 ```{r results=ifelse(longform, "markup", "hide")}
 # define sir approximation to daily death count
@@ -145,7 +145,7 @@ out <- nlme(deathIncrease ~ richfu.sir(day.numeric, a, b0,b1), fixed = a+b0+b1~1
 
 #refit omiting the outlier
 out.nooutlier <- nlme(deathIncrease ~ richfu.sir(day.numeric, a, b0,b1), fixed = a+b0+b1~1,
-            random =  a+b1~1, data=subset(covid.tracking.new, deathIncrease<800),start=c(a=40, b0=-2,b1=.01), verbose=T, groups=~state, control=nlmeControl(msMaxIter=1000,opt="nlminb",pnlsTol=.0001,msVerbose=T,minScale=.0001, maxIter=1000) )
+            random =  a+b1~1, data=subset(covid.tracking.new, deathIncrease<800),start=c(a=40, b0=-1.8,b1=.03), verbose=T, groups=~state, control=nlmeControl(msMaxIter=1000,opt="nlminb",pnlsTol=.0001,msVerbose=T,minScale=.0001, maxIter=1000) )
 temp.data <- covid.tracking.new
 dropped.data <- which(covid.tracking.new$deathIncrease>=800)
 
@@ -155,6 +155,8 @@ out.first42days <- nlme(deathIncrease ~ richfu.sir(day.numeric, a, b0,b1), fixed
 
 
 ```
+
+FIX TO PERCAPITA DEATH
 
 ```{r eval=F, echo=F}
 #test function for additive constant
@@ -173,7 +175,7 @@ We see that this function (red curve) does a reasonable job of fitting the daily
  
  
  
-```{r }
+```{r sir.approx.ny}
 summary(out)
 out.nlme.deaths <- out
 out.nlme.deaths.nooutlier <- out.nooutlier
@@ -204,7 +206,7 @@ ggplot( subset(covid.tracking.new, state=="NY"), aes(x=day.numeric,y=deathIncrea
 
 The data for death is quite noisy, for example, here are plots for both New Jersey and Michigan.
 
-```{r  }
+```{r  sir.approx.nj.mi}
 p1 <- ggplot( subset(covid.tracking.new, state=="NJ"), aes(x=day.numeric,y=deathIncrease)) +
   #  scale_x_date(date_breaks="1 week", date_labels = "%d %b") +
   geom_line(aes(day.numeric, predicted), color="red") + geom_point() +
@@ -269,7 +271,7 @@ $$
 $$
 The left square bracket term has the form of the logistic growth function and the right square bracket term has the form of an exponential growth function. The term $C$ is the integration constant that we will set so that the cumulative sum starts at 0.  Thus, this simplification of the SIR model yields a product of the two functions we explored in Chapter \@ref(descmodel).  It isn't one or the other as we explored earlier, but this model suggests the curves approximately follow a combination of both forms. This is an example of the advantage of doing some mathematical modeling to be able to examine the implications of your model.  In the earlier chapter we considered exponential and logistic growth models without careful attention to why we chose those functions.  This type of mathematical modeling allows you to justify the functional forms you want to test based on implications from your hypotheses. Here I'm referring to the change equations of the SIR model as a set of hypotheses that govern how change occurs among the susceptibles, the infecteds and recovered.  Those equations (with some additional assumptions and approximations) imply this product of both forms, which we can test and examine with data.  Not counting the integration constant this approximation also has 3 parameters as we had in both the exponential form and the logistic growth form in Chapter \@ref(descmodel).
 
-```{r}
+```{r sir.cum.ny}
 # pull out the coefficients from the nlme 
 coef.ny <- coef(out)[rownames(coef(out))=="NY",]
 a <- unlist(coef.ny[1])
@@ -302,14 +304,18 @@ The fit is ok given the simplifying assumptions that were made to derive this fo
 
 It is helpful to estimate the logistic function directly on the cumulative death count  and superimpose that curve (blue) on the same graph.  We see that the pure logistic provides a better fit to these data. This shouldn't be too surprising since I fit the logistic form directly to the data, whereas the red curve corresponding to the approximate SIR model takes into account other processes, has additional simplifying assumptions and approximations. Nonetheless, we can use the data and the fit to the models, to decide if we want to reject the SIR model because that model implies a functional form that fits worse than a simpler logistic growth model, use this finding to decide whether we should relax those simplifying assumptions and derive a new form, or use this finding to justify using the SIR model because the fit to the data is "close enough." Of course, close enough depends on different applications. If one wants to describe a bunch of points with a simple curve or one wants to use the model to make forecasts.  In the case of forecasting to inform public policy, then "close enough" better be pretty darn close because many people's lives will be affected.  Often, the disagreements between modelers about their predictions boils down to details of the assumptions each modeler makes and the kinds of simplifications they use.
 
-```{r eval=F}
+```{r results="hide"}
 # logistic on death; use same function as used for logistic growth on positive count data
-temp <- covid.tracking.new[,c("day.numeric","death","state")]
-out.logistic.death <- nlme(death ~ richfu.logistic(day.numeric, l,y,b1), fixed = l+y+b1~1,
-            random =  l+y~1, data=na.omit(temp),start=c( l=1000,y=100,b1=-.2), verbose=T, groups=~state, control=nlmeControl(msMaxIter=1000,opt="nlminb",pnlsTol=.01,msVerbose=T,minScale=.01, maxIter=1000, eval.mas=1000) )
+starts <- getInitial(death~ SSlogis(day.numeric, Asym=1, xmid=1, scal=1), data=covid.tracking.new)
+tempdata <- covid.tracking.new[,c("day.numeric","death","state","deathIncrease")]
+out.logistic.death <- nlme(death ~ SSlogis(day.numeric, asym,xmid,scal), fixed = asym+xmid+scal~1,
+            random =  asym+xmid+scal~1, data=na.omit(tempdata),start=c( asym=starts[1], xmid=starts[2],scal=starts[3]), verbose=T, groups=~state, control=nlmeControl(msMaxIter=1000,opt="nlminb",pnlsTol=.01,msVerbose=T,minScale=.01, maxIter=1000, eval.mas=1000) )
+```
+
+```{r}
 
 # add predicted values from the logistic regression; need to fix scaling
-preddat$pred.logistic <- c(rep(NA,5),rev(predict(out.logistic.death)[names(predict(out.logistic.death))=="NY"]))
+preddat$pred.logistic <- c((predict(out.logistic.death)[names(predict(out.logistic.death))=="NY"]))
 ggplot(subset(covid.tracking.new, state=="NY"), aes(x=day.numeric,y=death)) +
  geom_line(data=preddat, aes(day.numeric, pred), color="red") +
   geom_point() + geom_line(data=preddat, aes(day.numeric, pred.logistic), color="blue")
@@ -317,6 +323,25 @@ ggplot(subset(covid.tracking.new, state=="NY"), aes(x=day.numeric,y=death)) +
                                    title="US Covid-19 Deaths New York")  +
     theme(legend.position = "none",
           strip.text.y = element_text(size=11))
+
+```
+
+Compare AIC
+
+```{r}
+AIC(out.logistic.death,out.nlme.deaths )
+```
+
+Add phase plot of this model
+
+```{r SIR.pred.phase.plot, eval=F}
+# copy from logistic in previous chapter; edit to fit this function
+logistic.pred.ts <- ts(diff(nydf.logistic$prediction))
+plot(logistic.pred.ts, stats::lag(logistic.pred.ts, 1), cex = .8, col = "blue",
+     main = "Phase plot of New York Positive Counts for the Logistic Model",
+      xlab="count(t)", ylab="count(t+1)")
+abline(0,1)
+lines(c(logistic.pred.ts), c(stats::lag(logistic.pred.ts, 1)),col="red",type="S")
 ```
 
 ```{r eval=F, echo=F}
@@ -326,20 +351,14 @@ richfu.sir3 <- function(d,a,b01,b11, b02,b12){
 a*4/(exp(b11*d + b01) + exp(-1*(b12*d + b02)))^2
 }
 
-out.nls <- nls(deathIncrease ~ richfu.sir3(day.numeric, a, b01,b11,b02,b12), data=na.omit(subset(covid.tracking.new[,c("state","deathIncrease","day.numeric")], state=="NY")), start=list(a=47, b01=-2.1,b11=.01, b02=-2.1, b12=.01))
-
-out.nls <- nls(deathIncrease ~ richfu.sir(day.numeric, a, b01,b11), data=na.omit(subset(covid.tracking.new[,c("state","deathIncrease","day.numeric")], state=="NY")), start=list(a=800, b01=-2.1,b11=.01))
- with(temp, plot(day.numeric, richfu.sir(day.numeric,698, -2.14, .06)))
-
-out <- nlme(deathIncrease ~ richfu.sir2(day.numeric, a, b0,b1,b2), fixed = a+b0+b1+b2~1,
-            random =  a+b1~1, data=covid.tracking.new,start=c(a=46.5, b0=-2.1,b1=.05, b2=500), verbose=T, groups=~state, control=nlmeControl(msMaxIter=500,opt="nlminb",pnlsTol=.001,msVerbose=T,minScale=.001, maxIter=500) )
+out.nls <- nls(deathIncrease ~ richfu.sir3(day.numeric, a, b01,b11,b02,b12), data=na.omit(subset(covid.tracking.new[,c("state","deathIncrease","day.numeric")], state=="NY"& deathIncrease<900)), start=list(a=10, b01=-1.9,b11=.005, b02=-1.9, b12=.006), algorithm="port")
 
 
- with(temp, plot(day.numeric, richfu.sir3(day.numeric,.391, -1.9, .008, -1.3, .2)))
- with(temp, points(day.numeric, deathIncrease,col="red"))
+ with(subset(tempdata,state=="NY"), plot(day.numeric, richfu.sir3(day.numeric,10, -1.9, .01, -2.1, .2),ylim=c(0,1000)))
+ with(subset(tempdata,state=="NY"), points(day.numeric, deathIncrease,col="red"))
 
-out <- nlme(deathIncrease ~ richfu.sir3(day.numeric, a, b0,b1,b0,b12), fixed = a+b0+b01+b1+b12~1,
-            random =  a~1, data=covid.tracking.new,start=c(a=.4, b0=-1.9,b01=-1.3, b1=.008,b12=.2), verbose=T, groups=~state, control=nlmeControl(msMaxIter=500,opt="nlminb",pnlsTol=.001,msVerbose=T,minScale=.001, maxIter=500) )
+out <- nlme(deathIncrease ~ richfu.sir3(day.numeric, a, b01,b11,b02,b12), fixed = a+b01+b11+b02+b12~1,
+            random =  a~1, data=covid.tracking.new,start=c(a=10, b01=-1.9,b11=.005, b02=-2.1,b12=.2), verbose=T, groups=~state, control=nlmeControl(msMaxIter=500,opt="nlminb",pnlsTol=1,msVerbose=T,minScale=1, maxIter=500) )
 
 ```
 

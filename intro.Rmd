@@ -40,11 +40,12 @@ Snow kept track track of which households developed cholera, where there were de
 
 <!-- ![Snow's Cholera Map of London](figures/snow-cholera.jpg) -->
 
-```{r, out.width='95%', fig.align='center', fig.cap="Snows Cholera Map of London", echo=F}
+```{r fig.align='center', fig.cap="Snows Cholera Map of London", echo=F}
 knitr::include_graphics('figures/snow-cholera.jpg')
 ```
+<!-- out.width='95%' -->
 
-```{r, out.width='95%', fig.align='center', fig.cap="Broad Street Pump Replica (box is an active webpage)", echo=F}
+```{r fig.align='center', fig.cap="Broad Street Pump Replica (box is an active webpage)", echo=F}
 knitr::include_url('http://www.ph.ucla.edu/epi/snow/broadstreetpumpcloseup.html', height="1000px")
 ```
 

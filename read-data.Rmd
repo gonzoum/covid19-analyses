@@ -202,6 +202,7 @@ This code makes use of the library tidycensus (and also functions in tidyverse).
 # you can see my code, AHHHHH;
 
 # a better way to do this is to save the code in a local file
+# say called keycode.R
 # and issue an R command to read that file to read the code like
 # my.key.code <- source(keycode.R)
 # where the file keycode.R merely sets the text to a name like mykey="THE.NUMBERS.LETTERS"
