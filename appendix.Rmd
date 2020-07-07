@@ -88,7 +88,7 @@ It is good to save this information to a separate file so that it can be added t
 writeLines(capture.output(sessionInfo()), "sessioninfo.txt")
 ```
 
-There are more systematic approaches to creating self-contained environments with the packae [renv](https://rstudio.github.io/renv/articles/renv.html) or solutions outside R such as [docker containers](https://www.docker.com/?utm_source=google&utm_medium=cpc&utm_campaign=dockerhomepage&utm_content=namer&utm_term=dockerhomepage&utm_budget=growth&gclid=CjwKCAjw7LX0BRBiEiwA__gNwx4_6mBagzF3TIvDIHw-BJixzj6KQAHgr5conMNwazJc-JI_uNeLqBoC-ZEQAvD_BwE).
+There are more systematic approaches to creating self-contained environments with the package [renv](https://rstudio.github.io/renv/articles/renv.html) or solutions outside R such as [docker containers](https://www.docker.com/?utm_source=google&utm_medium=cpc&utm_campaign=dockerhomepage&utm_content=namer&utm_term=dockerhomepage&utm_budget=growth&gclid=CjwKCAjw7LX0BRBiEiwA__gNwx4_6mBagzF3TIvDIHw-BJixzj6KQAHgr5conMNwazJc-JI_uNeLqBoC-ZEQAvD_BwE).
 
 # Appendix C: Saving Workspace
 

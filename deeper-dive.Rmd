@@ -138,6 +138,14 @@ covid.tracking.new$day.numeric <- as.numeric(covid.tracking.new$date)-18330
 covid.tracking.new$deathIncrease <- ifelse(is.na(covid.tracking.new$deathIncrease),0,covid.tracking.new$deathIncrease)
 ```
 
+```{r}
+#version was defined at the beginning of the the index.Rmd file
+#get current tag and use a filename prefix
+currentversion <- system("git describe --tags",intern=T)
+save.image(file=paste0("data-archive/",currentversion,"-dataworkspace.RData"))
+print(paste0("File name associated with this run is ", currentversion, "-dataworkspace.RData"))
+```
+
 ```{r results="hide"}
 #out <- nls(deathIncrease ~ richfu.sir(day.numeric, a, b0,b1), data=covid.tracking.new,start=c(a=155, b0=-1.9,b1=.001), algorithm="port")
 out <- nlme(deathIncrease ~ richfu.sir(day.numeric, a, b0,b1), fixed = a+b0+b1~1,
@@ -147,6 +155,7 @@ out <- nlme(deathIncrease ~ richfu.sir(day.numeric, a, b0,b1), fixed = a+b0+b1~1
 out.nooutlier <- nlme(deathIncrease ~ richfu.sir(day.numeric, a, b0,b1), fixed = a+b0+b1~1,
             random =  a+b1~1, data=subset(covid.tracking.new, deathIncrease<800),start=c(a=40, b0=-1.8,b1=.03), verbose=T, groups=~state, control=nlmeControl(msMaxIter=1000,opt="nlminb",pnlsTol=.0001,msVerbose=T,minScale=.0001, maxIter=1000) )
 temp.data <- covid.tracking.new
+# looks like two outliers as of 6/25/20, NY and NJ (prior only one NY)
 dropped.data <- which(covid.tracking.new$deathIncrease>=800)
 
 out.first42days <- nlme(deathIncrease ~ richfu.sir(day.numeric, a, b0,b1), fixed = a+b0+b1~1,
@@ -183,8 +192,10 @@ out.nlme.deaths.nooutlier <- out.nooutlier
 # add predicted values to the data frame
 covid.tracking.new$predicted <- predict(out, level=1)
 temp.predict <- predict(out.nooutlier, level=1)
-if (length(dropped.data)==1) 
-covid.tracking.new$predicted.nooutlier <- c(temp.predict[1:(dropped.data-1)], NA, temp.predict[dropped.data:length(temp.predict)])
+#if (length(dropped.data)==1) 
+#covid.tracking.new$predicted.nooutlier <- c(temp.predict[1:(dropped.data-1)], NA, #temp.predict[(dropped.data):length(temp.predict)])
+covid.tracking.new.nooutlier <- covid.tracking.new[-dropped.data,]
+covid.tracking.new.nooutlier$predicted.nooutlier <- temp.predict
 
 # just first 42 days
 covid.tracking.new$predicted.42 <- predict(out.first42days, newdata=data.frame(state=covid.tracking.new$state, day.numeric=covid.tracking.new$day.numeric), level=1)
@@ -195,7 +206,7 @@ covid.tracking.new$predicted.42 <- predict(out.first42days, newdata=data.frame(s
 ggplot( subset(covid.tracking.new, state=="NY"), aes(x=day.numeric,y=deathIncrease)) + 
   #  scale_x_date(date_breaks="1 week", date_labels = "%d %b") +
   geom_line(aes(day.numeric, predicted), color="red") + geom_point() +
-  geom_line(aes(day.numeric, predicted.nooutlier), color="blue") +
+  geom_line(data=subset(covid.tracking.new.nooutlier, state=="NY"), aes(day.numeric, predicted.nooutlier), color="blue") +
     geom_line(aes(day.numeric, predicted.42), color="green") +
  #   geom_line(aes(day.numeric, predicted.43plus), color="black") +
     labs(y="Daily incidence ",
@@ -380,4 +391,54 @@ points(unique(tempdata$day.numeric),c(unlist(by(tempdata$death,tempdata$day.nume
 
 out <- nlme(deathIncrease ~ richfu.sir2(day.numeric, a, b0,b1,b2), fixed = a+b0+b1+b2~1,
             random =  a+b1~1, data=covid.tracking.new,start=c(a=47.2, b0=-2.8,b1=.1, b2=500), verbose=T, groups=~state, control=nlmeControl(msMaxIter=500,opt="nlminb",pnlsTol=.001,msVerbose=T,minScale=.001, maxIter=500) )
+```
+
+## Functional Equations
+
+Need to develop this section. Currently just a few plots.
+
+```{r FE.test.expvslogistic}
+# should pull out the coef from the fitted objects
+# add the sech form
+d <- 0:90
+pred <- richfu(d, 0,1.0288,.0578,1)
+test.1 <- data.frame(d=d, pred=c(NA,pred[-length(d)]), pred.plus=c(NA, pred[-1]), group = rep(1,length(d)))
+test.2 <- data.frame(d=d, pred=c(rep(NA,2),pred[-seq(length(d)-1,length(d),1)]), pred.plus=c(rep(NA,2),pred[-seq(1,2,1)]), group = rep(2,length(d)))
+test.3 <- data.frame(d=d, pred=c(rep(NA,3),pred[-seq(length(d)-2,length(d),1)]), pred.plus=c(rep(NA,3),pred[-seq(1,3,1)]), group = rep(3,length(d)))
+test.4 <- data.frame(d=d, pred=c(rep(NA,4),pred[-seq(length(d)-3,length(d),1)]), pred.plus=c(rep(NA,4),pred[-seq(1,4,1)]), group = rep(4,length(d)))
+test.5 <- data.frame(d=d, pred=c(rep(NA,5),pred[-seq(length(d)-4,length(d),1)]), pred.plus=c(rep(NA,5),pred[-seq(1,5,1)]), group = rep(5,length(d)))
+test <- rbind(test.1,test.2, test.3, test.4, test.5)
+test$group <- factor(test$group)
+
+ggplot(test, aes(x=pred,y=pred.plus, group=group, color=group)) + geom_line()+ xlab("f(t)") + ylab("f(t+k)") + labs(color="value of k")
+
+ggplot(data.frame(d,pred), aes(d,pred)) + geom_line() + xlab("time") + ylab("count")+ ggtitle("Best fitting exponential")
+
+#redo for NY
+d <- nydf.logistic$day.numeric
+pred <- nydf.logistic$percap10000
+test.1 <- data.frame(d=d, pred=c(NA,pred[-length(d)]), pred.plus=c(NA, pred[-1]), group = rep(1,length(d)))
+test.2 <- data.frame(d=d, pred=c(rep(NA,2),pred[-seq(length(d)-1,length(d),1)]), pred.plus=c(rep(NA,2),pred[-seq(1,2,1)]), group = rep(2,length(d)))
+test.3 <- data.frame(d=d, pred=c(rep(NA,3),pred[-seq(length(d)-2,length(d),1)]), pred.plus=c(rep(NA,3),pred[-seq(1,3,1)]), group = rep(3,length(d)))
+test.4 <- data.frame(d=d, pred=c(rep(NA,4),pred[-seq(length(d)-3,length(d),1)]), pred.plus=c(rep(NA,4),pred[-seq(1,4,1)]), group = rep(4,length(d)))
+test.5 <- data.frame(d=d, pred=c(rep(NA,5),pred[-seq(length(d)-4,length(d),1)]), pred.plus=c(rep(NA,5),pred[-seq(1,5,1)]), group = rep(5,length(d)))
+test <- rbind(test.1,test.2, test.3, test.4, test.5)
+test$group <- factor(test$group)
+
+ggplot(test, aes(x=pred,y=pred.plus, group=group, color=group)) + geom_line()+ xlab("f(t)") + ylab("f(t+k)") + labs(color="value of k")
+ggplot(data.frame(d,pred), aes(d,pred)) + geom_line() + xlab("time") + ylab("count") + ggtitle("Actual Data")
+
+#redo for NY  SSlogis
+d <- 0:90
+pred <- SSlogis(d, 186.233, 34.63, 9.4478)
+test.1 <- data.frame(d=d, pred=c(NA,pred[-length(d)]), pred.plus=c(NA, pred[-1]), group = rep(1,length(d)))
+test.2 <- data.frame(d=d, pred=c(rep(NA,2),pred[-seq(length(d)-1,length(d),1)]), pred.plus=c(rep(NA,2),pred[-seq(1,2,1)]), group = rep(2,length(d)))
+test.3 <- data.frame(d=d, pred=c(rep(NA,3),pred[-seq(length(d)-2,length(d),1)]), pred.plus=c(rep(NA,3),pred[-seq(1,3,1)]), group = rep(3,length(d)))
+test.4 <- data.frame(d=d, pred=c(rep(NA,4),pred[-seq(length(d)-3,length(d),1)]), pred.plus=c(rep(NA,4),pred[-seq(1,4,1)]), group = rep(4,length(d)))
+test.5 <- data.frame(d=d, pred=c(rep(NA,5),pred[-seq(length(d)-4,length(d),1)]), pred.plus=c(rep(NA,5),pred[-seq(1,5,1)]), group = rep(5,length(d)))
+test <- rbind(test.1,test.2, test.3, test.4, test.5)
+test$group <- factor(test$group)
+
+ggplot(test, aes(x=pred,y=pred.plus, group=group, color=group)) + geom_line()+ xlab("f(t)") + ylab("f(t+k)") + labs(color="value of k")
+ggplot(data.frame(d,pred), aes(d,pred)) + geom_line() + xlab("time") + ylab("count") + ggtitle("Best fitting logistic")
 ```

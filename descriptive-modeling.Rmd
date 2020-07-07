@@ -51,8 +51,6 @@ Here are the results of this simple linear mixed model on the log scale.
 # run linear mixed model default optimizer didn't converge so switched to Nelder_Mead
 out.lmer <- lmer(percent.log10 ~ 1 + day.numeric + (1+ day.numeric|state.abb), allstates.long, control = lmerControl(optimizer ="Nelder_Mead"))
 
-# summary(out.lmer)
-# tab_model() produces nicer looking tables
 if (is_html_output())
 tab_model(out.lmer, show.se=T, show.stat=T)
 ```
@@ -399,7 +397,7 @@ The fixed effects parameters refer to state-level parameters. You can think of t
 
 Let's plot  the fitted values of each state.  These are the predicted exponential curves according to the model. Note that this plot represents the model estimates rather than the actual data.
 
-```{r fig.cap="Exponential Function Estimated through Nonlinear Mixed Model Regression"}
+```{r expo.fitted, fig.cap="Exponential Function Estimated through Nonlinear Mixed Model Regression"}
 predmatnonlin <- data.frame(day.numeric=rep(c(0:max.day.numeric),50),state.abb=rep(rownames(coef(out.exponential)),each=max.day.numeric+1))
 predmatnonlin$prediction <- predict(out.exponential, list(day.numeric=predmatnonlin$day.numeric, state.abb=predmatnonlin$state.abb),level=1)
 predmatnonlin.exponential <- predmatnonlin
@@ -409,7 +407,7 @@ nonlinreg
 
 We can examine specific states. The best fitting exponential curve for New York is shown in the next figure (observed data points are in blue).
 
-```{r}
+```{r expo.ny}
 nydf <- predmatnonlin[predmatnonlin$state.abb=="New York",]
 
 nydf$percent <- allstates.long$percent[allstates.long$state.abb=="New York"]
@@ -568,11 +566,12 @@ starts <- getInitial(count~ SSlogis(day.numeric, Asym=1, xmid=1, scal=1), data=a
  allstates.long.new$percap10000 <- allstates.long.new$percap100 * 100
  starts <- getInitial(percap10000~ SSlogis(day.numeric, Asym=1, xmid=1, scal=1), data=allstates.long.new)
 
-out.perc <- nlme(percap10000 ~ SSlogis(day.numeric, Asym, xmid,scal), fixed =  Asym + xmid + scal  ~1,
-          random = Asym + xmid + scal~ 1, data=na.omit(allstates.long.new),start=c(Asym=starts[1], xmid=starts[2], scal=starts[3]), verbose=T, control=nlmeControl(msMaxIter=500,opt="nlminb",pnlsTol=.01,msVerbose=T,minScale=.01, maxIter=400, eval.max=400))
-
 # out.perc <- nlme(percap10000 ~ SSlogis(day.numeric, Asym, xmid,scal), fixed =  Asym + xmid + scal  ~1,
-#            random = Asym + xmid + scal~ 1, data=na.omit(allstates.long.new),start=c(Asym=64, xmid=60, scal=15), verbose=T, control=nlmeControl(msMaxIter=500,opt="nlminb",pnlsTol=.001,msVerbose=T,minScale=.001, maxIter=400, eval.max=400))
+#            random = Asym + xmid + scal~ 1, data=na.omit(allstates.long.new),start=c(Asym=starts[1], xmid=starts[2], scal=starts[3]), verbose=T, control=nlmeControl(msMaxIter=500,opt="nlminb",pnlsTol=.1,msVerbose=T,minScale=.1, maxIter=400, eval.max=400, tolerance=.1))
+
+#drop random effect scal for now 7/6/2020
+ out.perc <- nlme(percap10000 ~ SSlogis(day.numeric, Asym, xmid,scal), fixed =  Asym + xmid + scal  ~1,
+            random = Asym + scal ~ 1, data=na.omit(allstates.long.new),start=c(Asym=115, xmid=80, scal=21), verbose=T, control=nlmeControl(msMaxIter=500,opt="nlminb",pnlsTol=.01,msVerbose=T,minScale=.01, maxIter=400, eval.max=400, tolerance=.1))
 ```
 
 ```{r}
@@ -789,10 +788,11 @@ par(pty="m")
 # use earlier estimates as starting values
 start.vals <-  fixef(out.logistic)
 
+#drop random 7/6/20 xmid
 out <- nlme(percap10000 ~ SSlogis(day.numeric, Asym, xmid, scal+b2*povertyperc), fixed = Asym + xmid + scal+b2~1,
-            random =  Asym  + xmid + scal ~1, data=na.omit(allstates.long.new),
-            start=c( Asym=start.vals[1],xmid=start.vals[2],scal=start.vals[3], b2=.01), verbose=T,  
-            control=nlmeControl(msMaxIter=1000,opt="nlminb",tolerance=.01, pnlsTol=.001,msVerbose=T,minScale=.001, maxIter=1000, eval.max=1000) )
+            random =  Asym   + scal ~1, data=na.omit(allstates.long.new),
+            start=c( Asym=start.vals[1],xmid=start.vals[2],scal=start.vals[3], b2=-.3), verbose=T,  
+            control=nlmeControl(msMaxIter=1000,opt="nlminb",tolerance=.1, pnlsTol=.01,msVerbose=T,minScale=.01, maxIter=1000, eval.max=1000) )
 ```
 
 
@@ -809,7 +809,8 @@ if (is_latex_output())
 knitr::kable(intervals(out.logistic.poverty, which="fixed")[[1]])
 ```
 
-
+ DOUBLECHECK: significance status has changed. 
+ 
 The $\beta$ associated with poverty is  statistically significant in this example so there is evidence that the state variability in the scal parameter of this logistic growth model is associated with the state's poverty level.  In other words, state-level poverty is associated with how quickly a state increases in positive tests (the scal parameter). We need to be careful in interpreting this association given that the dependent variable we are using could reflect covid incidence but could also reflect the number of tests a state has conducted.
 
 ```{exercise}
@@ -824,7 +825,7 @@ While the presentation has focused on associations, the overall framework can be
 
 I'll revert back to the simple logistic growth model at the start of this subsection.  The residual plots already raised concern about the model fit.  We can also examine additional assumptions of the model such as the distribution of the random effects. The random effect parameters in the nonlinear mixed logistic growth model are assumed to follow a multivariate normal distribution, which seems to be reasonable so many days into the pandemic. Here is a 2D density plot (I know, a lot to ask for when there are relatively few pairs of points, one for each state), separate qqplots and boxplots for the asymptote and scale parameters.  The qqplot for the asymptote parameter has a long tail, mostly due to New York and New Jersey; the ones for the xmid and scal parameters look ok. 
 
-```{r}
+```{r logistic.assumptions}
 # edit this function to be pairs of scatterplots for 3 random effects
 #ggplot(coef(out.logistic), aes(x=l, y=b1)) + stat_density_2d(aes(fill = ..level..), geom = "polygon", colour="white") + xlab("l = asymptote")
 
@@ -946,7 +947,7 @@ saveRDS(fit_loss, file="fitloss.RDS")
 
 Here are the signature Bayesian plots of each parameter (density and trace plots) as well as the intercorrelations across the parameters.
 
-```{r}
+```{r bayes.plots}
 # in interest of time just read in the saved object 
 # currently using data through 4/22/20 in what I saved
 fit_loss <- readRDS("fitloss.RDS")

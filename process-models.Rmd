@@ -103,9 +103,9 @@ Here is the characteristic plot of a standard change process following an expone
 
 ```{r}
 exp.pred.ts <- ts(diff(nydf.exponential$prediction))
-plot(exp.pred.ts, stats::lag(exp.pred.ts, 1), cex = .8, col = "blue",
+plot(exp.pred.ts, stats::lag(exp.pred.ts, 1), cex = .5, col = "blue",
      main = "Phase plot of New York Positive Counts for the Exponential Model",
-     xlab="count(t)", ylab="count(t+1)", xlim=c(0.009,.045),ylim=c(0.009,.045))
+     xlab="count(t)", ylab="count(t+1)", xlim=c(0.009,.036),ylim=c(0.009,.036))
 abline(0,1)
 ```
 
@@ -113,9 +113,9 @@ Sometimes this plot is produced in the form of a cobweb by including the step fu
 
 ```{r}
 exp.pred.ts <- ts(diff(nydf.exponential$prediction))
-plot(exp.pred.ts, stats::lag(exp.pred.ts, 1), cex = .8, col = "blue", 
+plot(exp.pred.ts, stats::lag(exp.pred.ts, 1), cex = .5, col = "blue", 
      main = "Phase plot of New York Positive Counts for the Exponential Model",
-     xlab="count(t)", ylab="count(t+1)",xlim=c(0.009,.045),ylim=c(0.009,.045))
+     xlab="count(t)", ylab="count(t+1)",xlim=c(0.009,.036),ylim=c(0.009,.036))
 abline(0,1)
 lines(c(exp.pred.ts), c(stats::lag(exp.pred.ts, 1)),col="red",type="S")
 ```
@@ -125,7 +125,7 @@ We can also examine the analogous phase plot for the logistic growth model that 
 
 ```{r logistic.pred.phase.plot}
 logistic.pred.ts <- ts(diff(nydf.logistic$prediction))
-plot(logistic.pred.ts, stats::lag(logistic.pred.ts, 1), cex = .8, col = "blue",
+plot(logistic.pred.ts, stats::lag(logistic.pred.ts, 1), cex = .5, col = "blue",
      main = "Phase plot of New York Positive Counts for the Logistic Model",
       xlab="count(t)", ylab="count(t+1)")
 abline(0,1)
@@ -137,7 +137,7 @@ Now that we have a clear understanding of the phase plots the exponential and lo
 ```{r data.phase.plot}
 data <- data.frame(days= actualny$x[-1], counts= actualny$y[-1])
 time.series.day.counts <- ts(diff(data$counts))
-plot(time.series.day.counts, stats::lag(time.series.day.counts, 1), cex = .8, col = "blue",
+plot(time.series.day.counts, stats::lag(time.series.day.counts, 1), cex = .5, col = "blue",
      main = "Lag plot of New York Positive Counts", xy.lines=F, xy.labels=T,
      xlab="count(t)", ylab="count(t+1)")
 abline(0,1)
