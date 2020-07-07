@@ -1,0 +1,53 @@
+\usepackage{pgfpages}
+%\setbeameroption{show notes}
+%\setbeameroption{show notes on second screen=right}
+%use dspdfviewer 
+%old: use pdfpc -n right phoebe-retire.pdf
+
+\usetheme[numbering=none]{metropolis}
+\usepackage{appendixnumberbeamer}
+
+
+%frame around includegraphics
+\usepackage[export]{adjustbox}
+\newcommand{\cfbox}[1]{%
+	\adjustbox{cfbox=#1}%
+}
+
+\useoutertheme{metropolis}
+\useinnertheme{metropolis}
+\usefonttheme{metropolis}
+%keeps above same but others change by seahorse (e.g., light gray background for frametitle
+\usecolortheme{seahorse} 
+
+\usepackage{tikz}
+
+\usepackage{booktabs}
+\usepackage[scale=2]{ccicons}
+
+\usepackage{xcolor,colortbl}
+
+\usepackage{pgfplots}
+\usepgfplotslibrary{dateplot}
+
+\usepackage{xspace}
+\newcommand{\themename}{\textbf{\textsc{metropolis}}\xspace}
+
+\usepackage{graphicx}
+
+%from bookdown
+
+\usepackage{longtable}
+%\usepackage[bf,singlelinecheck=off]{caption}
+%
+\usepackage{framed,color}
+\definecolor{shadecolor}{RGB}{248,248,248}
+%
+
+%
+\urlstyle{tt}
+%
+%
+%
+\usepackage{amsthm}
+

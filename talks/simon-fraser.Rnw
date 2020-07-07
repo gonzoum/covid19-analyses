@@ -1,0 +1,938 @@
+%\documentclass[10pt]{beamer}
+\documentclass[ignorenonframetext,10pt,handout]{beamer}
+\usepackage{pgfpages}
+\setbeameroption{show notes}
+\setbeameroption{show notes on second screen=right}
+%pdfpc --notes="right" simon-fraser.pdf --windowed="both" -s  (w is windowed)
+%use dspdfviewer
+%old: use pdfpc -n right phoebe-retire.pdf
+
+\usetheme[numbering=none]{metropolis}
+\usepackage{appendixnumberbeamer}
+
+%frame around includegraphics
+\usepackage[export]{adjustbox}
+\newcommand{\cfbox}[1]{%
+	\adjustbox{cfbox=#1}%
+}
+
+\useoutertheme{metropolis}
+\useinnertheme{metropolis}
+\usefonttheme{metropolis}
+%keeps above same but others change by seahorse (e.g., light gray background for frametitle
+\usecolortheme{seahorse}
+
+\usepackage{tikz}
+\usetikzlibrary{arrows,shapes}
+
+\usepackage{booktabs}
+\usepackage[scale=2]{ccicons}
+
+\usepackage{xcolor,colortbl}
+
+\usepackage{pgfplots}
+\usepgfplotslibrary{dateplot}
+
+\usepackage{xspace}
+\newcommand{\themename}{\textbf{\textsc{metropolis}}\xspace}
+
+\usepackage{graphicx}
+
+\usepackage{hyperref}
+\hypersetup{colorlinks=true,linkcolor=blue}
+
+\usepackage[nosectionbib]{apacite}
+%removes document icon from ref list and next line removes "reference" title
+\setbeamertemplate{bibliography item}{}
+\renewcommand\refname{}
+
+\setbeamertemplate{caption}[numbered]
+%eliminates new section hence orange line
+\makeatletter
+\let\st@rtbibsection\@bibnewpage
+\let\st@rtbibchapter\@bibnewpage
+\makeatother
+
+
+\title{Assumptions in Nonlinear Mixed Models: \\Illustrating with Covid-19 Data }
+%\subtitle{}
+\date{\today}
+\author{Richard Gonzalez}
+\institute{University of Michigan}
+% \titlegraphic{\hfill\includegraphics[height=1.5cm]{logo.pdf}}
+
+\begin{document}
+\mode<all>
+\maketitle
+
+<<echo=F,message=F,warning=F>>=
+options(width=60, digits=3)
+library(formattable)
+library(stargazer)
+library(nlme)
+library(sjPlot)
+library(kableExtra)
+#load(file="../data-archive/v.95-110-g95fe04f-dataworkspace.RData")
+load(file="../data-archive/v.95-111-gbfd5aae-dataworkspace.RData")
+@
+
+   \note{I'm honored to be part of today's remote conference. While I've been engaged in many zoom meetings these last three months, this is my first conference. \\~\\
+
+Today I want to take issue with how advanced regression models tend to be analyzed in practice. I'll use examples with Covid-19 data. \\~\\
+
+Covid-19 data are showing patterns that are more complex than simple exponential or logistic growth models. I will discuss implications for measurement, dynamic models, and thinking through effects of real-time interventions (e.g., stay-in-place orders) on how we approach modeling efforts. 
+}
+
+\frame{
+\frametitle{Standard Approach to (Non)Linear Mixed Model Regression}
+
+\begin{eqnarray*}
+Y_i &=& f(X_i, \theta_i) + \epsilon_i
+\end{eqnarray*}
+
+\begin{enumerate}
+\item Assert a particular function $f$ and a loss function (e.g., least squares, maximum likelihood, posterior expected loss)
+\item Estimate parameters
+\item Compute model fit indices
+\item Check diagnostics for specification problems
+\end{enumerate}
+
+My concern today is with Step 1 and relatively little attention given to Step 4.\\[2ex]
+
+Is there a procedure that allows testing functional forms directly? 
+
+Let's see what can go awry.
+}
+\note{ith case with Xi, theta, and epsilon being vectors.\newline
+  
+Linear regression is a special case. We assume f is linear, theta is
+  the vector of betas. More generally, f need not be linear and theta is
+  more complicated than a parameter for every element in X estimation.
+
+
+}
+
+
+
+\begin{frame}{Outline}
+  \setbeamertemplate{section in toc}[sections numbered]
+ \tableofcontents[hideallsubsections]
+\end{frame}
+
+\section{Users go straight to modeling}
+\subsection{Exponential Growth Curve and Linear in Log}
+
+\frame{
+\frametitle{Myth?}
+\begin{exampleblock}{Assertion:}
+Pandemics involve exponential growth over time
+\end{exampleblock}
+
+\begin{exampleblock}{Implication:}
+Take the log of the data and run linear models with time as the predictor
+\end{exampleblock}
+
+\vspace*{3ex}
+
+To account for unit-level variability run linear mixed model so each unit (e.g., country, state, county) has unique intercept and slope parameters
+}
+
+\begin{frame}
+\vspace*{-2ex}
+<<echo=FALSE,results="asis">>=
+stargazer(out.lmer, header=F, type="latex",omit.stat="n",title="Linear Mixed Model: Log Per Capita By 50 States",font.size="scriptsize")
+@
+<<echo=FALSE,results="asis">>=
+#knitr::kable(VarCorr(out.lmer), format="latex",digits=3) %>% kable_styling(font_size=7)
+x <- data.frame(VarCorr(out.lmer))[,c(2,5)]
+x$sdcor <- round(x$sdcor,3)
+colnames(x) <- c("parameter","sd_or_corr")
+x[3,1] <- "Int-Slope Corr"
+x[4,1] <- "Residual"
+knitr::kable(x, format="latex") %>% kable_styling(font_size=7)
+@
+\end{frame}
+\note{here is output from lmer on log percapita}
+
+\begin{frame}
+\begin{center}
+	\vfill
+	\includegraphics[height=3.25in]{../_public/covid19-analyses_files/figure-html/{log.model.plot.coef-1}.png}
+\end{center}
+\vfill
+\end{frame}
+
+\section{Checking for evidence of exponential growth}
+
+\begin{frame}
+\begin{center}
+	\vfill
+	\includegraphics[height=3.25in]{../_public/covid19-analyses_files/figure-html/{log.model.residuals-1}.png}
+\end{center}
+\vfill
+\end{frame}
+
+\begin{frame}
+\begin{center}
+	\vfill
+	\includegraphics[height=3.25in]{../_public/covid19-analyses_files/figure-html/{log.model.residuals-2}.png}
+\end{center}
+\vfill
+\end{frame}
+
+\begin{frame}
+\begin{center}
+	\vfill
+	\includegraphics[height=3.25in]{../_public/covid19-analyses_files/figure-html/{log.model.pred.ny-1}.png}
+\end{center}
+\vfill
+\end{frame}
+
+\begin{frame}
+\begin{center}
+	\vfill
+	\includegraphics[height=3.25in]{../_public/covid19-analyses_files/figure-html/{log.model.predict.mi-1}.png}
+\end{center}
+\vfill
+\end{frame}
+
+
+\begin{frame}
+\begin{center}
+	\vfill
+	\includegraphics[height=3.25in]{../_public/covid19-analyses_files/figure-html/usstates-1.png}
+\end{center}
+\vfill
+\end{frame}
+\note{Now let's look at actual data; Here are the counts per cap out of 100 by state since early March }
+
+\begin{frame}
+\begin{center}
+	\vfill
+	\includegraphics[height=3.25in]{../_public/covid19-analyses_files/figure-html/usstates-log-1.png}
+\end{center}
+\vfill
+\end{frame}
+\note{same plot but taking logs; doesn't look like a straight line\\~\\
+
+we could reject the straight line even a couple of weeks into this in late March so not an issue of various public health interventions}
+
+\begin{frame}
+\begin{center}
+	\vfill
+	\includegraphics[height=3.25in]{../_public/covid19-analyses_files/figure-html/usstates-log-grid-1.png}
+\end{center}
+\vfill
+\end{frame}
+\note{log plot but broken up by population; not much of a pattern by  population}
+
+\begin{frame}
+\begin{center}
+	\vfill
+	\includegraphics[height=3.25in]{../_public/covid19-analyses_files/figure-html/incplot-1.png}
+\end{center}
+\vfill
+\end{frame}
+\note{blue curve is 7 day moving average}
+
+\frame{
+\frametitle{Exponential model through nonlinear mixed regression}
+\begin{exampleblock}{Functional Form:}
+$\mbox{percentage} = y r^t + \epsilon$
+\end{exampleblock}
+
+\begin{exampleblock}{Linear in log model:}
+implies a multiplicative error term in the original scale
+\end{exampleblock}
+
+\vspace*{3ex}
+Maybe better to estimate the exponential function directly in a nonlinear mixed model.
+}
+
+\begin{frame}
+\vspace*{-2ex}
+<<echo=FALSE,results="asis">>=
+   stargazer(out.exponential, header=F, type="latex",report="vcs",single.row=T,omit.stat="n",  omit.table.layout = "n", digits=2, digits.extra=2,font.size="scriptsize")
+@
+<<echo=FALSE,results="asis">>=
+knitr::kable(VarCorr(out.exponential), format="latex",digits=3) %>% kable_styling(font_size=7)
+@
+
+\end{frame}
+
+\begin{frame}
+\begin{center}
+	\vfill
+	\includegraphics[height=3.25in]{../_public/covid19-analyses_files/figure-html/{expo.fitted-1}.png}
+\end{center}
+\vfill
+\end{frame}
+
+\begin{frame}
+\begin{center}
+	\vfill
+	\includegraphics[height=3.25in]{../_public/covid19-analyses_files/figure-html/{expo.ny-1}.png}
+\end{center}
+\vfill
+\end{frame}
+
+\begin{frame}
+\begin{center}
+	\vfill
+	\includegraphics[height=3.25in]{../_public/covid19-analyses_files/figure-html/{resid.expo.ny-1}.png}
+\end{center}
+\vfill
+\end{frame}
+
+\begin{frame}
+\begin{center}
+	\vfill
+	\includegraphics[height=3.25in]{../_public/covid19-analyses_files/figure-html/{expo.qqplot-1}.png}
+\end{center}
+\vfill
+\end{frame}
+
+
+\section{Alternative process: Logistic growth}
+
+\frame{
+General logistic growth form I'm using:
+
+\begin{eqnarray*}
+\frac{\mbox{count}}{\mbox{population}}10000 &=& \frac{\mbox{asymptote}}{1 + y e^{\beta_1(\mbox{day.mid} - \mbox{day})}}
+\end{eqnarray*}
+
+For the analyses presented today I'm setting y=1 and focusing on the other three parameters.
+
+Let's see what these 3 parameters control.
+}
+
+
+\begin{frame}
+\begin{center}
+	\vfill
+	\includegraphics[height=3.25in]{../_public/covid19-analyses_files/figure-html/{demo.logistic-1}.png}
+\end{center}
+\vfill
+\end{frame}
+
+\begin{frame}
+\begin{center}
+	\vfill
+	\includegraphics[height=3.25in]{../_public/covid19-analyses_files/figure-html/{demo.logistic-2}.png}
+\end{center}
+\vfill
+\end{frame}
+
+\begin{frame}
+\begin{center}
+	\vfill
+	\includegraphics[height=3.25in]{../_public/covid19-analyses_files/figure-html/{demo.logistic-3}.png}
+\end{center}
+\vfill
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Logistic Growth: Parameters}
+<<echo=FALSE,results="asis">>=
+   stargazer(out.logistic, header=F, type="latex",report="vcs",single.row=T,omit.stat="n",  omit.table.layout = "n", digits=2, digits.extra=2,font.size="scriptsize")
+@
+<<echo=FALSE,results="asis">>=
+knitr::kable(VarCorr(out.logistic), format="latex",digits=3) %>% kable_styling(font_size=7)
+@
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Logistic Growth: Confidence Intervals}
+<<echo=FALSE>>=
+knitr::kable(intervals(out.logistic,which="fixed")[[1]])
+
+knitr::kable(intervals(out.logistic,which="var-cov")[[1]])
+@
+\end{frame}
+
+\begin{frame}
+\begin{center}
+	\vfill
+	\includegraphics[height=3.25in]{../_public/covid19-analyses_files/figure-html/{resid.logistic-1}.png}
+\end{center}
+\vfill
+\end{frame}
+
+\begin{frame}
+\begin{center}
+	\vfill
+	\includegraphics[height=3.25in]{../_public/covid19-analyses_files/figure-html/{logistic.fit-1}.png}
+\end{center}
+\vfill
+\end{frame}
+
+\begin{frame}
+\begin{center}
+	\vfill
+	\includegraphics[height=3.25in]{../_public/covid19-analyses_files/figure-html/{logistic.ny-1}.png}
+\end{center}
+\vfill
+\end{frame}
+
+\begin{frame}
+\begin{center}
+	\vfill
+	\includegraphics[height=3.25in]{../_public/covid19-analyses_files/figure-html/{logistic.by.state-1}.png}
+\end{center}
+\vfill
+\end{frame}
+
+\begin{frame}
+\begin{center}
+	\vfill
+	\includegraphics[height=3.25in]{../_public/covid19-analyses_files/figure-html/{logistic.by.state-2}.png}
+\end{center}
+\vfill
+\end{frame}
+\note{we can add predictors to this model, such as state poverty level, to see whether the predictors influences the properties of these trajectories, such as how high, when and steepness}
+
+
+\section{SIR Models}
+
+\frame{\frametitle{SIR models}
+
+System of differential equations to model number in each of three states: Susceptible, Infectious, Recovered
+
+\begin{eqnarray*}
+\mbox{change S} &=&  \beta_1 \frac{ I S}{N}\\
+\mbox{change I} &=& \beta_1 \frac{ I S}{N} - \beta_2 I \\
+\mbox{change R} &=& \beta_2 I 
+\end{eqnarray*}
+where ``change S'' denotes $\frac{dS}{dt}$.  Keeping things simple (e.g., no details on initial conditions)
+
+\begin{exampleblock}{Comparison:}
+Exponential: $\mbox{change C} =  \beta_1 f(t)$\newline
+
+Logistic: $\mbox{change C} =  \beta_1 f(t)*(1-f(t))$
+\end{exampleblock}
+}
+\note{you can think of these as latent states in a predator-prey kind of setting \\~\\
+
+the betas lead to the Rnaught parameter \\~\\
+
+by change C I mean change in count \\~\\
+}
+
+\begin{frame}
+\begin{center}
+	\vfill
+	\includegraphics[height=3.25in]{fancy-sir}
+\end{center}
+\vfill
+SIR models can get elaborate; from Giordano et al (2020)
+\end{frame}
+
+\frame{
+\frametitle{Alternative SIR derivation}
+With a few simple assumptions such as people interact randomly (questionable) and a Poisson process, the simple SIR model can be approximated with this form
+
+\begin{displaymath}
+a \;\;\mbox{sech}^2 (\kappa_0 + \kappa_1 t)
+\end{displaymath}
+
+The 3 parameters are functions of the SIR parameters.
+
+FYI: $\mbox{sech} (x) = \frac{2}{\exp^{x} + \exp^{-x}}$
+
+From Kermack \& McKendrick (1927), see Keeling \& Rohani (2008)
+}
+\note{provides what is called the epidemic curve, or number of ``cases'' per unit time;  derivation is in terms of R but example is deaths but text says ``cases''.}
+
+\begin{frame}
+\frametitle{Measles in Bombay 1905-06}
+\begin{center}
+	\includegraphics[height=3in]{measles-graph}
+\end{center}
+\vfill
+From Keeling and Rohani (2008)
+\end{frame}
+\note{works well in some diseases, note the symmetry unlike what we see in covid}
+
+\begin{frame}
+\begin{center}
+	\vfill
+	\includegraphics[height=3.25in]{../_public/covid19-analyses_files/figure-html/{sir.approx.ny-1}.png}
+\end{center}
+\vfill
+\end{frame}
+
+\begin{frame}
+\begin{center}
+	\includegraphics[height=3.25in]{../_public/covid19-analyses_files/figure-html/{sir.approx.nj.mi-1}.png}
+\end{center}
+\vfill
+\end{frame}
+
+\frame{
+\frametitle{Integrating the ``sech'' approximation}
+
+The differential equation implies this growth curve:
+
+\begin{eqnarray*}
+\bigg[\frac{a}{\kappa_1 (1+e^{2(\kappa_0 + \kappa_1 t)} )}\bigg] \;\;\; \bigg[(e^{2(\kappa_0 + \kappa_1 t)} - 1)\bigg] + C
+\end{eqnarray*}
+
+Only three parameters not counting the integration constant, so same number of parameters as the logistic growth function.
+
+\begin{exampleblock}{Interesting observation:}
+Left square bracket: logistic growth form
+
+Right square bracket: exponential growth form
+\end{exampleblock}
+
+\begin{exampleblock}{Preliminary evidence:}
+Better fit with this ``sech'' form than basic logistic growth (AIC, BIC, residual diagnostics)
+\end{exampleblock}
+}
+\note{sech: hyperbolic secant}
+
+
+\begin{frame}
+\begin{center}
+	\vfill
+	\includegraphics[height=3.25in]{../_public/covid19-analyses_files/figure-html/{sir.cum.ny-1}.png}
+\end{center}
+\vfill
+\end{frame}
+
+\section{Functional Equations}
+
+\frame{
+Functional Equations:  branch of mathematics where the unknown is a functional form
+
+Example: f(x+y) = f(x) + f(y). Which functions f satisfy this equation under a set of conditions?
+
+
+How can they be used in data analysis?
+}
+
+\begin{frame}
+\frametitle{Plateau's gray study}
+  
+  Eight artists were given one black \tikz \fill[black] (1ex,1ex) circle
+  (1ex) ; and one white patch \tikz \draw (1ex,1ex) circle
+  (1ex) ;.
+    
+
+They went to their studios to mix a gray that was midway between the black and white patches--something like \tikz \fill[black!35!white] (1ex,1ex) circle
+  (1ex) ; .
+
+\vspace*{1ex}
+{\visible<2-> { An invariance was observed! 
+
+\vspace*{2ex}
+All eight artists came back with the same
+ shade of gray.\\[2ex]
+
+This was an important observation.
+
+}}
+
+
+\end{frame}
+\note{Narens, extraterrestrial paper, refers to this as lightness and
+  hue constancy. Offers a verbal argument involving ratio of physical
+  intensity reflected from the patch from the physical intensity
+  reflected from the walls remaining constant.
+}
+
+\begin{frame}
+The invariance can be modeled as
+
+ \begin{eqnarray*}
+   cM(a,b) &=& M(ca, cb)
+ \end{eqnarray*}
+such that 
+\begin{eqnarray*}
+M(a,b) &=& \frac{u(a) + u(b)}{2}  
+\end{eqnarray*}
+
+{\visible<2-> { Under the assumption that $M$ is an average, the only solutions to $u$ are:}}
+\begin{eqnarray*}
+{\visible<2-> {u(a) }}&{\visible<2-> {=}}&{\visible<2-> { \alpha a^{\beta} + \gamma  }} \hspace*{2ex}{\visible<3-> {\text{\color{blue} Steven's power law}}}\\
+{\visible<2-> {u(a) }}&{\visible<2-> {=}}& {\visible<2-> {\alpha \log(a)
+    + \beta  }} \hspace*{2ex} {\visible<3-> {\text{\color{blue} Weber/Fechner law}}}
+\end{eqnarray*}
+
+
+\end{frame}
+\note{
+Scale is in lux (illumination of one candela on a sphere of 1 meter
+radius, all directions). Ambient light can be thought of as multiplying
+the illumination in the patches.
+
+all this depends on teh assumption that M is the arithmetic
+mean. Different assumptions about M would lead to different forms for u.
+
+Luce's possible laws paper: both ratio, leads to power $\alpha
+x^{\beta}$ (e.g., Volume of sphere=4$\pi r^3$/3; area of square=l$^2$;
+both interval, leads to linear; physical is ratio, psycho is interval
+leads to either linear transforms of log or power; interval phyiscal and
+ratio psycho leads to a constant. The argument here is based on
+admissible transformations on one scale should lead to admissible
+transformations on the other. The one problem with this is when there
+are dimensional parameters that can be transformed only by
+transformations that depend on the transformation of the physical
+parameter f.
+
+Plateau staring at the sun
+}
+
+\frame{
+\frametitle{Functional Equations}
+
+Solutions to FE yield specific functional forms.\\[2ex]
+
+Equations are solved for a variable such as $x$, but\\
+FEs are solved for functions such as $f$.\\[2ex]
+
+Derive functional forms from first principles rather than assume and assess goodness of fit.\\[2ex]
+
+{\visible<2-> {\color{blue} My claim:
+
+\vspace*{1ex}
+Functional equations can be used in theory development,
+    theory testing, and data analysis.}}
+
+
+}
+\note{Think back to high school, where algebra was used to solve for unknown variables. FE extends that idea from variables to unknown functions. }
+
+\frame{
+\frametitle{Standard Approach to Regression}
+
+\begin{eqnarray*}
+Y_i &=& f(X_i, \theta) + \epsilon_i
+\end{eqnarray*}
+
+\begin{enumerate}
+\item Assert a particular function for $f$ and a loss function (e.g., least squares, maximum likelihood, posterior expected loss)
+\item Estimate parameters
+\item Compute model fit indices
+\item Check diagnostics for specification problems
+\end{enumerate}
+
+My concern is with the first step.\\[2ex]
+
+Is there a procedure that allows testing functional forms directly?
+}
+\note{ith case with Xi, theta, and epsilon being vectors
+  
+ {\footnotesize Linear regression is a special case. We assume f is linear, theta is
+  the vector of betas. More generally, f need not be linear and theta is
+  more complicated than a parameter for every element in X estimation 
+
+
+  Modeling behavior usually requires parametric assumptions. Sometimes
+  these parametric assumptions are central to the psychological theory
+  (e.g., Steven's psychophysical power function, metric assumptions in
+  models of categorization) and other times they are less central to the
+  the theory (e.g., the squashing function in neural
+  networks).  The common feature of these parametric assumptions
+  however is that they are usually ad hoc and little rationale other
+  than ``because they fit data well'' or ``because they are easy to work
+  with'' is provided.  Functional equations is a mathematical technique
+  that supplies some of the necessary structure to put the
+  identification of functional forms on solid ground. A few intuitive,
+  motivating examples will be given. I offer a brief,
+  relatively non-technical introduction to functional equations, show
+  applications of the technique, and will compare the functional equations approach to more
+  traditional modeling approaches used in cognitive psychology.
+}
+
+}
+
+
+\frame{
+\frametitle{What do $x$ and $f(x)$ mean in Social/Behavioral Science?}
+What is $x$?\\[4ex]
+
+What is $f(x)$?\\[4ex]
+
+What is $f(x+y)$?
+
+}
+\note{here give examples of x as stimulus, f(x) of data (response given
+  stimulus), and f(x+y) as response given combinations of stimuli
+
+}
+
+
+\frame{
+\frametitle{Example: Cauchy Equations}
+
+{\visible<1-> {
+Under mild continuity and monotonicity conditions the FE
+
+\begin{eqnarray*}
+f(x+y) & = & f(x) + f(y)
+\end{eqnarray*}
+
+has only one nontrivial solution
+
+\begin{eqnarray*}
+f(x) & =& cx
+\end{eqnarray*}
+}
+}
+}
+\note{Let's start with a simple FE.
+
+What does this mean? It means that if we can observe data where the
+result of the mixture is equal to the sum of the two separate results,
+then the only functional form is linear. So it is a statement about
+order of operation: I get teh same response whether I sum the stimulus
+or I sum the data.
+
+Show necessity (substitute), on the next slide I will show sufficiency.
+
+The key in all of this is to have good definitions of what stimulus
+operations mean, and good operations of what data operations mean
+(especially when there is noise).
+}
+
+\frame{
+\frametitle{Differential equations version of FE}
+Take the linear Cauchy equation (noting f(0) = 0)
+\begin{eqnarray*}
+  f(x+y) &=& f(x) + f(y)
+\end{eqnarray*}
+Differentiate both sides wrt $y$
+\begin{eqnarray*}
+  f^{\prime}(x+y) &=& f^{\prime}(y)
+\end{eqnarray*}
+Substitute $y=0$ 
+\begin{eqnarray*}
+  f^{\prime}(x) &=& f^{\prime}(0)\\
+                &=& c
+\end{eqnarray*}
+
+This last line is a DE with the solution
+\begin{eqnarray*}
+  f(x) &=& cx + b
+\end{eqnarray*}
+because of the side condition $f(0)=0$, $b$ must equal 0. 
+
+}
+
+\begin{frame}
+\frametitle{Embedding ala State Space}  
+
+Need data in the form of triples.\\[2ex]
+
+\begin{center}
+\begin{tabular}{cccc}
+Subject & f(t) & f(k) & f(t+k)\\\hline
+1 & obs & obs & obs\\
+1 & & & \\
+1 & & & \\
+2 & & & \\
+2& & & \\
+2& & & \\
+3& & & \\
+etc
+\end{tabular}
+\end{center}
+
+\vspace*{2ex}
+{\color{blue}
+Key point: setting up relations between DVs; data in long form, perfect for multilevel modeling
+\\~\\
+
+These are related to phase plots and cobweb plots.
+}
+
+\end{frame}
+\note{Here is a statistical detail to work out. Not clear how to develop
+  the statistical model because of correlated error, measurement error, etc.
+
+Point out that we are in the domain of relating data to data, rather
+than the usual relating stimuli to data.
+
+Some students here got confused because they thought I am doing a
+descriptive approach because I'm working with data. I pointed out that
+the descriptive/inferential distinction they learned is too
+simplistic. Sometimes descriptive data can be quite informative about structure.
+}
+
+\begin{frame}
+\begin{center}
+			\includegraphics[height=.5in,fbox]{../_public/covid19-analyses_files/figure-html/{FE.test.expvslogistic-4}.png} 
+	\includegraphics[height=2.75in,fbox]{../_public/covid19-analyses_files/figure-html/{FE.test.expvslogistic-3}.png}
+\end{center}
+\end{frame}
+\note{actual data for new york}
+
+
+\begin{frame}
+\frametitle{Cauchy/Pexider Equations for the Exponential: Theoretical Curves}
+\begin{columns}[c]
+	\column{.5\textwidth}
+	\begin{center}
+			\includegraphics[height=.75in,fbox]{../_public/covid19-analyses_files/figure-html/{FE.test.expvslogistic-2}.png}
+		\includegraphics[height=1.5in,fbox]{../_public/covid19-analyses_files/figure-html/{FE.test.expvslogistic-1}.png}
+		
+		Exponential
+	\end{center}
+	\column{.5\textwidth}
+	\begin{center}
+			\includegraphics[height=.75in,fbox]{../_public/covid19-analyses_files/figure-html/{FE.test.expvslogistic-6}.png} 
+		\includegraphics[height=1.5in,fbox]{../_public/covid19-analyses_files/figure-html/{FE.test.expvslogistic-5}.png} 
+		
+		Logistic
+	\end{center}
+\end{columns}
+\note{t}
+\end{frame}
+
+
+\frame{
+\frametitle{Characterizing the normal distribution (Aczel)}
+
+Well-known: assuming normal pdf with ML yields the mean as the estimator.
+
+\vspace*{2ex}
+
+Less well-known: assuming ML with mean yields the normal pdf as the only solution.
+
+\vspace*{2ex}
+
+I.E., find the probability density function of the form $f$(x-a) where a is the mean. Here the unknown is $f$. A FE argument shows that the normal distribution is the only pdf that follows.
+
+\vspace{2ex}
+
+Proof sketch: Set up a functional equation for h$^{\prime}$(x), where h(x) = log(f(x)). This follows the linear Cauchy equation so h$^{\prime}$(x) is cx. Integration, substitution and appropriate scaling lead to the normal distribution.
+}
+\note{Castillo has a nice proof, page 37; Aczel special case of n=3; azzalini-genton-2007 general proof also for multivariate normal }
+
+
+\frame{
+\frametitle{Open Problems in Using Functional Equations in Data Analysis}
+
+Include
+\begin{itemize}
+\item developing statistical models for dealing with measurement
+  error, embedding dependencies and goodness of fit
+\item developing a system for converting (verbally-stated) psychological
+  theories into propositions that can be modeled mathematically
+  \item leverage methods from areas such as functional data analysis to develop new approaches for using functional equations in data analysis
+%\item use to develop diagnostics for distinguishing distributions
+%  (variance/mean plots for binary data)
+\item finding appropriate psychological research questions to model
+\end{itemize}
+
+{\visible<2-> {\color{blue} 
+I hope you are interested in a good quantitative challenge!
+
+}}
+
+}
+\note{FE are used in some theoretical methods such as in probability theory for characteristic functions and moment generating functions, they are used to show that the exponential distribution is the only distribution that has the memoryless property}
+
+
+%\begin{frame}{Animation}
+%  \begin{itemize}[<+- | alert@+>]
+%    \item \alert<4>{This is\only<4>{ really} important}
+%    \item Now this
+%    \item And now this
+%  \end{itemize}
+%\end{frame}
+%{%
+%	\setbeamertemplate{frame footer}{My custom footer}
+%	\begin{frame}[fragile]{Frame footer}
+%	\themename defines a custom beamer template to add a text to the footer. It can be set via
+%	\begin{verbatim}\setbeamertemplate{frame footer}{My custom footer}\end{verbatim}
+%\end{frame}
+%}
+%
+%\begin{frame}{References}
+%Some references to showcase [allowframebreaks] \cite{knuth92,ConcreteMath,Simpson,Er01,greenwade93}
+%\end{frame}
+
+
+\section{Conclusion}
+
+\frame{\frametitle{Conclusion}
+
+\begin{enumerate}
+\item Carefully assess your functional form
+\item Functional forms can give insight about underlying process
+\item We need to develop new statistical tools to permit testing of functional forms and use of mathematical methods such as functional equations
+\end{enumerate}
+}
+
+\begin{frame}[standout,fragile]{Thank You}
+
+For more information: \\
+\href{http://www-personal.umich.edu/~gonzo/covid19/_public/}{http://www-personal.umich.edu/\~{}gonzo/covid19/\_public/}
+
+You'll find all the R code for these analyses plus a lot more.
+
+%for standout note needs to be outside of frame
+\end{frame}
+\note{}
+%\begin{frame}{References}
+%Some references to showcase \cite{knuth92,ConcreteMath,Simpson,Er01,greenwade93}
+%\end{frame}
+
+
+\appendix
+
+%\begin{frame}{Blocks}
+%  Three different block environments are pre-defined and may be styled with an
+%  optional background color.
+%
+%  \begin{columns}[T,onlytextwidth]
+%    \column{0.5\textwidth}
+%      \begin{block}{Default}
+%        Block content.
+%      \end{block}
+%
+%      \begin{alertblock}{Alert}
+%        Block content.
+%      \end{alertblock}
+%
+%      \begin{exampleblock}{Example}
+%        Block content.
+%      \end{exampleblock}
+%
+%    \column{0.5\textwidth}
+%
+%      \metroset{block=fill}
+%
+%      \begin{block}{Default}
+%        Block content.
+%      \end{block}
+%
+%      \begin{alertblock}{Alert}
+%        Block content.
+%      \end{alertblock}
+%
+%      \begin{exampleblock}{Example}
+%        Block content.
+%      \end{exampleblock}
+%
+%  \end{columns}
+%\end{frame}
+%
+
+
+%\begin{frame}[allowframebreaks]{References}
+
+%  \bibliography{demo}
+%  \bibliographystyle{apacite}
+%\cite<e.g.,>[p.~11]{Jone01,Ross87} (e.g., Jones, 2001; Ross, 1987, p. 11)
+%\citeNP<e.g.,>[p.~11]{Jone01,Ross87} e.g., Jones, 2001; Ross, 1987, p. 11
+%\citeA<e.g.,>[p.~11]{Jone01,Ross87} e.g., Jones (2001); Ross (1987, p. 11)
+%\citeauthor<e.g.,>[p.~11]{Jone01,Ross87} e.g., Jones; Ross, p. 11
+%\citeyear<e.g.,>[p.~11]{Jone01,Ross87} (e.g., 2001; 1987, p. 11)
+%citeyearNP<e.g.,>[p.~11]{Jone01,Ross87} e.g., 2001; 1987, p. 11
+%\end{frame}
+
+\end{document}
