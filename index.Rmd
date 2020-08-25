@@ -43,8 +43,6 @@ longform <- params$longform
 
 # Preface {-}
 
-
-
 ```{asis echo=longform}
 ::: {.infobox .caution data-latex="{caution}"}
 

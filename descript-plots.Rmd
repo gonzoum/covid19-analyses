@@ -456,6 +456,10 @@ library(urbnmapr)
 
 # get county level data
 newmap.US <- datacov.US[,c(1:11,dim(datacov.US)[2])]
+
+# added 7/18 as FIPS comes as character string
+newmap.US$FIPS <- as.numeric(newmap.US$FIPS)
+
 recent.col <- dim(newmap.US)[2]
 
 # set up the map

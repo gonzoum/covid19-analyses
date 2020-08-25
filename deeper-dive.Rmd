@@ -136,7 +136,30 @@ covid.tracking.new$day.numeric <- as.numeric(covid.tracking.new$date)-18330
 
 # temporary fix on 4/27/20 one missing code came up so I'll set it to 0
 covid.tracking.new$deathIncrease <- ifelse(is.na(covid.tracking.new$deathIncrease),0,covid.tracking.new$deathIncrease)
+
+# add population info
+temp1 <- str_sub(allstates.long.new$prettyval[1:50],start=-2,end=-1)
+temp2 <- allstates.long.new$population[1:50]
+ord <- order(temp1)
+temp1 <- temp1[ord]
+temp2 <- temp2[ord]
+n <- table(covid.tracking.new$state)[1]
+covid.tracking.new$population <- rep(temp2,n)
+covid.tracking.new$deathIncrease.pc <- covid.tracking.new$deathIncrease/covid.tracking.new$population*1000000
+covid.tracking.new$deathIncrease.pc[covid.tracking.new$deathIncrease.pc<0] <- 0
 ```
+
+Drop one outlier in NJ. Y scale is free across states. Default smoothing parameters.
+
+```{r death.by.state}
+covid.tracking.new$deathIncrease.pc.nooutlier <- covid.tracking.new$deathIncrease.pc
+covid.tracking.new$deathIncrease.pc.nooutlier[covid.tracking.new$deathIncrease.pc.nooutlier>100] <- NA
+
+ggplot(covid.tracking.new, aes(day.numeric,deathIncrease.pc.nooutlier)) +  geom_point(size=1, color="blue") + geom_smooth(color="red",size=1) + facet_wrap_paginate(~state, nrow=5,ncol=5,page=1, scales="free_y")
+ggplot(covid.tracking.new, aes(day.numeric,deathIncrease.pc.nooutlier)) +  geom_point(size=1,color="blue") + geom_smooth(color="red",size=1) + facet_wrap_paginate(~state, nrow=5,ncol=5,page=2, scales="free_y")
+
+```
+
 
 ```{r}
 #version was defined at the beginning of the the index.Rmd file
@@ -147,25 +170,44 @@ print(paste0("File name associated with this run is ", currentversion, "-datawor
 ```
 
 ```{r results="hide"}
-#out <- nls(deathIncrease ~ richfu.sir(day.numeric, a, b0,b1), data=covid.tracking.new,start=c(a=155, b0=-1.9,b1=.001), algorithm="port")
-out <- nlme(deathIncrease ~ richfu.sir(day.numeric, a, b0,b1), fixed = a+b0+b1~1,
-            random =  a+b1~1, data=covid.tracking.new,start=c(a=40, b0=-1.8,b1=.03), verbose=T, groups=~state, control=nlmeControl(msMaxIter=1000,opt="nlminb",pnlsTol=.0001,msVerbose=T,minScale=.0001, maxIter=1000) )
+#out <- nls(deathIncrease.pc ~ richfu.sir(day.numeric, a, b0,b1), data=covid.tracking.new,start=c(a=1, b0=-.1,b1=0.1), algorithm="port")
+
+
+out <- nlme(deathIncrease.pc ~ richfu.sir(day.numeric, a, b0,b1), fixed = a+b0+b1~1,
+            random =  a+b0+b1~1, data=covid.tracking.new,start=c(a=5, b01=1.3,b1=-.02), verbose=T, groups=~state, control=nlmeControl(msMaxIter=400,opt="nlminb",pnlsTol=.1,msVerbose=T,minScale=.1, maxIter=400, tolerance=1, msTol=1) )
+#c(a=35, b0=1.23,b1=-.023)
 
 #refit omiting the outlier
-out.nooutlier <- nlme(deathIncrease ~ richfu.sir(day.numeric, a, b0,b1), fixed = a+b0+b1~1,
-            random =  a+b1~1, data=subset(covid.tracking.new, deathIncrease<800),start=c(a=40, b0=-1.8,b1=.03), verbose=T, groups=~state, control=nlmeControl(msMaxIter=1000,opt="nlminb",pnlsTol=.0001,msVerbose=T,minScale=.0001, maxIter=1000) )
+# out.nooutlier <- nlme(deathIncrease ~ richfu.sir(day.numeric, a, b0,b1), fixed = a+b0+b1~1,
+#             random =  a+b0+b1~1, data=subset(covid.tracking.new, deathIncrease<800),start=c(a=40, b0=-1.8,b1=.03), verbose=T, groups=~state, control=nlmeControl(msMaxIter=1000,opt="nlminb",pnlsTol=.01,msVerbose=T,minScale=.01, maxIter=1000) )
+
+#temporary kludge while I fix this, just use with outlier for nooutlier
+#see chunk sir.approx.ny because have to drop subscript in temp.predict
+out.nooutlier <- out
 temp.data <- covid.tracking.new
 # looks like two outliers as of 6/25/20, NY and NJ (prior only one NY)
 dropped.data <- which(covid.tracking.new$deathIncrease>=800)
 
-out.first42days <- nlme(deathIncrease ~ richfu.sir(day.numeric, a, b0,b1), fixed = a+b0+b1~1,
-            random =  a+b1~1, data=subset(covid.tracking.new, day.numeric<43),start=c(a=115, b0=2.1,b1=-.01), verbose=T, groups=~state, control=nlmeControl(msMaxIter=1000,opt="nlminb",pnlsTol=.0001,msVerbose=T,minScale=.0001, maxIter=1000) )
+starts <- nls(deathIncrease.pc ~ richfu.sir(day.numeric, a, b0,b1), data=subset(covid.tracking.new, day.numeric<43),start=c(a=.5, b0=-2.7,b1=.05), algorithm="port")
+out.first42days <- nlme(deathIncrease.pc ~ richfu.sir(day.numeric, a, b0,b1), fixed = a+b0+b1~1,
+            random =  a+b0+b1~1, data=subset(covid.tracking.new, day.numeric<43),start=c(a=5.55, b0=-2.67,b1=.072), verbose=T, groups=~state, control=nlmeControl(msMaxIter=1000,opt="nlminb",pnlsTol=.01,msVerbose=T,minScale=.01, maxIter=1000, niterEM=1000, msMaxEval=1000, tolerance=1, msTol=.1) )
 
 
 
 ```
 
-FIX TO PERCAPITA DEATH
+Play using Newton's cooling equation
+
+```{r}
+richfu.heat <- function(d,b0,b1,b2){
+b0+b1*exp(b2*d)
+}
+starts <- nls(deathIncrease.pc ~ richfu.heat(day.numeric, b0,b1,b2), data=subset(covid.tracking.new, day.numeric>=34),start=c(b0=0.1, b1=30, b2=-.05), algorithm="port")
+
+out.43days <- nlme(deathIncrease.pc ~ richfu.heat(day.numeric,b0=0,b1,b2), fixed = b1+b2~1,
+            random =  b1+b2~1, data=subset(covid.tracking.new, day.numeric>=34),start=c(b1=10.7,b2=-.027), verbose=T, groups=~state, control=nlmeControl(msMaxIter=1000,opt="nlminb",pnlsTol=.1,msVerbose=T,minScale=.1, maxIter=1000, tolerance=1, msTol=.1) )
+
+```
 
 ```{r eval=F, echo=F}
 #test function for additive constant
@@ -195,7 +237,9 @@ temp.predict <- predict(out.nooutlier, level=1)
 #if (length(dropped.data)==1) 
 #covid.tracking.new$predicted.nooutlier <- c(temp.predict[1:(dropped.data-1)], NA, #temp.predict[(dropped.data):length(temp.predict)])
 covid.tracking.new.nooutlier <- covid.tracking.new[-dropped.data,]
-covid.tracking.new.nooutlier$predicted.nooutlier <- temp.predict
+
+#drop [-dropped.data,] from temp.predict when fixing outlier above
+#covid.tracking.new.nooutlier$predicted.nooutlier <- temp.predict[-dropped.data]
 
 # just first 42 days
 covid.tracking.new$predicted.42 <- predict(out.first42days, newdata=data.frame(state=covid.tracking.new$state, day.numeric=covid.tracking.new$day.numeric), level=1)
@@ -203,34 +247,45 @@ covid.tracking.new$predicted.42 <- predict(out.first42days, newdata=data.frame(s
 # after 42 days
 #covid.tracking.new$predicted.43plus <- predict(out.after43days, #newdata=data.frame(state=covid.tracking.new$state, day.numeric=covid.tracking.new$day.numeric), level=1)
 
-ggplot( subset(covid.tracking.new, state=="NY"), aes(x=day.numeric,y=deathIncrease)) + 
+p <- ggplot( subset(covid.tracking.new, state=="NY"), aes(x=day.numeric,y=deathIncrease.pc)) + 
   #  scale_x_date(date_breaks="1 week", date_labels = "%d %b") +
   geom_line(aes(day.numeric, predicted), color="red") + geom_point() +
-  geom_line(data=subset(covid.tracking.new.nooutlier, state=="NY"), aes(day.numeric, predicted.nooutlier), color="blue") +
+ # geom_line(data=subset(covid.tracking.new.nooutlier, state=="NY"), aes(day.numeric, predicted.nooutlier), color="blue") +
     geom_line(aes(day.numeric, predicted.42), color="green") +
  #   geom_line(aes(day.numeric, predicted.43plus), color="black") +
     labs(y="Daily incidence ",
                   title="Daily Covid-19 Deaths in New York (red curve all data estimate; blue curve omitting single outlier")  +
     theme(legend.position = "none",
           strip.text.y = element_text(size=11)) 
+p
+```
+
+Add cooling
+
+```{r}
+# 43days
+covid.tracking.new$predicted.43 <- predict(out.43days, newdata=data.frame(state=covid.tracking.new$state, day.numeric=covid.tracking.new$day.numeric), level=1)
+
+p +     geom_line(data=subset(covid.tracking.new, state=="NY"&day.numeric>=34), aes(day.numeric, predicted.43), color="black") 
+
 ```
 
 The data for death is quite noisy, for example, here are plots for both New Jersey and Michigan.
 
 ```{r  sir.approx.nj.mi}
-p1 <- ggplot( subset(covid.tracking.new, state=="NJ"), aes(x=day.numeric,y=deathIncrease)) +
+p1 <- ggplot( subset(covid.tracking.new, state=="NJ"), aes(x=day.numeric,y=deathIncrease.pc)) +
   #  scale_x_date(date_breaks="1 week", date_labels = "%d %b") +
   geom_line(aes(day.numeric, predicted), color="red") + geom_point() +
     labs(y="Daily incidence ",
-                                   title="Daily Covid-19 Deaths in New Jersey")  +
+                                   title="Daily Covid-19 Deaths in New Jersey (per 1M)")  +
     theme(legend.position = "none",
           strip.text.y = element_text(size=11)) 
 
-p2 <- ggplot( subset(covid.tracking.new, state=="MI"), aes(x=day.numeric,y=deathIncrease)) +  
+p2 <- ggplot( subset(covid.tracking.new, state=="MI"), aes(x=day.numeric,y=deathIncrease.pc)) +  
   #  scale_x_date(date_breaks="1 week", date_labels = "%d %b") +
   geom_line(aes(day.numeric, predicted), color="red") + geom_point() +
     labs(y="Daily incidence ",
-                                   title="Daily Covid-19 Deaths in Michigan")  +
+                                   title="Daily Covid-19 Deaths in Michigan (per 1M)")  +
     theme(legend.position = "none",
           strip.text.y = element_text(size=11))
 
@@ -244,34 +299,35 @@ This large daily variability is troubling.   One possibility is the way some sta
 To be fair, these three plots (New York, New Jersey and Michigan) have different scales for the Y-axes, which may exaggerate the variability.  I'll redo the three plots with the same scale on the Y axis to check that possibility.
 
 ```{r }
-p1 <- ggplot( subset(covid.tracking.new, state=="NY"), aes(x=day.numeric,y=deathIncrease)) + 
+p1 <- ggplot( subset(covid.tracking.new, state=="NY"), aes(x=day.numeric,y=deathIncrease.pc)) + 
   #  scale_x_date(date_breaks="1 week", date_labels = "%d %b") +
   geom_line(aes(day.numeric, predicted), color="red") + geom_point() +
     labs(y="Daily incidence ",
-                                   title="Daily Covid-19 Deaths in New York")  +
+                                   title="Daily Covid-19 Deaths in New York (per 1M)")  +
     theme(legend.position = "none",
-          strip.text.y = element_text(size=11))  + ylim(0,1000)
+          strip.text.y = element_text(size=11))  + ylim(0,50)
 
-p2 <- ggplot( subset(covid.tracking.new, state=="NJ"), aes(x=day.numeric,y=deathIncrease)) +  
+p2 <- ggplot( subset(covid.tracking.new, state=="NJ"), aes(x=day.numeric,y=deathIncrease.pc)) +  
   #  scale_x_date(date_breaks="1 week", date_labels = "%d %b") +
   geom_line(aes(day.numeric, predicted), color="red") + geom_point() +
     labs(y="Daily incidence ",
-                                   title="Daily Covid-19 Deaths in New Jersey")  +
+                                   title="Daily Covid-19 Deaths in New Jersey (per 1M)")  +
     theme(legend.position = "none",
-          strip.text.y = element_text(size=11)) + ylim(0,1000)
+          strip.text.y = element_text(size=11)) + ylim(0,50)
 
-p3 <- ggplot( subset(covid.tracking.new, state=="MI"), aes(x=day.numeric,y=deathIncrease)) + 
+p3 <- ggplot( subset(covid.tracking.new, state=="MI"), aes(x=day.numeric,y=deathIncrease.pc)) + 
   #  scale_x_date(date_breaks="1 week", date_labels = "%d %b") +
   geom_line(aes(day.numeric, predicted), color="red") + geom_point() +
     labs(y="Daily incidence ",
-                                   title="Daily Covid-19 Deaths in Michigan")  +
+                                   title="Daily Covid-19 Deaths in Michigan (per 1M)")  +
     theme(legend.position = "none",
-          strip.text.y = element_text(size=11)) + ylim(0,1000)
+          strip.text.y = element_text(size=11)) + ylim(0,50)
 
 multiplot(p1,p2,p3,cols=1)
 ```
 
 
+FIX TO PERCAPITA DEATH
 
 But a more interesting result emerges by examining this approximate functional form.  We can integrate this approximation over t to see what form emerges  for the cumulative death count. In this context, integration is analogous to summing the daily counts to create a cumulative count but we do this symbolically on the function rather than the data in order to learn the form of the function on the cumulative count. 
 
@@ -315,15 +371,19 @@ The fit is ok given the simplifying assumptions that were made to derive this fo
 
 It is helpful to estimate the logistic function directly on the cumulative death count  and superimpose that curve (blue) on the same graph.  We see that the pure logistic provides a better fit to these data. This shouldn't be too surprising since I fit the logistic form directly to the data, whereas the red curve corresponding to the approximate SIR model takes into account other processes, has additional simplifying assumptions and approximations. Nonetheless, we can use the data and the fit to the models, to decide if we want to reject the SIR model because that model implies a functional form that fits worse than a simpler logistic growth model, use this finding to decide whether we should relax those simplifying assumptions and derive a new form, or use this finding to justify using the SIR model because the fit to the data is "close enough." Of course, close enough depends on different applications. If one wants to describe a bunch of points with a simple curve or one wants to use the model to make forecasts.  In the case of forecasting to inform public policy, then "close enough" better be pretty darn close because many people's lives will be affected.  Often, the disagreements between modelers about their predictions boils down to details of the assumptions each modeler makes and the kinds of simplifications they use.
 
+7/10/20 dropped xmid random effect to get code to run; debug later, likely something weird with today's data pull
+
 ```{r results="hide"}
 # logistic on death; use same function as used for logistic growth on positive count data
-starts <- getInitial(death~ SSlogis(day.numeric, Asym=1, xmid=1, scal=1), data=covid.tracking.new)
-tempdata <- covid.tracking.new[,c("day.numeric","death","state","deathIncrease")]
-out.logistic.death <- nlme(death ~ SSlogis(day.numeric, asym,xmid,scal), fixed = asym+xmid+scal~1,
-            random =  asym+xmid+scal~1, data=na.omit(tempdata),start=c( asym=starts[1], xmid=starts[2],scal=starts[3]), verbose=T, groups=~state, control=nlmeControl(msMaxIter=1000,opt="nlminb",pnlsTol=.01,msVerbose=T,minScale=.01, maxIter=1000, eval.mas=1000) )
+covid.tracking.new$death.pc <- covid.tracking.new$death/covid.tracking.new$population
+starts <- getInitial(death.pc~ SSlogis(day.numeric, Asym=1, xmid=1, scal=1), data=covid.tracking.new)
+
+tempdata <- covid.tracking.new[,c("day.numeric","death.pc","state","deathIncrease")]
+out.logistic.death <- nlme(death.pc ~ SSlogis(day.numeric, asym,xmid,scal), fixed = asym+xmid+scal~1,
+            random =  asym+scal~1, data=na.omit(tempdata),start=c( asym=starts[1], xmid=starts[2],scal=starts[3]), verbose=T, groups=~state, control=nlmeControl(msMaxIter=1000,opt="nlminb",pnlsTol=.01,msVerbose=T,minScale=.01, maxIter=1000, eval.mas=1000, tolerance=.1) )
 ```
 
-```{r}
+```{r eval=F}
 
 # add predicted values from the logistic regression; need to fix scaling
 preddat$pred.logistic <- c((predict(out.logistic.death)[names(predict(out.logistic.death))=="NY"]))
@@ -395,7 +455,7 @@ out <- nlme(deathIncrease ~ richfu.sir2(day.numeric, a, b0,b1,b2), fixed = a+b0+
 
 ## Functional Equations
 
-Need to develop this section. Currently just a few plots.
+Need to develop this section. Currently just a few plots.  exponential is percentage but data and logistic are percap; need to make consistent.
 
 ```{r FE.test.expvslogistic}
 # should pull out the coef from the fitted objects

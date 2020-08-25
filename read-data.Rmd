@@ -96,6 +96,14 @@ read_csv(paste0(path,"time_series_covid19_confirmed_global.csv"))
 
 datacov.US <- 
 read_csv(paste0(path,"time_series_covid19_confirmed_US.csv"))
+
+#here are the corresponding files on death counts
+datacov.World.deaths <- 
+read_csv(paste0(path,"time_series_covid19_deaths_global.csv"))
+
+datacov.US.deaths <- 
+read_csv(paste0(path,"time_series_covid19_deaths_US.csv"))
+
 ```
 
 <!-- Had trouble getting backticks to display across multiple displays (r viewers, pdf, web browsers so went with html code) -->
@@ -147,7 +155,9 @@ There is usually additional manipulation needed to format the table. In this cas
 
 If the table on the wiki changes, it could break this code.  This already changed in that originally the table I wanted was the 4th table, then it was the 5th table in the html file, then the 6th table, and  back to the 5th. I ended up pointing to the table itself rather than the URL of the wiki page. 
 
-```{r echo=longform}
+Format changed:  need to fix
+
+```{r echo=longform, eval=F}
 # table kept changing location in the wikipage, so go to the table 
 # URL directly rather than wiki page
 #URL <- "https://en.wikipedia.org/wiki/2019%E2%80%9320_coronavirus_pandemic"

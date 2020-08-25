@@ -78,7 +78,9 @@ qqnorm(resid(out.lmer))
 qqline(resid(out.lmer))
 ```
 
-The residuals against the fitted values suggest a nonlinear pattern remains in the data. This suggests that we may not have completely linearized the data with the log transformation. The qqplot suggests some deviation from a typical normal distribution; that is, the residuals appear to have longer tails than expected by a normal distribution.  Both of these plots suggest there are issues that have to be addressed.  We probably don't want to jump right into doing another transformation right way as that may create new issues with interpretation. We selected the log transformation because we are checking for exponential growth and on the log scale the exponential growth should become linear. So maybe the exponential growth model may not be appropriate here, or there may be other issues with the data that are contaminating the exponential growth pattern.  Without additional modeling we cannot adjudicate between these possibilities just from this present regression alone.
+The residuals against the fitted values suggest a nonlinear pattern remains in the data. This suggests that we may not have completely linearized the data with the log transformation. Recall the logic rule modus tollens that states "if p, then q is accepted and not-q holds, then we can infer not-p."  Applied to this situation, if a functional relation is exponential (p), then a log transformation will linearize the relation (q).  We observe from the residuals that a log transform did not linearlize the relation (not-q), so we conclude that the original functional relation was not exponential (not-p).  While it may be disappointing that the residuals suggest the assumptions of regression are violated, we can make a relatively strong conclusion that the original relation, whatever it is, cannot be purely an exponential.
+
+The qqplot suggests some deviation from a typical normal distribution; that is, the residuals appear to have longer tails than expected by a normal distribution.  Both of these plots suggest there are issues that have to be addressed.  We probably don't want to jump right into doing another transformation right way as that may create new issues with interpretation. We selected the log transformation because we are checking for exponential growth and on the log scale the exponential growth should become linear. So maybe the exponential growth model may not be appropriate here, or there may be other issues with the data that are contaminating the exponential growth pattern.  Without additional modeling we cannot adjudicate between these possibilities just from this present regression alone.
 
 
 Even though the residual plots raise concern about this model, let's examine the state-level slopes and intercepts more directly:  first with a table of each state and then with some plots.  Light gray points have confidence intervals that overlap 0 so those parameter estimates are not significantly different from zero. We did not perform a correction like Bonferroni or Scheffe to address the 100 tests we just did (50 states on each of slope and intercept).  This would just require a small modification to the code to adjust the level of the CI to correspond, say, to the Bonferroni corrected levels.
@@ -566,12 +568,11 @@ starts <- getInitial(count~ SSlogis(day.numeric, Asym=1, xmid=1, scal=1), data=a
  allstates.long.new$percap10000 <- allstates.long.new$percap100 * 100
  starts <- getInitial(percap10000~ SSlogis(day.numeric, Asym=1, xmid=1, scal=1), data=allstates.long.new)
 
-# out.perc <- nlme(percap10000 ~ SSlogis(day.numeric, Asym, xmid,scal), fixed =  Asym + xmid + scal  ~1,
-#            random = Asym + xmid + scal~ 1, data=na.omit(allstates.long.new),start=c(Asym=starts[1], xmid=starts[2], scal=starts[3]), verbose=T, control=nlmeControl(msMaxIter=500,opt="nlminb",pnlsTol=.1,msVerbose=T,minScale=.1, maxIter=400, eval.max=400, tolerance=.1))
+ # out.perc <- nlme(percap10000 ~ SSlogis(day.numeric, Asym, xmid,scal), fixed =  Asym + xmid + scal  ~1,
+ #             random = Asym  + xmid+ scal~ 1, data=na.omit(allstates.long.new),start=c(Asym=starts[1], xmid=starts[2], scal=starts[3]), verbose=T, control=nlmeControl(msMaxIter=500,opt="nlminb",pnlsTol=.0001,msVerbose=T,minScale=.0001, maxIter=400, eval.max=400, tolerance=.1))
 
-#drop random effect scal for now 7/6/2020
- out.perc <- nlme(percap10000 ~ SSlogis(day.numeric, Asym, xmid,scal), fixed =  Asym + xmid + scal  ~1,
-            random = Asym + scal ~ 1, data=na.omit(allstates.long.new),start=c(Asym=115, xmid=80, scal=21), verbose=T, control=nlmeControl(msMaxIter=500,opt="nlminb",pnlsTol=.01,msVerbose=T,minScale=.01, maxIter=400, eval.max=400, tolerance=.1))
+   out.perc <- nlme(percap10000 ~ SSlogis(day.numeric, Asym, xmid,scal), fixed =  Asym + xmid + scal  ~1,
+              random = Asym + xmid+ scal ~ 1, data=na.omit(allstates.long.new),start=c(Asym=600, xmid=115, scal=25), verbose=T, control=nlmeControl(msMaxIter=500,opt="nlminb",pnlsTol=.0001,msVerbose=T,minScale=.0001, maxIter=400, eval.max=400, tolerance=.1, msTol=.1))
 ```
 
 ```{r}
@@ -726,7 +727,7 @@ nydf2$count <- allstates.long$count[allstates.long$state.abb=="New York"& allsta
 ggplot(nydf2, aes(day.numeric,prediction,group=state.abb, color=state.abb )) + geom_line() + geom_point(aes(x=day.numeric, y=count), col="blue") + ggtitle("New York: Actual counts in blue; logistic growth with correlated error in red")
 ```
 
-For illustration purposes, here is another way of fitting this model using a different package lme4.  While lme4 is in some ways easier to use, it is not as flexible as nlme, which allows, for example, correlated error structure on the residuals and the ability to impose structure on the covariance matrix between random effects.  This model includes random effects from the asym and xmid parameters but there are convergence issues when all three parameters are allowed to be random effects.
+For illustration purposes, here is another way of fitting this model using a different package lme4.  While lme4 is in some ways easier to use, it is not as flexible as nlme, which allows, for example, correlated error structure on the residuals and the ability to impose structure on the covariance matrix between random effects.  This model includes random effects from the asym and xmid parameters but there are convergence issues when all three parameters are allowed to be random effects. [now got it working with 3 RE parameters]
 
 ```{r results="hide"}
 starts <- getInitial(percap10000 ~ SSlogis(day.numeric, asym,xmid,scal), data=na.omit(allstates.long.new))
@@ -737,7 +738,7 @@ starts
 #temp <- nls(percap10000 ~ SSlogis(day.numeric, asym, xmid,scal), data=na.omit(allstates.long.new))
 #coef(temp)
 
-out.logistic.nlmer <- nlmer(percap10000 ~ SSlogis(day.numeric, asym, xmid,scal) ~ asym + xmid | state.abb, data=na.omit(allstates.long.new), start=c(asym=55,xmid=54,scal=12),    control=nlmerControl(tolPwrss=.01))
+out.logistic.nlmer <- nlmer(percap10000 ~ SSlogis(day.numeric, asym, xmid,scal) ~ asym + xmid +scal| state.abb, data=na.omit(allstates.long.new), start=c(asym=600,xmid=125,scal=25),    control=nlmerControl(tolPwrss=.1))
 
 ```
 
