@@ -91,6 +91,33 @@ library(pander)
 # use this package just for sech 
 library(pracma)
 library(ggforce)
+library(RColorBrewer)
+library(investr)
+library(forecast)
+library(hts)
+library(ggfortify)
+library(brms)
+library(bayesplot)
+library(tidybayes)
+library(tibbletime)
+
+```
+
+```{r}
+#devtools::install_github("wmurphyrd/fiftystater")
+library(fiftystater)
+
+#devtools::install_github("UrbanInstitute/urbnmapr")
+library(urbnmapr)
+
+# devtools::install_github('davidgohel/ggiraph')
+library(ggiraph)
+
+# remotes::install_github("CollinErickson/GauPro")
+library(GauPro)
+
+# devtools::install_github("nelsonroque/tsfeaturex")
+library(tsfeaturex)
 ```
 
 ```{asis echo=longform}
@@ -109,7 +136,9 @@ p_load("bookdown","readr","tidyverse","rvest","magrittr",
    "scales", "maps","ggthemes","viridis","ggrepel","sjPlot",
    "sjmisc", "sjlabelled","lme4","nlme","merTools","Hmisc",
    "readxl","rnn","stargazer","texreg","gamm4","splines","mgcv",
-   "nlrx", "pander", "pracma","ggforce")
+   "nlrx", "pander", "pracma","ggforce", "RColorBrewer","investr",
+   "forecast","hts","ggfortify", "brms","bayesplot","tidybayes",
+   "tibbletime")
 ```
 
 

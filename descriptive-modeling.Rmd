@@ -272,7 +272,6 @@ text(30,500,"Prediction")
 text(45, 1800, "True Exponential", col="green")
 text(45, 100, "Estimated Polynomial", col="blue")
 
-library(investr)
 pred.exp <- predFit(out.exp, newdata=data.frame(x=x[26:50]), se.fit=T, interval="prediction", level=.95)
 polygon(c(x[26:50],rev(x[26:50])), c(pred.exp$fit[,"lwr"], rev(pred.exp$fit[,"upr"])),col="gray", border=NA)
 pred.c <- predFit(out.c, newdata=data.frame(x=x[26:50]), se.fit=T, interval="prediction" , level=.95)
@@ -371,7 +370,7 @@ For these estimations I'm using percent of positive cases in the state (count/po
 
 ```{r results="hide"}
 out <- nlme(percent ~ richfu(day.numeric, l=0, rate,y,b1=1), fixed = rate+y~1,
-            random =  rate+y ~1, data=na.omit(allstates.long.new),start=c( rate=1.05,y=.01), verbose=T, control=nlmeControl(msMaxIter=500,opt="nlminb",pnlsTol=.01,msVerbose=T,minScale=.01) )
+            random =  rate+y ~1, data=na.omit(allstates.long.new),start=c( rate=1.01,y=.22), verbose=T, control=nlmeControl(msMaxIter=500,opt="nlminb",pnlsTol=.01,msVerbose=T,minScale=.01) )
 ```
 
 ```{r results="asis"}
@@ -572,7 +571,7 @@ starts <- getInitial(count~ SSlogis(day.numeric, Asym=1, xmid=1, scal=1), data=a
  #             random = Asym  + xmid+ scal~ 1, data=na.omit(allstates.long.new),start=c(Asym=starts[1], xmid=starts[2], scal=starts[3]), verbose=T, control=nlmeControl(msMaxIter=500,opt="nlminb",pnlsTol=.0001,msVerbose=T,minScale=.0001, maxIter=400, eval.max=400, tolerance=.1))
 
    out.perc <- nlme(percap10000 ~ SSlogis(day.numeric, Asym, xmid,scal), fixed =  Asym + xmid + scal  ~1,
-              random = Asym + xmid+ scal ~ 1, data=na.omit(allstates.long.new),start=c(Asym=600, xmid=115, scal=25), verbose=T, control=nlmeControl(msMaxIter=500,opt="nlminb",pnlsTol=.0001,msVerbose=T,minScale=.0001, maxIter=400, eval.max=400, tolerance=.1, msTol=.1))
+              random = Asym + xmid+ scal ~ 1, data=na.omit(allstates.long.new),start=c(Asym=800, xmid=125, scal=35), verbose=T, control=nlmeControl(msMaxIter=500,opt="nlminb",pnlsTol=.0001,msVerbose=T,minScale=.0001, maxIter=400, eval.max=400, tolerance=.1, msTol=.1))
 ```
 
 ```{r}
@@ -858,6 +857,13 @@ The Center for Quality, Safety & Value Analytics at Rush University released a [
 To get deeper in such process models of growth, we need to develop some additional machinery including differential equations, which are equations that govern changes over time.  I'll briefly touch on these models in the next chapter.
 
 
+``` 
+check on glmer and gamma
+
+out.gamma <- glmer(percap100 ~ day.numeric + (day.numeric|state.abb), data=na.omit(allstates.long.new), 
+            family=quasi(link="identity"))
+```
+
 ## Splines, Smoothers and Time Series {#splines}
 
 I'll briefly give an example of splines because it will be helpful in subsequent sections.
@@ -882,9 +888,7 @@ of the forecast package and the excellent online book by [Hyndman and Athanasopo
 
 ```{r}
 # better to redo plots with dates like 4/1/20 and weekly markers
-library(forecast)
-library(hts)
-library(ggfortify)
+
 nydays <- allstates.long$day[allstates.long$state.abb=="New York"]
 # check
 nycount.ts <- ts(nydf$percap10000, start=1, end=max(nydf$day.numeric)+1, frequency = 1)
@@ -920,8 +924,9 @@ I'll follow the same modeling implementation as used earlier. The brm() function
 
 NEED TO FIX BAYESIAN MODEL TO USE percap10000 dv
 
-```{r }
+```{r load.bayes.libraries}
 # once working correctly move these library calls to prelim file
+# already there but leaving here for now during debugging
 library(brms)
 library(bayesplot)
 library(tidybayes)
@@ -948,7 +953,7 @@ saveRDS(fit_loss, file="fitloss.RDS")
 
 Here are the signature Bayesian plots of each parameter (density and trace plots) as well as the intercorrelations across the parameters.
 
-```{r bayes.plots}
+```{r bayes.plots, eval=F}
 # in interest of time just read in the saved object 
 # currently using data through 4/22/20 in what I saved
 fit_loss <- readRDS("fitloss.RDS")
@@ -961,12 +966,12 @@ pairs(fit_loss)
 
 These are the prediction bands around the "fixed effect" part of the model and a plot for the state of Michigan.
 
-```{r}
+```{r eval=F}
 plot(conditional_effects(fit_loss)) 
 ```
 
 
-```{rm}
+```{r eval=F}
 int<- 1:100
 out.predict <- predict(fit_loss, newdata=data.frame(state.abb=rep("Michigan",max(int)), day.numeric=int), re_formula=NULL)
 temp <-data.frame(day.numeric=int, out.predict)
@@ -995,7 +1000,6 @@ ggplot(subset(allstates.long, state.abb %in% c("New York","Michigan"))) +
   geom_point(color = "red") +
   facet_wrap("state.abb")
 
-library(RColorBrewer)
 ggplot(subset(allstates.long, state.abb %in% c("New York","Michigan"))) +
   aes(x = day.numeric, y = count) +
   geom_point(color = "red") + stat_lineribbon(data=subset(fits, state.abb %in% c("New York","Michigan")), aes(y=.prediction), .width = c(.99, .95,.80, .50), alpha=1/4, color = brewer.pal(5, "Blues")[[5]]) +
@@ -1082,7 +1086,7 @@ I adapted some of the code from this [webpage](https://towardsdatascience.com/st
 
 R example pending.
 
-```{ eval=F, echo=F}
+```{r eval=F, echo=F}
 # keep library here while developing section
 library(TSstudio)
 library(dlm)
@@ -1156,7 +1160,7 @@ The underlying common element of a neural network is that they take inputs, weig
 
 Here is a graphical representation of what I mean.  This example has four inputs (i.e., four variables or features), one hidden layer with 8 units, and one output layer that is a single number prediction (like our counts of positive tests).  The hidden layer is a set of 8 units. The two B terms are the "bias" terms that feed into the weighted sums.  The thick black lines refer to higher positive weights and the thicker gray refer to smaller negative.   Example adapted from the tutorial in the NeuralNetTools R package.
 
-```{r echo=F, results="hide"}
+```{r echo=longform, results="hide"}
 library(NeuralNetTools)
 library(nnet)
 
@@ -1167,7 +1171,7 @@ neuraldat$X4 <- neuraldat$X1* neuraldat$X2
 mod <- nnet(Y1 ~ X1 + X2 + X3 + X4, data = neuraldat, size = 8)
 ```
 
-```{r echo=F}
+```{r echo=longform}
 # plot
 par(mar = numeric(4))
 plotnet(mod)
@@ -1209,10 +1213,10 @@ So, overall the long section of code is because we have to do some work to put t
 
 In the figure below the red points are the actual daily cases in New York.  The green curve is what the machine learning model learned. I intentionally over trained the model. The last day shows the prediction by the machine learning model in solid blue and the actual in solid red.  
 
-```{r cache=F, results=ifelse(longform, "markup", "hide")}
+FIX: computer memory problem staring 8/27 with R upgrade
+```{r prepare.rnn.data, results=ifelse(longform, "markup", "hide")}
 #set.seed(03302020)
 #for rollify for running mean
-library(tibbletime)
 y = allstates.long.new[allstates.long.new$state.abb == "New York","count"]
 actualny <- data.frame(y=y, x=0:(length(y)-1))
 
@@ -1270,7 +1274,9 @@ sdmat <- apply(tempmat, 2, function(i) sqrt(var(i,na.rm=T)))
 # rnn programs usually require 3 dimensional arrays for X and Y
 X <- array(c(sc(data.mat$days.numeric),sc(data.mat$daysq), sc(data.mat$daycube), sc(data.mat$first),sc(data.mat$second), sc(data.mat$previous.day.count),sc(data.mat$runmean5)), dim=c(1,nrow(data.mat),7))
 Y <- array(sc(time.series.day.counts[-c(1:5)]), dim=c(1,nrow(data.mat),1))
+```
 
+```{r run.rnn, cache=F, results=ifelse(longform, "markup", "hide")}
 # I tinkered with different settings for learningrate, momentum
 #batchsize should not be greater than the size of the training set
 model <- trainr(Y = Y,
@@ -1329,12 +1335,13 @@ Part of the issue is that we don't have enough data to  allow these machine lear
 
 There are many  approaches that fall under the Machine Learning umbrella, with neural networks presented in the previous subsection being just one type of approach.  In this subsection I will consider a different approach that mingles Bayesian methods with machine learning approaches and standard statistical models.  The approach is to treat the function as a draw from a parent distribution of functions (see [Erickson](https://cran.r-project.org/web/packages/GauPro/vignettes/IntroductionToGPs.html) for a short introduction and [Rasmussen & Williams (2006)](http://www.gaussianprocess.org/gpml/chapters/RW.pdf) for a book length treatment).  I demonstrate one implementation using the GauPro package in R.  The default is a Gaussian kernel but other can be used as well.  In this demonstration I stick with the default settings but these can be tuned as with most machine learning algorithms.
 
+FIX: temporarily commented out 
+
 ```{r gaussproc}
 # warning: sometimes this plot can look strange
 # need to figure out how to get a more stable solution
 # using newest version on github
-# remotes::install_github("CollinErickson/GauPro")
-library(GauPro)
+
 
 first.order.train <- c(data_train[1,2],diff(data_train[,2]))
 first.order.test <- data_test[1,2]-data_train[nrow(data_train),2]
@@ -1363,12 +1370,12 @@ The concept of feature engineering is much like entering linear, quadratic, cubi
 
 As a simple illustration of feature extraction,  here is the output of the daily count variable for each of the 50 states.
 
+FIX: temporarily commented out
 ```{r results="hide"}
 # since this is a package I'm just using here for illustration 
 # I'll read it from github and load it here rather than in preliminary.Rmd;
 # if you want to download just uncomment the next line
-# devtools::install_github("nelsonroque/tsfeaturex")
-library(tsfeaturex)
+
 
 # create just a submatrix of the allstates.long data frame
 tsdat <- allstates.long[,c("day.numeric", "state.abb", "count")]
@@ -1379,7 +1386,7 @@ out.featurex <- extract_features(tsdat, group_var="state.abb",
 names(out.featurex)
 ```
 
-```{r}
+```{r eval=F}
 # example for just the median
 head(out.featurex$f.median)
 

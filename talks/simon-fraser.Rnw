@@ -73,7 +73,7 @@ library(nlme)
 library(sjPlot)
 library(kableExtra)
 #load(file="../data-archive/v.95-110-g95fe04f-dataworkspace.RData")
-load(file="../data-archive/v.95-111-gbfd5aae-dataworkspace.RData")
+load(file="../data-archive/v.95-114-g3631e1d-dataworkspace.RData")
 @
 
    \note{I'm honored to be part of today's remote conference. While I've been engaged in many zoom meetings these last three months, this is my first conference. \\~\\
@@ -200,7 +200,7 @@ knitr::kable(x, format="latex") %>% kable_styling(font_size=7)
 \begin{frame}
 \begin{center}
 	\vfill
-	\includegraphics[height=3.25in]{../_public/covid19-analyses_files/figure-html/usstates-1.png}
+	\includegraphics[height=3.25in]{../_public/covid19-analyses_files/figure-html/{usstates-1}.png}
 \end{center}
 \vfill
 \end{frame}
@@ -209,7 +209,7 @@ knitr::kable(x, format="latex") %>% kable_styling(font_size=7)
 \begin{frame}
 \begin{center}
 	\vfill
-	\includegraphics[height=3.25in]{../_public/covid19-analyses_files/figure-html/usstates-log-1.png}
+	\includegraphics[height=3.25in]{../_book/covid19-analyses_files/figure-html/{usstates-log-1}.png}
 \end{center}
 \vfill
 \end{frame}
@@ -220,7 +220,7 @@ we could reject the straight line even a couple of weeks into this in late March
 \begin{frame}
 \begin{center}
 	\vfill
-	\includegraphics[height=3.25in]{../_public/covid19-analyses_files/figure-html/usstates-log-grid-1.png}
+	\includegraphics[height=3.25in]{../_public/covid19-analyses_files/figure-html/{usstates-log-grid-1}.png}
 \end{center}
 \vfill
 \end{frame}
@@ -347,7 +347,7 @@ knitr::kable(VarCorr(out.logistic), format="latex",digits=3) %>% kable_styling(f
 <<echo=FALSE>>=
 knitr::kable(intervals(out.logistic,which="fixed")[[1]])
 
-knitr::kable(intervals(out.logistic,which="var-cov")[[1]])
+#knitr::kable(intervals(out.logistic,which="var-cov")[[1]])
 @
 \end{frame}
 
@@ -492,6 +492,16 @@ Better fit with this ``sech'' form than basic logistic growth (AIC, BIC, residua
 }
 \note{sech: hyperbolic secant}
 
+\begin{frame}[standout,fragile]{Thank You}
+
+For more information: \\
+\href{http://www-personal.umich.edu/~gonzo/covid19/_public/}{http://www-personal.umich.edu/\~{}gonzo/covid19/\_public/}
+
+You'll find all the R code for these analyses plus a lot more.
+
+%for standout note needs to be outside of frame
+\end{frame}
+\note{}
 
 \begin{frame}
 \begin{center}

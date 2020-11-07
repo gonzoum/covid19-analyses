@@ -11,17 +11,19 @@ Some code I copied from [here](https://datascienceplus.com/map-visualization-of-
 
 I make use of the datacov.World file I read in from the Johns Hopkins git repository.
 
+FIX: need to edit mybreaks and mylabels in remaining world plots; similar edits to US versions
 
-
-```{r}
+```{r world}
 # for these code chunks I use the datacov.World data file
 # coding trick; by switching the definition of datacov I can keep my original code post the 3/23/20 change and just swap 
 # out which file, world or us, to drop into datacov.  Rest of code should remain the same as prior to the change.
 datacov <- datacov.World
 
 # cutoffs and labels to use in the plot based on the number of cases
-mybreaks <- c(1, 20, 100, 1000, 50000)
-mylabels <- c("1-19", "20-99", "100-999", "1,000-49,999", "50,000+")
+#mybreaks <- c(1, 20, 100, 1000, 50000)
+#mylabels <- c("1-19", "20-99", "100-999", "1,000-49,999", "50,000+")
+mybreaks <- c(1, 10000, 100000, 500000,1000000,2000000)
+mylabels <- c("<10,000", "10,000 - 100,000", "100,001 - 500,000", "500,001 - 1,000,000", "1M - 2M", "2M>")
 
 world <- map_data("world")
 
@@ -68,12 +70,12 @@ datacov.long$day.numeric <- as.numeric(datacov.long$day)-18283
 ```
 
 ```{asis echo=longform}
-I rewrote the original parts of the plotting program to make it more efficient for the animation (e.g., I use the ggthemes in the maps package). This animation uses the package gganimate to reproduce the plot for each day and then overlays the plots one on top of the other to produce the animation.
+I rewrote the original parts of the plotting program to make it more efficient for the animation (e.g., I use the ggthemes in the maps package). This animation uses the package gganimate to reproduce the plot for each day and then overlays the daily plots one on top of the other to produce the animation.
 ```
 
 <!-- trying two different versions for html and latex -->
 
-```{r cache=cache,fig.cap="World Count of Positive Cases", eval=knitr::is_html_output(), echo=longform&knitr::is_html_output()}
+```{r world.animhtml, cache=cache, fig.cap="World Count of Positive Cases", eval=knitr::is_html_output(), echo=longform&knitr::is_html_output()}
 
 ggplot(datacov.long) +  borders("world", colour = "gray90", fill = "gray85") +
   theme_map() + 
@@ -92,7 +94,8 @@ ggplot(datacov.long) +  borders("world", colour = "gray90", fill = "gray85") +
   transition_time(day) + ease_aes('linear')
 ```
 
-```{r cache=cache, fig.cap="World Count of Positive Cases", fig.show="animate", aniopts=c("autoplay", "controls", "loop"),  eval=knitr::is_latex_output(),echo=longform&knitr::is_latex_output()}
+```{r world.animlatex, cache=cache, fig.cap="World Count of Positive Cases", fig.show="animate", aniopts=c("autoplay", "controls", "loop"),  eval=knitr::is_latex_output(), echo=longform&knitr::is_latex_output()}
+
 ggplot(datacov.long) +  borders("world", colour = "gray90", fill = "gray85") +
   theme_map() + 
   geom_point(aes(x=Long, y=Lat, size=count, color=count),stroke=F, alpha=0.7) +
@@ -275,7 +278,7 @@ coord_cartesian(clip = 'off') + scale_x_date(limits=as.Date(c("2020-03-09", as.c
 
 To help see the state by state structure in these curves (e.g., whether or not they are linear in the log scale), I partitioned the 50 states by population (sample sizes in each panel, yielding 12 or 13 states per panel). The states with larger populations (two lower panels) show relatively linear patterns.  The states with smaller population sizes (the two upper panels) show patterns suggesting the per capita rate may still be increasing, whereas states with larger populations may be leveling off.   We would need statistical analyses to verify the observations in these descriptive plots.
 
-```{r usstates-log-grid, fig.cap="Per Cap Positive Cases by State (log10 scale); Panels are based on Population"}
+```{r usstates-log-grid, eval=T, fig.cap="Per Cap Positive Cases by State (log10 scale); Panels are based on Population"}
 subset(allstates.long, day.numeric!=0) %>%mutate(label = if_else(day == max(day), as.character(prettyval), NA_character_)) %>%
 ggplot( aes(x=day, y=count/population*100,group=prettyval, color=prettyval)) + geom_line() +
  geom_label_repel(aes(label= label), nudge_x=2, na.rm=T,segment.color = 'grey50', label.size=.01, size=2.5, show.legend=F) +
@@ -399,11 +402,6 @@ For this plot I used the fiftystater R package, which not only allows the shape 
 ```
 
 ```{r echo=longform}
-# libraries just for this plot
-library(RColorBrewer)
-#devtools::install_github("wmurphyrd/fiftystater")
-library(fiftystater)
-
 temp <- subset(allstates.long, day==max.day)
 temp$state <- tolower(temp$state.abb)
 
@@ -451,9 +449,6 @@ For this plot I switched to the urbnmapr package.  This package needs to be down
 ```
 
 ```{r}
-#devtools::install_github("UrbanInstitute/urbnmapr")
-library(urbnmapr)
-
 # get county level data
 newmap.US <- datacov.US[,c(1:11,dim(datacov.US)[2])]
 
@@ -520,11 +515,11 @@ day.sums <- day.sums %>% mutate(movavg=movavg(daily, n=7, type="s"))
 # make plot with nice labels 5th bar looks almost empty; the data show 61 cases
 # that day
 ggplot( day.sums, aes(x=day,y=daily)) +  geom_bar(stat="identity") +
-    scale_x_date(date_breaks="1 week", date_labels = "%d %b") +
+    scale_x_date(date_breaks="2 weeks", date_labels = "%d %b", expand=expansion(mult=c(0.05,.15))) +
     labs(y="Daily incremental incidence",
                                    title="Positive US Covid-19 Cases")  +
     theme(legend.position = "none",
-          strip.text.y = element_text(size=11)) +
+          strip.text.y = element_text(size=11),axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
       geom_line(aes(x=day, y=movavg), color="blue", size=1.5) 
 ```
 
@@ -533,29 +528,30 @@ We can add  interactive capabilities to the ggplot by using the ggigraph package
 ```{asis echo=longform}
 The package needs to be downloaded through github; the path is commented out in the R code chunk.
 ```
-The html version of this book allows popups when the mouse hovers over the bars. You will notice that the number of positive deaths has a weekly pattern emerging on Monday April 13, 2020. There is a trough that occurs weekly on Mondays through at least May 11.  I will monitor on subsequent weeks.  This is an important part of the variability these data exhibit, which is lost if we "smooth" the data by computing moving averages as shown in the blue curve of the previous graph.
+
+The html version of this book allows popups when the mouse hovers over the bars. You will notice that the number of positive deaths has a weekly pattern emerging on Monday April 13, 2020. There is a trough that occurs weekly on Mondays through at least May 11.  This is an important part of the variability these data exhibit, which is lost if we "smooth" the data by computing moving averages as shown in the blue curve of the previous graph.
 
 ```{r eval=knitr::is_html_output(), echo=longform&knitr::is_html_output()}
-# devtools::install_github('davidgohel/ggiraph')
-library(ggiraph)
-
 # code to format a table to display on mouse hover
 str_model <- paste0("<tr><td>date</td><td>%s</td></tr>", 
                     "<tr><td>day</td><td>%s</td></tr>", 
                    "<tr><td>count</td><td>%s</td></tr>")
+str_model <- paste0("<tr><td>%s</td></tr>", 
+                    "<tr><td>%s</td></tr>", 
+                   "<tr><td>%s</td></tr>")
 day.sums$tooltip <- sprintf(str_model, day.sums$day, 
-                            weekdays(day.sums$day),
+                            weekdays(day.sums$day, abbreviate=T),
                             day.sums$daily)
 day.sums$tooltip <- paste0( "<table>", 
                             day.sums$tooltip, "</table>" )
 
 p <- ggplot( day.sums, aes(x=day,y=daily, tooltip = tooltip,
         data_id = day)) +  geom_bar_interactive(stat="identity") +
-    scale_x_date(date_breaks="1 week", date_labels = "%d %b") +
+    scale_x_date(date_breaks="2 weeks", date_labels = "%d %b", expand=expansion(mult=c(0.05,.15))) +
     labs(y="Daily incremental incidence",
                                    title="Positive US Covid-19 Cases (mouse hover in html version")  +
     theme(legend.position = "none",
-          strip.text.y = element_text(size=11))
+          strip.text.y = element_text(size=11), axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))  
 
 girafe(ggobj=p)
 ```
@@ -570,11 +566,11 @@ covid.tracking.date <- covid.tracking.date %>% group_by(date) %>% dplyr::summari
 covid.tracking.date <- covid.tracking.date %>% mutate(sumdaily = c(date.sum[1], diff(date.sum)))
 
 ggplot( covid.tracking.date, aes(x=date,y=sumdaily)) +  geom_bar(stat="identity") +
-    scale_x_date(date_breaks="1 week", date_labels = "%d %b") +
+    scale_x_date(date_breaks="2 weeks", date_labels = "%d %b", expand=expansion(mult=c(0.05,.15))) +
     labs(y="Daily incremental incidence",
                                    title="Total US Tests: Pos, Neg and Pending")  +
     theme(legend.position = "none",
-          strip.text.y = element_text(size=11))
+          strip.text.y = element_text(size=11), axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 
 # mouse hover
 if (knitr::is_html_output()) {
@@ -582,18 +578,18 @@ str_model <- paste0("<tr><td>date</td><td>%s</td></tr>",
                     "<tr><td>day</td><td>%s</td></tr>", 
                    "<tr><td>count</td><td>%s</td></tr>")
 covid.tracking.date$tooltip <- sprintf(str_model, covid.tracking.date$date, 
-                            weekdays(covid.tracking.date$date),
+                            weekdays(covid.tracking.date$date, abbreviate=T),
                             covid.tracking.date$sumdaily)
 covid.tracking.date$tooltip <- paste0( "<table>", 
                            covid.tracking.date$tooltip, "</table>" )
 
 p <- ggplot( covid.tracking.date, aes(x=date,y=sumdaily, tooltip = tooltip,
         data_id = date)) +  geom_bar_interactive(stat="identity") +
-    scale_x_date(date_breaks="1 week", date_labels = "%d %b") +
+    scale_x_date(date_breaks="2 weeks", date_labels = "%d %b", expand=expansion(mult=c(0.05,.20))) +
     labs(y="Daily incremental incidence",
                                    title="Total US Tests: Pos, Neg and Pending (mouse hover in html")  +
     theme(legend.position = "none",
-          strip.text.y = element_text(size=11))
+          strip.text.y = element_text(size=11), axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 
 girafe(ggobj=p)
 } #end mouse hover for html

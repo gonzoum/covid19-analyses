@@ -16,7 +16,7 @@ github-repo: https://github.com/gonzoum/covid19-analyses
 graphics: yes
 description: "Pages to make remote teaching of statistics more interesting during the covid-19 pandemic."
 params:
-  longform: FALSE
+  longform: TRUE
 #params$longform
 #https://bookdown.org/yihui/rmarkdown/params-use.html
 ---
@@ -48,7 +48,7 @@ longform <- params$longform
 
 **Note**
 
-I have an [abbreviated version](http://www-personal.umich.edu/~gonzo/covid19/_public/) of these notes with limited R code displayed. That version may be easier to follow if you want to see the final results rather than the detailed code presented here.
+I have an [abbreviated version](http://www-personal.umich.edu/~gonzo/covid19/_public/) of these notes with limited R code displayed. That version may be easier to follow if you want to focus on the final results rather than the detailed code.
 
 :::
   
