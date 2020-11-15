@@ -71,7 +71,7 @@ ggplot(county.level, aes(x=day,y=daily)) +  geom_bar(stat="identity") +
     labs(y="Daily incremental incidence",
                                    title="Fulton County, Georgia: Positive US Covid-19 Cases")  +
     theme(legend.position = "none",
-          strip.text.y = element_text(size=11)) + 
+          strip.text.y = element_text(size=11), axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) + 
     geom_vline(xintercept=as.Date("2020/04/24"), color="red")
 
 county.level <- alabama.df %>% subset(Admin2=="Montgomery" & day > as.Date("2020/03/11")) %>% mutate(daily=c(NA, diff(count)))
@@ -81,7 +81,7 @@ ggplot(county.level, aes(x=day,y=daily)) +  geom_bar(stat="identity") +
     labs(y="Daily incremental incidence",
                                    title="Montgomery County, Alabama: Positive US Covid-19 Cases")  +
     theme(legend.position = "none",
-          strip.text.y = element_text(size=11)) + 
+          strip.text.y = element_text(size=11), axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) + 
     geom_vline(xintercept=as.Date("2020/04/24"), color="red")
 
 ```
@@ -94,6 +94,47 @@ The good news is that the study found that patient-reported physical activity an
 
 More on this to come.  Here are some initial plots but the data are suspect with various missing days and implausible values such as New York reporting 9 consecutive days of reporting 5016, which suggests lack of daily update.
 
+Format data
+
+```{r results=ifelse(longform, "markup", "hide"), warning=FALSE, message=FALSE}
+# use covid tracking data set; start at march 9 and create day.numeric as before
+covid.tracking.new <- covid.tracking %>% subset(date>as.Date("2020-03-18", "%Y-%m-%d"))
+# reorder the data.frame
+covid.tracking.new <- arrange(covid.tracking.new, date, group_by=state)
+covid.tracking.new$day.numeric <- as.numeric(covid.tracking.new$date)-18330
+
+# clean up death, hospitalization, ICU and vent columns
+# temporary fix on 4/27/20 one missing code came up so I'll set it to 0
+covid.tracking.new$deathIncrease <- ifelse(is.na(covid.tracking.new$deathIncrease),0,covid.tracking.new$deathIncrease)
+
+# create separate dataframe for US totals
+day.death.totals.US <- covid.tracking.new %>% group_by(date) %>% summarise(daytotal=sum(deathIncrease,na.rm=T))
+
+# add population info
+temp1 <- str_sub(allstates.long.new$prettyval[1:50],start=-2,end=-1)
+temp2 <- allstates.long.new$population[1:50]
+ord <- order(temp1)
+temp1 <- temp1[ord]
+temp2 <- temp2[ord]
+n <- table(covid.tracking.new$state)[1]
+covid.tracking.new$population <- rep(temp2,n)
+
+# compute per capita for death
+covid.tracking.new$deathIncrease.pc <- covid.tracking.new$deathIncrease/covid.tracking.new$population*1000000
+covid.tracking.new$deathIncrease.pc[covid.tracking.new$deathIncrease.pc<0] <- 0
+
+# Drop one outlier in NJ. Y scale is free across states.
+covid.tracking.new$deathIncrease.pc.nooutlier <- covid.tracking.new$deathIncrease.pc
+covid.tracking.new$deathIncrease.pc.nooutlier[covid.tracking.new$deathIncrease.pc.nooutlier>100] <- NA
+
+day.hospitalizedCurrently <- covid.tracking.new %>% group_by(date) %>% summarise(daytotal=sum(hospitalizedCurrently,na.rm=T))
+
+day.inIcuCurrently <- covid.tracking.new %>% group_by(date) %>% summarise(daytotal=sum(inIcuCurrently,na.rm=T))
+
+day.onVentilatorCurrently <- covid.tracking.new %>% group_by(date) %>% summarise(daytotal=sum(onVentilatorCurrently,na.rm=T))
+
+```
+
 
 ```{r}
 ggplot(subset(covid.tracking, date > as.Date("2020/03/20")), aes(date, hospitalizedCurrently, group=state, color=state)) + geom_line() + ggtitle("Number Currently Hospitalized By State")
@@ -101,6 +142,30 @@ ggplot(subset(covid.tracking, date > as.Date("2020/03/20")), aes(date, hospitali
 ggplot(subset(covid.tracking, date > as.Date("2020/03/20")), aes(date, inIcuCurrently, group=state, color=state)) + geom_line() + ggtitle("Number Currently in ICU By State")
 
 ggplot(subset(covid.tracking, date > as.Date("2020/03/20")), aes(date, onVentilatorCurrently, group=state, color=state)) + geom_line() + ggtitle("Number Currently on Ventilator By State")
+
+```
+
+```{r}
+ggplot(day.hospitalizedCurrently, aes(date, daytotal)) +
+ geom_bar(stat="identity",width=1) +
+ scale_x_date(date_breaks="2 weeks", date_labels = "%d %b", expand=expansion(mult=c(0.05,.15))) +
+    labs(y="Daily", title="US Covid Hospitalization")  +
+    theme(legend.position = "none",
+          strip.text.y = element_text(size=11),axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) 
+
+ggplot(day.inIcuCurrently, aes(date, daytotal)) +
+ geom_bar(stat="identity",width=1) +
+ scale_x_date(date_breaks="2 weeks", date_labels = "%d %b", expand=expansion(mult=c(0.05,.15))) +
+    labs(y="Daily", title="US Covid ICU")  +
+    theme(legend.position = "none",
+          strip.text.y = element_text(size=11),axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) 
+
+ggplot(day.onVentilatorCurrently, aes(date, daytotal)) +
+ geom_bar(stat="identity",width=1) +
+ scale_x_date(date_breaks="2 weeks", date_labels = "%d %b", expand=expansion(mult=c(0.05,.15))) +
+    labs(y="Daily", title="US Covid Ventilator")  +
+    theme(legend.position = "none",
+          strip.text.y = element_text(size=11),axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) 
 
 ```
 
@@ -127,34 +192,20 @@ Let's perform a direct fit to the daily death count, since death is a more appro
 richfu.sir <- function(d,a,b0,b1){
 a*sech(b1*d + b0)^2
 }
-
-# use covid tracking data set; start at march 9 and create day.numeric as before
-covid.tracking.new <- covid.tracking %>% subset(date>as.Date("2020-03-18", "%Y-%m-%d"))
-# reorder the data.frame
-covid.tracking.new <- arrange(covid.tracking.new, date, group_by=state)
-covid.tracking.new$day.numeric <- as.numeric(covid.tracking.new$date)-18330
-
-# temporary fix on 4/27/20 one missing code came up so I'll set it to 0
-covid.tracking.new$deathIncrease <- ifelse(is.na(covid.tracking.new$deathIncrease),0,covid.tracking.new$deathIncrease)
-
-# add population info
-temp1 <- str_sub(allstates.long.new$prettyval[1:50],start=-2,end=-1)
-temp2 <- allstates.long.new$population[1:50]
-ord <- order(temp1)
-temp1 <- temp1[ord]
-temp2 <- temp2[ord]
-n <- table(covid.tracking.new$state)[1]
-covid.tracking.new$population <- rep(temp2,n)
-covid.tracking.new$deathIncrease.pc <- covid.tracking.new$deathIncrease/covid.tracking.new$population*1000000
-covid.tracking.new$deathIncrease.pc[covid.tracking.new$deathIncrease.pc<0] <- 0
 ```
 
-Drop one outlier in NJ. Y scale is free across states. Default smoothing parameters.
+Default smoothing parameters.
 
 ```{r death.by.state}
-covid.tracking.new$deathIncrease.pc.nooutlier <- covid.tracking.new$deathIncrease.pc
-covid.tracking.new$deathIncrease.pc.nooutlier[covid.tracking.new$deathIncrease.pc.nooutlier>100] <- NA
+# incidence plot for US
+ggplot(day.death.totals.US, aes(date, daytotal)) +
+ geom_bar(stat="identity",width=1) +
+ scale_x_date(date_breaks="2 weeks", date_labels = "%d %b", expand=expansion(mult=c(0.05,.15))) +
+    labs(y="Daily", title="US Covid-19 Deaths")  +
+    theme(legend.position = "none",
+          strip.text.y = element_text(size=11),axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) 
 
+# incidence plot by state
 ggplot(covid.tracking.new, aes(day.numeric,deathIncrease.pc.nooutlier)) +  geom_point(size=1, color="blue") + geom_smooth(color="red",size=1) + facet_wrap_paginate(~state, nrow=5,ncol=5,page=1, scales="free_y")
 ggplot(covid.tracking.new, aes(day.numeric,deathIncrease.pc.nooutlier)) +  geom_point(size=1,color="blue") + geom_smooth(color="red",size=1) + facet_wrap_paginate(~state, nrow=5,ncol=5,page=2, scales="free_y")
 
@@ -162,20 +213,20 @@ ggplot(covid.tracking.new, aes(day.numeric,deathIncrease.pc.nooutlier)) +  geom_
 
 
 ```{r}
-#version was defined at the beginning of the the index.Rmd file
-#get current tag and use a filename prefix
+# version was defined at the beginning of the the index.Rmd file
+# get current tag and use a filename prefix
 currentversion <- system("git describe --tags",intern=T)
 save.image(file=paste0("data-archive/",currentversion,"-dataworkspace.RData"))
 print(paste0("File name associated with this run is ", currentversion, "-dataworkspace.RData"))
 ```
 
 ```{r results="hide"}
-#out <- nls(deathIncrease.pc ~ richfu.sir(day.numeric, a, b0,b1), data=covid.tracking.new,start=c(a=1, b0=-.1,b1=0.1), algorithm="port")
+#out <- nls(deathIncrease.pc ~ richfu.sir(day.numeric, a, b0,b1), data=covid.tracking.new,start=c(a=9, b0=2,b1=-0.1), algorithm="port", control=nls.control(maxiter=500))
 
-
+#temporarily drop random b0 on 11/12 until convergence can be fixed
 out <- nlme(deathIncrease.pc ~ richfu.sir(day.numeric, a, b0,b1), fixed = a+b0+b1~1,
-            random =  a+b0+b1~1, data=covid.tracking.new,start=c(a=8, b01=.9,b1=-.01), verbose=T, groups=~state, control=nlmeControl(msMaxIter=400,opt="nlminb",pnlsTol=.1,msVerbose=T,minScale=.001, maxIter=400, tolerance=.01, msTol=.01) )
-#check public for recent run 7, 1.6, -.02, I think I had 7, 1.8 -.03
+            random =  a+b1~1, data=covid.tracking.new,start=c(a=7, b0=1.75,b1=-.01), verbose=T, groups=~state, control=nlmeControl(msMaxIter=400,opt="nlminb",pnlsTol=.01,msVerbose=T,minScale=.01, maxIter=400, tolerance=.5, msTol=.01) )
+#check public for recent run 8, .9, -.01, 
 #c(a=35, b0=1.23,b1=-.023)
 
 #refit omitting the outlier
@@ -205,8 +256,8 @@ b0+b1*exp(b2*d)
 }
 starts <- nls(deathIncrease.pc ~ richfu.heat(day.numeric, b0,b1,b2), data=subset(covid.tracking.new, day.numeric>=34),start=c(b0=0.1, b1=30, b2=-.05), algorithm="port")
 
-out.43days <- nlme(deathIncrease.pc ~ richfu.heat(day.numeric,b0=0,b1,b2), fixed = b1+b2~1,
-            random =  b1+b2~1, data=subset(covid.tracking.new, day.numeric>=34),start=c(b1=10.7,b2=-.029), verbose=T, groups=~state, control=nlmeControl(msMaxIter=1000,opt="nlminb",pnlsTol=.1,msVerbose=T,minScale=.1, maxIter=1000, tolerance=1, msTol=.1) )
+out.43days <- nlme(deathIncrease.pc ~ richfu.heat(day.numeric,b0,b1,b2), fixed = b0+b1+b2~1,
+            random =  b0+b1+b2~1, data=subset(covid.tracking.new, day.numeric>=34),start=c(b0=2,b1=11,b2=-.03), verbose=T, groups=~state, control=nlmeControl(msMaxIter=1000,opt="nlminb",pnlsTol=.01,msVerbose=T,minScale=.01, maxIter=1000, tolerance=1, msTol=.1) )
 
 ```
 

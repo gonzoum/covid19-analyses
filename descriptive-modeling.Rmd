@@ -366,11 +366,17 @@ There is a sense in which we didn't have to worry about liftoff in the linear mi
 
 Let's estimate an exponential growth model using a nonlinear mixed model regression. This mimics the LMER model we ran earlier in these notes but rather than transforming with a log to convert the data into straight lines, this time we model the curvature directly with an exponential function. To simplify things I constrain the liftoff parameter to 0 and the multiplier b1 to 1.  To estimate all four parameters simultaneously we need to move to a different R package [saemix](https://cran.r-project.org/web/packages/saemix/saemix.pdf) that uses a stochastic EM algorithm to estimate this nonlinear mixed model because nlme can't handle very complex models like this one without doing more ground work in setting up a self-starting function that has information about the gradient of the function.  But, some additional work needs to be done to check that all four parameters can be estimated. There may be a redundancy with the rate and the b1 parameters (related to the base of the exponent that I described earlier in the [Exponential Growth Background](#expoback) subsection when moving to different bases like base 10 or $\exp$).  Sometimes parameters cannot be identified.
 
-For these estimations I'm using percent of positive cases in the state (count/population) rather than the count.
+For this estimation of the exponential function I'm using percent of positive cases in the state (i.e., count/population) rather than the raw count.
+
+```{r}
+currentversion <- system("git describe --tags",intern=T)
+save.image(file=paste0("data-archive/",currentversion,"-dataworkspace.RData"))
+print(paste0("File name associated with this run is ", currentversion, "-dataworkspace.RData"))
+```
 
 ```{r results="hide"}
 out <- nlme(percent ~ richfu(day.numeric, l=0, rate,y,b1=1), fixed = rate+y~1,
-            random =  rate+y ~1, data=na.omit(allstates.long.new),start=c( rate=1.01,y=.22), verbose=T, control=nlmeControl(msMaxIter=500,opt="nlminb",pnlsTol=.01,msVerbose=T,minScale=.01) )
+            random =  rate+y ~1, data=na.omit(allstates.long.new),start=c( rate=1.01,y=.25), verbose=T, control=nlmeControl(msMaxIter=500,opt="nlminb",pnlsTol=.01,msVerbose=T,minScale=.01) )
 ```
 
 ```{r results="asis"}
@@ -1161,8 +1167,7 @@ The underlying common element of a neural network is that they take inputs, weig
 Here is a graphical representation of what I mean.  This example has four inputs (i.e., four variables or features), one hidden layer with 8 units, and one output layer that is a single number prediction (like our counts of positive tests).  The hidden layer is a set of 8 units. The two B terms are the "bias" terms that feed into the weighted sums.  The thick black lines refer to higher positive weights and the thicker gray refer to smaller negative.   Example adapted from the tutorial in the NeuralNetTools R package.
 
 ```{r echo=longform, results="hide"}
-library(NeuralNetTools)
-library(nnet)
+
 
 data(neuraldat)
 

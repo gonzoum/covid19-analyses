@@ -1,8 +1,8 @@
-%\documentclass[10pt]{beamer}
-\documentclass[ignorenonframetext,10pt,handout]{beamer}
+\documentclass[ignorenonframetext,10pt]{beamer}
+%\documentclass[ignorenonframetext,10pt,handout]{beamer}
 \usepackage{pgfpages}
-\setbeameroption{show notes}
-\setbeameroption{show notes on second screen=right}
+%\setbeameroption{show notes}
+%\setbeameroption{show notes on second screen=right}
 %pdfpc --notes="right" simon-fraser.pdf --windowed="both" -s  (w is windowed)
 %use dspdfviewer
 %old: use pdfpc -n right phoebe-retire.pdf
@@ -73,7 +73,10 @@ library(nlme)
 library(sjPlot)
 library(kableExtra)
 #load(file="../data-archive/v.95-110-g95fe04f-dataworkspace.RData")
-load(file="../data-archive/v.95-114-g3631e1d-dataworkspace.RData")
+#load(file="../data-archive/v.95-115-g34282c2-dataworkspace.RData")
+#most recent file
+tmpshot <- fileSnapshot("../data-archive/")
+load(file=paste0("../data-archive/",rownames(tmpshot$info[which.max(tmpshot$info$mtime),])))
 @
 
    \note{I'm honored to be part of today's remote conference. While I've been engaged in many zoom meetings these last three months, this is my first conference. \\~\\
@@ -492,17 +495,6 @@ Better fit with this ``sech'' form than basic logistic growth (AIC, BIC, residua
 }
 \note{sech: hyperbolic secant}
 
-\begin{frame}[standout,fragile]{Thank You}
-
-For more information: \\
-\href{http://www-personal.umich.edu/~gonzo/covid19/_public/}{http://www-personal.umich.edu/\~{}gonzo/covid19/\_public/}
-
-You'll find all the R code for these analyses plus a lot more.
-
-%for standout note needs to be outside of frame
-\end{frame}
-\note{}
-
 \begin{frame}
 \begin{center}
 	\vfill
@@ -513,14 +505,14 @@ You'll find all the R code for these analyses plus a lot more.
 
 \section{Functional Equations}
 
-\frame{
+\begin{frame}
 Functional Equations:  branch of mathematics where the unknown is a functional form
 
 Example: f(x+y) = f(x) + f(y). Which functions f satisfy this equation under a set of conditions?
 
 
 How can they be used in data analysis?
-}
+\end{frame}
 
 \begin{frame}
 \frametitle{Plateau's gray study}
@@ -654,9 +646,7 @@ Is there a procedure that allows testing functional forms directly?
   relatively non-technical introduction to functional equations, show
   applications of the technique, and will compare the functional equations approach to more
   traditional modeling approaches used in cognitive psychology.
-}
-
-}
+}}
 
 
 \frame{

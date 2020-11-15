@@ -130,7 +130,7 @@ allstates.temp2 <- allstates.temp %>% group_by(`Province/State`) %>%  summarize_
 # create subset of 50 states from original datacov in order to have the correct long and lat by state (rather than county)
 # this is a check that new code from 3/31/20 works with the older format
 datacov.ori <- 
- read_csv("/Users/gonzo/Dropbox/transfer/mac transfer/covid19-analyses/time_series_19-covid-Confirmed.csv")
+ read_csv("time_series_19-covid-Confirmed.csv")
 allstates <- subset(datacov.ori, `Province/State`%in% states)
 allstates.ori <- allstates
 
@@ -514,13 +514,15 @@ day.sums <- day.sums %>% mutate(movavg=movavg(daily, n=7, type="s"))
 
 # make plot with nice labels 5th bar looks almost empty; the data show 61 cases
 # that day
-ggplot( day.sums, aes(x=day,y=daily)) +  geom_bar(stat="identity") +
-    scale_x_date(date_breaks="2 weeks", date_labels = "%d %b", expand=expansion(mult=c(0.05,.15))) +
+ggplot( day.sums, aes(x=day,y=daily)) +  geom_bar(stat="identity",width=1) +
+    scale_x_date(date_breaks="2 weeks", date_labels = "%d %b", expand=expansion(mult=c(0.05,.15))) + 
+  scale_y_continuous(labels = scales::comma) +
     labs(y="Daily incremental incidence",
                                    title="Positive US Covid-19 Cases")  +
     theme(legend.position = "none",
           strip.text.y = element_text(size=11),axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
       geom_line(aes(x=day, y=movavg), color="blue", size=1.5) 
+
 ```
 
 \index{interactive plot}
@@ -547,7 +549,8 @@ day.sums$tooltip <- paste0( "<table>",
 
 p <- ggplot( day.sums, aes(x=day,y=daily, tooltip = tooltip,
         data_id = day)) +  geom_bar_interactive(stat="identity") +
-    scale_x_date(date_breaks="2 weeks", date_labels = "%d %b", expand=expansion(mult=c(0.05,.15))) +
+    scale_x_date(date_breaks="2 weeks", date_labels = "%d %b", expand=expansion(mult=c(0.05,.2))) +
+    scale_y_continuous(labels = scales::comma) +
     labs(y="Daily incremental incidence",
                                    title="Positive US Covid-19 Cases (mouse hover in html version")  +
     theme(legend.position = "none",
@@ -565,8 +568,9 @@ covid.tracking.date <- covid.tracking %>% subset(date>as.Date("2020-03-9", "%Y-%
 covid.tracking.date <- covid.tracking.date %>% group_by(date) %>% dplyr::summarize(date.sum = sum(total, na.rm=T)) 
 covid.tracking.date <- covid.tracking.date %>% mutate(sumdaily = c(date.sum[1], diff(date.sum)))
 
-ggplot( covid.tracking.date, aes(x=date,y=sumdaily)) +  geom_bar(stat="identity") +
+ggplot( covid.tracking.date, aes(x=date,y=sumdaily)) +  geom_bar(stat="identity",width=1) +
     scale_x_date(date_breaks="2 weeks", date_labels = "%d %b", expand=expansion(mult=c(0.05,.15))) +
+      scale_y_continuous(labels = scales::comma) +
     labs(y="Daily incremental incidence",
                                    title="Total US Tests: Pos, Neg and Pending")  +
     theme(legend.position = "none",
@@ -583,15 +587,16 @@ covid.tracking.date$tooltip <- sprintf(str_model, covid.tracking.date$date,
 covid.tracking.date$tooltip <- paste0( "<table>", 
                            covid.tracking.date$tooltip, "</table>" )
 
-p <- ggplot( covid.tracking.date, aes(x=date,y=sumdaily, tooltip = tooltip,
+p2 <- ggplot( covid.tracking.date, aes(x=date,y=sumdaily, tooltip = tooltip,
         data_id = date)) +  geom_bar_interactive(stat="identity") +
     scale_x_date(date_breaks="2 weeks", date_labels = "%d %b", expand=expansion(mult=c(0.05,.20))) +
+      scale_y_continuous(labels = scales::comma) +
     labs(y="Daily incremental incidence",
                                    title="Total US Tests: Pos, Neg and Pending (mouse hover in html")  +
     theme(legend.position = "none",
           strip.text.y = element_text(size=11), axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 
-girafe(ggobj=p)
+girafe(ggobj=p2)
 } #end mouse hover for html
 ```
 

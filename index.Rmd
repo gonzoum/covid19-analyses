@@ -16,7 +16,7 @@ github-repo: https://github.com/gonzoum/covid19-analyses
 graphics: yes
 description: "Pages to make remote teaching of statistics more interesting during the covid-19 pandemic."
 params:
-  longform: TRUE
+  longform: FALSE
 #params$longform
 #https://bookdown.org/yihui/rmarkdown/params-use.html
 ---

@@ -12,7 +12,7 @@ This chapter has details on where the data came from and how I gathered them.  I
   
 ```
 
-We are fortunate to be in a time where the technical infrastructure facilitates sharing data in a way that makes publicly available data useful.  To newcomers it will seem like a challenging task to find the data, grab the data file and put it in a format that can be used and merged with other data to promote understanding and decision making. Also, working with such complex data at multiple levels, including country, state/province, county, as well as multiple variables, including number of positive tests, number of confirmed covid-19 deaths, and the number of covid-19-related hospitalizations, can be challenging.  Then there is the issue of examining explanatory and outcome variables. What information is helpful in accounting for the variability we see across states or across counties? Is it access to health care? poverty rate? compliance to social distancing guidelines?  There is also the necessary base rate information that help us understand the counts, such as populations sizes, typical number of ICU visits. This chapter will provide examples for how one goes about accessing such data.
+We are fortunate to be in a time where the technical infrastructure facilitates sharing data in a way that makes publicly available data useful.  To newcomers it will seem like a challenging task to find the data, grab the data file and put it in a format that can be used and merged with other data to promote understanding and decision making. Also, working with such complex data at multiple levels, including country, state/province, county, as well as multiple variables, including number of positive tests, number of confirmed covid-19 deaths, and the number of covid-19-related hospitalizations, can be challenging.  Then there is the issue of examining explanatory and outcome variables. What information is helpful in accounting for the variability we see across states or across counties? Is it access to health care? poverty rate? compliance to social distancing guidelines?  There is also the necessary base rate information that help us understand the counts, such as populations sizes, typical number of ICU visits. This chapter will provide examples for how one goes about accessing, downloading and processing such data.
 
 This chapter will cover four different ways to read data into R: 
 
@@ -44,43 +44,32 @@ Sometimes these present conflicts such as writing robust code may not be code th
 
 ## Pulling data from a git repository
 
-I'll use the [data base that Johns Hopkins](https://github.com/CSSEGISandData/COVID-19) has been maintaining on github. It is used by news outlets such as CNN.  I already cloned the git repository on my local computer so each day I merely have to issue a "git pull" command to get all new files that have been edited.  This is a better process than conducting a completely new download every day of the entire repository. You can see the Johns Hopkins github site for a complete listing of sources of their data. 
+I'll use the [data base that Johns Hopkins University (JHU)](https://github.com/CSSEGISandData/COVID-19) has been maintaining on github. It is used by news outlets such as CNN.  I already cloned the git repository on my local computer so each day I merely have to issue a "git pull" command to get all new files that have been edited.  This is a better process than conducting a completely new download every day of the entire repository. You can see the Johns Hopkins github site for a complete listing of sources of their data. 
 
 If you want to learn more about working with git repositories, you can do a Google search for how to clone a repository.  [Rstudio](https://rstudio.com/products/rstudio/) also has features to help clone and manage a git repository.  For basic git information see Appendix \@ref(usinggit).
 
-The script below will switch to the folder I'm keeping the git repository, execute the command "git pull" (which checks if there have been any updates on the server and, if so, downlooads those updates) and then bring me back to the original folder.  To keep things organized I'm keeping the git repository in a separate folder from the R files that are creating these pages. Another way of accomplishing the same thing is to pull the git repository manually each time you want to run the most updated data set. Basically, this next line of code downloads the most recent data for me so I don't have to do it manually.
-
-
+The script below will switch to the folder I'm keeping the JHU data git repository, execute the command "git pull" (which checks if there have been any updates on the server and, if so, downlooads those updates) and then bring me back to the original folder.  To keep things organized I'm keeping the data git repository in a separate folder from the R files that are creating these pages. Another way of accomplishing the same thing is to pull the git repository manually each time you want to run the most updated data set. Basically, this next line of code downloads the most recent data for me so I don't have to do it manually.
 
 ```{r warning=F, message=F, results='hide'}
-#assuming git has been installed on your machine (e.g., Xcode in mac);
-#this is mac and linux specific; pc may be different unless unix commands have been installed
+# assuming git has been installed on your machine (e.g., Xcode in mac);
+# this is mac and linux specific; 
+# pc may be different unless unix commands have been installed
 
 #intern and cat print the output of the system command to this html document
 cat(system(
   "pushd '../COVID-19' && git pull && popd", intern=T), sep="\n")
 ```
 
-I prefer not to include data files in the git repository as a matter of habit (e.g., data may contain private information yet the repository may be public).
+I prefer not to include data files in the git repository that has the code as a matter of habit (e.g., data may contain private information yet the repository with the code may be public). 
 
 ```{asis echo=longform}
-Now read the file that has the cumulative counts of confirmed covid-19 cases by country and, if relevant, state or province. I'll save it into an object called datacov; I list the first 6 rows of datacov.
+Now read the file that has the cumulative counts of confirmed covid-19 cases by country and, if relevant, state or province. I'll save the data into an object called datacov; I list the first 6 rows of datacov.
 
-**NOTE:** On 3/23/20 this site reorganized the data structure.   US data are now in a separate file from the rest of the world data, and the files are completely restructured where the US is now at the  county level rather than the state level. This is more granular data but the change means some work will need to be done to reformat these files. I'm going to freeze uploading new data until this gets resolved or I have time to rewrite the code.  Changing data format is a very common occurrence in the world of downloads and web scraping. What works today may break tomorrow.  One just needs to be flexible and write robust code that can be easily modified as needed.  Employment prospects for people working in data science will continue to be very good.
+On 3/23/20 the JHU site reorganized the data structure.   US data are now in a separate file from the rest of the world data, and the files are completely restructured where the US is now at the  county level rather than the state level. Changing data format is a common occurrence in the world of downloads and web scraping. What works today may break tomorrow.  One just needs to be flexible and write robust code that can be easily modified as needed to accommodate changes.  Employment prospects for people working in data science will continue to be very good.
 
 Here is the notice of the change to the data structure: [link](https://github.com/CSSEGISandData/COVID-19/issues/1250).
 
-**NOTE:** On 3/30/20 the repository lists the updated files. The new files changed in small ways that require some additional rewriting of the code. These changes include separating the US into a different file from the world (though the total US counts appear in the world data set), changing the names of a few columns but these are not consistent between the different data files that are downloaded (e.g., the US file has slightly different column names than the world data file), US data file ends one day behind the world data file (i.e., 3/30 and 3/31 respectively), and for the US data providing county-level counts rather than state-level counts so I need to create sums by states. These aren't big deals but can create lots of problems catching all the edits needed in  later code. For example, originally the longitude variable was called Long but now it is called Long_, and in the US data column names are given with dates as 2020 but in the world data file they are given as 20. There are several ways to address such changes. I'll go the route of changing the variable names here so that I don't need to make many changes throughout the rest of the code.  I suspect there may be more changes in the coming days so I'll make the minimal changes in a way that let's me easily adapt to future changes.
-
-I include little notes so you can see how I adapted my code to the changing landscape and evaluate the decisions I made along the way.  As much as possible I will document my edits and use clear commit messages in git so that one could go back to earlier versions as needed. Such documentation is an important part of conducting reproducible science.  The approach I've taken here allows  the code to be readable yet my changes can be examined without a bunch of clutter of obsolete code commented out with unhelpful statements such as "DO NOT USE THIS" (see below for a silly example).
-```
-
-```{r eval=F, echo=longform}
-#DO NOT USE THIS (SILLY EXAMPLE)
-#OLD CODE PRIOR TO 3/23/20
-
-datacov <- 
- read_csv("time_series_19-covid-Confirmed.csv")
+I include comments in the R code so you can see how I adapted my code to the changing landscape and evaluate the decisions I made along the way.  As much as possible I will document my edits and use clear commit messages in git so that one could go back to earlier versions as needed. Such documentation is an important part of conducting reproducible science.  The approach I've taken here allows  the code to be readable yet my changes can be examined without a bunch of clutter of obsolete code commented out with unhelpful statements such as "DO NOT USE THIS" (see below for a silly example).
 ```
 
 We read in the two files with world and US cumulative data.

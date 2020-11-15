@@ -100,23 +100,25 @@ library(brms)
 library(bayesplot)
 library(tidybayes)
 library(tibbletime)
-
+library(NeuralNetTools)
+library(nnet)
 ```
 
 ```{r}
-#devtools::install_github("wmurphyrd/fiftystater")
+install.github.libs <- F
+if (install.github.libs) devtools::install_github("wmurphyrd/fiftystater")
 library(fiftystater)
 
-#devtools::install_github("UrbanInstitute/urbnmapr")
+if (install.github.libs) devtools::install_github("UrbanInstitute/urbnmapr")
 library(urbnmapr)
 
-# devtools::install_github('davidgohel/ggiraph')
+if (install.github.libs) devtools::install_github('davidgohel/ggiraph')
 library(ggiraph)
 
-# remotes::install_github("CollinErickson/GauPro")
+if (install.github.libs) remotes::install_github("CollinErickson/GauPro")
 library(GauPro)
 
-# devtools::install_github("nelsonroque/tsfeaturex")
+if (install.github.libs) devtools::install_github("nelsonroque/tsfeaturex")
 library(tsfeaturex)
 ```
 
@@ -138,7 +140,7 @@ p_load("bookdown","readr","tidyverse","rvest","magrittr",
    "readxl","rnn","stargazer","texreg","gamm4","splines","mgcv",
    "nlrx", "pander", "pracma","ggforce", "RColorBrewer","investr",
    "forecast","hts","ggfortify", "brms","bayesplot","tidybayes",
-   "tibbletime")
+   "tibbletime","NeuralNetTools","nnet")
 ```
 
 
