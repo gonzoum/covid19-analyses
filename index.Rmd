@@ -16,7 +16,7 @@ github-repo: https://github.com/gonzoum/covid19-analyses
 graphics: yes
 description: "Pages to make remote teaching of statistics more interesting during the covid-19 pandemic."
 params:
-  longform: FALSE
+  longform: TRUE
 #params$longform
 #https://bookdown.org/yihui/rmarkdown/params-use.html
 ---
@@ -29,15 +29,10 @@ params:
 <!-- Serving the directory /Users/gonzo/Dropbox/transfer/mac transfer/covid19-analyses at http://127.0.0.1:4321 -->
 
 ```{r echo=F}
-#longform = T means print everything; longform=F means print just the pieces for public consumption
-#in hindsight I should have used the knitr global definition for echo (for r chunks) and "asis" (for text) but when I started I had 
-#in mind more nuanced use of chunks across the two versions and it seemed separate chunk by chunk definition
-#was more efficient
+# longform = T means print everything; 
+# longform=F means print just the pieces for public consumption
+# in hindsight I should have used the knitr global definition for echo (for r chunks) # and "asis" (for text) 
 longform <- params$longform
-
-#I could get fancy and have separate render_book commands but that would require writing a script and putting the longform boolean in the script
-#nice thing about that is that separate commands and save environments can be specified
-#for now, I just build this with either longform = T or F and remember to copy _book to public when longform = F
 ```
 
 
@@ -64,9 +59,9 @@ I have a more [detailed version](http://www-personal.umich.edu/~gonzo/covid19/_b
   
 ```
 
-** Disclaimer:  The contents of this website are in draft form.  Changes are made daily.  At this point I am more in "content creation mode" than in careful editing, consistency checks, references, and meta-level summaries.  Also, the code is run daily and all plots and tables change accordingly. Sometimes there are peculiar details that emerge for a particular day and I wasn't able to catch them prior to uploading the new day's files. This will eventually stablize as the notes enter their final form.** 
+** Disclaimer:  The contents of this website are in draft form.  Changes are made daily.  At this point I am more in "content creation mode" than in careful editing, consistency checks, references, and meta-level summaries.  Also, the code is run daily and all plots and tables change accordingly. Sometimes there are peculiarities that emerge for a particular day and I wasn't able to catch them prior to uploading the new day's files (e.g., a weird plot, an outlier that leads to unreasonable parameter estimates). This will eventually stablize as the notes enter their final form.** 
 
-This book began at the beginning of the Covid-19 pandemic as a set of lecture notes to teach advanced quantitative methods and data visualization to graduate statistics in the behavioral sciences at the University of Michigan. I used an earlier version in four lectures during the end of March, 2020. The notes are sprinkled with code because one goal is to teach how to conduct these analyses, create visualizations and interpret results.  There are two versions of these notes: one version omits much of the R code though still retains some of the flavor of how one uses these tools and interprets the output ([abbreviated version](http://www-personal.umich.edu/~gonzo/covid19/_public)) and other version includes all the R code ([detailed version](http://www-personal.umich.edu/~gonzo/covid19/_book)).   If you would like to see my more general set of teaching notes from the rest of the year-long graduate statistics course for additional background, visit my [course website](http://www-personal.umich.edu/~gonzo/coursenotes/) that is updated regularly.
+This book began during the Covid-19 pandemic as a set of lecture notes to teach advanced quantitative methods and data visualization to graduate statistics in the behavioral sciences at the University of Michigan. The notes are sprinkled with code because one goal is to teach how to conduct these analyses, create visualizations and interpret results.  There are two versions of these notes: one version omits much of the R code though still retains some of the flavor of how one uses these tools and interprets the output ([abbreviated version](http://www-personal.umich.edu/~gonzo/covid19/_public)) and another version includes all the R code ([detailed version](http://www-personal.umich.edu/~gonzo/covid19/_book)).   If you would like to see my more general set of teaching notes from the rest of the year-long graduate statistics course for additional background, visit my [course website](http://www-personal.umich.edu/~gonzo/coursenotes/).
 
 <!-- ::: {.infobox .caution data-latex="{caution}"} -->
 
