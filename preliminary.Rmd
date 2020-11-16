@@ -2,7 +2,7 @@
 
 # Preliminaries
 
-I want these notes to serve as an example of how to keep your analyses organized and reproducible.  Analysis projects have many common elements, which include gathering data, cleaning and organizing data, preparing descriptive summaries, testing hypotheses, writing reports, and dissemination.  The end product should be a complete pipeline that takes you from soup to nuts with clear documentation.   These notes provide one example of how to prepare a workflow.  Such workflows typically make use of many software tools, and I would like to highlight some of the tools I used.  All the tools used to produce this book were open-source.
+I want these notes to serve as an example of how to keep your analyses organized and reproducible.  Analysis projects have many common high-level elements, which include gathering data, cleaning and organizing data, preparing descriptive summaries, testing hypotheses, writing reports, and dissemination.  The end product should be a complete pipeline that takes you from soup to nuts with clear documentation.   These notes provide one example of how to prepare a workflow.  Such workflows typically make use of many software tools, and I would like to highlight some of the tools I used.  All the tools used to produce this book were open-source.
 
 These notes are written completely in [Rmarkdown](https://rmarkdown.rstudio.com/), a scripting language that allows one to weave text, R statistical commands, and R output to create a document. They are organized across several Rmd files (like this one) that are executed in a particular order. For example, the file that reads the data and cleans the data is sourced before the file that produces the descriptive summaries of the data.    See Appendix \@ref(learnr) to learn some basic details about R and find links to tutorials. The formatting of the files into both html and pdf was enabled by the [bookdown R package](https://bookdown.org/), which makes use of html constructs as well as [LaTeX](https://www.latex-project.org/) document formatting.  See Appendix \@ref(bookdown) for some basic information about the bookdown package.  I also made use of the [RStudio](https://rstudio.com/products/rstudio/) integrated editor that allowed me to type all these words and commands in a way that enabled debugging of code and natural weaving in of statistical output and figures.
 
@@ -10,11 +10,12 @@ I can reproduce all my analyses and so can you. I put the files for this project
 
 ## Libraries and Setup
 
-I need to set up some housekeeping commands. This includes formatting the R code so that it doesn't spill off the margin of the page and caching some time consuming computations. There are some analyses that I demonstrate here take a few hours to run. Rather than running them every time I recompile these notes, I cache those results in a folder so the results are re-used.  
-```{asis echo=longform}
-Rmarkdown detects when data has changed and those time consuming analyses need to be rerun. I prefer to exert manual control on the caching process and explicitly say cache=TRUE or cache=FALSE.  Later, you will see chunks of R code that are cached depending on whether I set the cache variable to TRUE or FALSE.
+I need to set up some housekeeping commands. This includes formatting the R code so that it doesn't spill off the margin of the page and caching some time consuming computations. There are some analyses in this book that can take a few hours to run. Rather than running them every time I recompile these notes, I cache those results in a folder so the results are re-used and only re-run those analyses periodically. 
 
-A variable that I set up in the index.Rmd file is longform. This is set either to TRUE or FALSE depending whether I want the "long version" of the book with all the R code and some additional explanations tied to R or the "short version" that omits the printing of the R code and some text specifically related to R.  For example, this paragraph is part of an Rmarkdown chunk that sets the echo argument to longform. If longform is TRUE this paragraph is printed, whereas if longform is FALSE the paragraph is omited.  This allows me to embed conditional statements and easily print two versions of the same document.  I use this feature in my own data analysis depending on whether I want to discuss all the analytic details with my colleagues or focus the end products of the analyses.
+```{asis echo=longform}
+Rmarkdown automatically detects when data have changed and those time consuming analyses need to be rerun. I prefer to exert manual control on the caching process and explicitly say cache=TRUE or cache=FALSE.
+
+A variable that I set up in the index.Rmd file is longform. This is set either to TRUE or FALSE depending whether I want the "long version" of the book with all the R code and some additional explanations tied to R or the "short version" that omits the printing of the R code and some text specifically related to R.  For example, this paragraph is part of an Rmarkdown chunk that sets the echo argument to longform. If longform is TRUE this paragraph is printed, whereas if longform is FALSE the paragraph is omited.  This allows me to embed conditional statements and easily print two versions of the same document (i.e., I don't need to include additional R code explanations in the version that does not include the R code).  I use this feature in my own data analysis depending on whether I want to discuss all the analytic details with my colleagues or focus on the end product of the analyses.
 ```
 
 ```{r setup, echo=longform}
@@ -51,10 +52,11 @@ cache <- T
 ```
 
 
-I organize in one place all the R packages that are used in these notes so they can be easily installed.  Typically, R packages are loaded with the library() command, which I'll use here.  This assumes the R package is already installed. 
+I prefer to organize in one place all the R packages that are used in these notes so they can be easily installed.  Typically, R packages are loaded with the library() command, which I'll use here.  The library() command assumes the R package is already installed. 
 
-There can be issues that arise when reading in multiple packages as I do here as there could be conflicts. For example, the package dplyr contains a function called select(), but there is also a select() function in another package I am using. I need to be careful I'm using the correct select() command and one what to accomplish that is by using the double colon construction. The command dplyr::select() instructs R to use the select() command that is contained in the package dplyr.
-
+```{asis echo=longform}
+There can be issues that arise when loading multiple packages, as I do in this project, such as conflicts across packages that may use the same name for different functions. For example, the package dplyr contains a function called select(), but there is also a select() function in another package I am using. I need to be careful I'm using the correct select() command and one why to accomplish that is by using the double colon construction. The command dplyr::select() instructs R to use the select() command that is contained in the package dplyr.
+```
 
 ```{r results='hide'}
 library(bookdown)
@@ -260,5 +262,5 @@ ggCaterpillar <- function(re, QQ=TRUE, likeDotplot=TRUE) {
 ::: {.infobox .caution data-latex="{caution}"}
 **R Notes**
 
-For better reproducibility it is good to use a package like renv that saves the current versions of all your packages used in your pipeline. This way if  a package is updated tomorrow and the new version breaks your code, you at least have the earlier version of the package available locally on your drive to continue running the same code.
+For better reproducibility it is good to use a package like renv that saves the current versions of all your packages used in your pipeline. This way if  a package is updated tomorrow and the new version breaks your code, you at least have the earlier version of the package available locally on your drive to continue running the same code. Another approach would be to put the entire project in a [Docker container](https://www.docker.com/), which is a complete self-contained running environment include operating system and all relevant executables.
 :::
