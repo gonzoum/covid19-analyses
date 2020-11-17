@@ -38,21 +38,27 @@ I wish I had a simpler set of instructions for Mac users. I'm a Mac user too and
 
 Some things to check include running git config -l to see your local configuration. These commands are typed in the "terminal" section of RStudio (not the R console where you type R commands). You could also type them into the terminal window on your Mac or PC.
 
-You may need to set username and email typing the following commands in the shell or in the terminal section of RSstudio. 
+You may need to set username and email by typing the following commands in the terminal section of RSstudio: 
 
 git config --global user.name "John Doe"
 
 git config --global user.email johndoe@example.com
 
-Other solutions that worked in the past include manually pulling the repository and there after Rstudio Git works fine. For example, if you want to pull my covid-19 repository issue the following two commands in the terminal section of RStudio: 
+If you want to pull my covid-19 repository code that includes the files to produce this book, you can issue the following two commands in the terminal section of RStudio: 
 
 git remote add origin https://github.com/gonzoum/covid19-analyses
 
 git pull origin master
 
-You would need to be in the folder where you want to save this repository because this git remote add command downloads the repository to the current folder.
+You would need to be in the folder where you want to save this repository because the ``git remote add'' command downloads the repository to the current folder.
 
+To download the Johns Hopkins data repository described in Chapter \@ref(readintro), change to a different folder and execute these two commands:
 
+git remote add origin https://github.com/CSSEGISandData/COVID-19
+
+git pull origin master
+
+The reason you need to switch to a different folder is that you can't have two git repositories in the same folder because they would conflict.
 
 ## Brief Git Explanation
 
