@@ -48,7 +48,7 @@ knit_hooks$set(output = function(x, options) {
 
 # cache=F to redo the lengthy analyses for new data, 
 # otherwise set to T for daily runs
-cache <- T
+cache <- F
 ```
 
 
@@ -67,6 +67,8 @@ library(magrittr)
 library(stringr)
 library(tidycensus)
 library(ggplot2)
+# gganimate needs gifski to render animations; 
+# dependency needs to be installed manually
 library(gganimate)
 library(ggeffects)
 library(scales)

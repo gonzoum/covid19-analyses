@@ -376,7 +376,7 @@ print(paste0("File name associated with this run is ", currentversion, "-datawor
 
 ```{r results="hide"}
 out <- nlme(percent ~ richfu(day.numeric, l=0, rate,y,b1=1), fixed = rate+y~1,
-            random =  rate+y ~1, data=na.omit(allstates.long.new),start=c( rate=1.01,y=.25), verbose=T, control=nlmeControl(msMaxIter=500,opt="nlminb",pnlsTol=.01,msVerbose=T,minScale=.01) )
+            random =  rate+y ~1, data=na.omit(allstates.long.new),start=c( rate=1.01,y=.20), verbose=T, control=nlmeControl(msMaxIter=500,opt="nlminb",pnlsTol=.01,msVerbose=T,minScale=.01) )
 ```
 
 ```{r results="asis"}

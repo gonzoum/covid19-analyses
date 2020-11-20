@@ -6,11 +6,11 @@ language:
   ui:
     edit: "Edit"
     chapter_name: "Chapter "
-delete_merged_file: yes
+delete_merged_file: no
 #rmd_subdir: TRUE
 rmd_files:  ["index.Rmd", "intro.Rmd", "preliminary.Rmd", "read-data.Rmd", "descript-plots.Rmd", "descriptive-modeling.Rmd",
-"process-models.Rmd", "deeper-dive.Rmd", "conclusion.Rmd", "Appendix.Rmd"]
-#yes below does khit and merge
+"process-models.Rmd", "deeper-dive.Rmd", "conclusion.Rmd", "appendix.Rmd"]
+#yes below does knit and merge
 #new_session:  yes
 output_dir: "_public"
 #output_dir: "_book"

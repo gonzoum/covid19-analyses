@@ -5,6 +5,7 @@ bookdown::gitbook:
 #    after_body:  disqus.html
   config:
     toc:
+      collapse: none
       before: |
         <li><a href="./">Learning Data Science Using Covid-19 Pandemic Data</a></li>
       after: |
@@ -12,20 +13,18 @@ bookdown::gitbook:
     #edit: https://github.com/rstudio/bookdown-demo/edit/master/%s
     download: ["pdf", "epub"]
     sharing: no
-bookdown::pdf_book:
-  includes:
-    in_header: latex/preamble.tex
-    before_body: latex/before_body.tex
-    after_body: latex/after_body.tex
-  latex_engine: xelatex
-  citation_package: natbib
-  keep_tex: yes
-  pandoc_args: --top-level-division=chapter #  [--wrap=none]
-  extra_dependencies: animate
-  toc_depth: 3
-  toc_unnumbered: false
-  toc_appendix: true
-  quote_footer: ["\\VA{", "}{}"]
-  highlight_bw: true
-#commented epub_book because messing up index.html
-#bookdown::epub_book: default
+#bookdown::pdf_book:
+#  includes:
+#    in_header: latex/preamble.tex
+#    before_body: latex/before_body.tex
+#    after_body: latex/after_body.tex
+#  latex_engine: xelatex
+#  citation_package: natbib
+#  keep_tex: yes
+#  pandoc_args: --top-level-division=chapter #  [--wrap=none]
+#  extra_dependencies: animate
+#  toc_depth: 3
+#  toc_unnumbered: false
+#  toc_appendix: true
+#  quote_footer: ["\\VA{", "}{}"]
+#  highlight_bw: true
