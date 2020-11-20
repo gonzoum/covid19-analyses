@@ -51,13 +51,21 @@ The program git is a tool for maintaining and distributing software versions.  F
 The script below will switch to the folder I'm keeping the JHU data git repository, execute the command "git pull" (which checks if there have been any updates on the server and, if so, downlooads those updates) and then bring me back to the original folder.  To keep things organized I'm keeping the data git repository in a separate folder from the R files that are creating these pages. Another way of accomplishing the same thing is to pull the git repository manually each time you want to run the most updated data set. Basically, this next line of code downloads the most recent data so I don't have to do it manually every time I want the most recent data pull.
 
 ```{r warning=F, message=F, results='hide'}
-# assuming git has been installed on your machine (e.g., Xcode in mac);
-# this is mac and linux specific; 
-# pc may be different unless unix commands have been installed
+# assumes git has been installed on your machine (e.g., Xcode in mac);
+# windows may be different unless unix commands have been installed
 
-# intern and cat print the output of the system command to this html document
-cat(system(
+# find system operating system
+os <- Sys.info()["sysname"]
+
+# move to folder with data and do git pull
+if (os == "Darwin") {
+  cat(system(
   "pushd '../COVID-19' && git pull && popd", intern=T), sep="\n")
+} else if (os =="Linux") {
+  setwd("../COVID-19")
+  system("git pull")
+  setwd("../covid19-analyses")
+}
 ```
 
 I prefer not to include data files in the git repository that has the code as a matter of habit (e.g., data may contain private information yet the repository with the code may be public). 

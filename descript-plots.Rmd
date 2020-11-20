@@ -2,29 +2,21 @@
 
 This chapter  presents several descriptive plots of the raw data. No statistical analyses, no standard errors, no parameters to estimate, no hypotheses to test. Just raw data presented in different forms to gain insight into the patterns that are in the data.  I'll create a few plots at the world level, and then switch to the state and county levels for US data.  You are free to take my code and edit it to produce additional plots for other countries and their states or provinces.  Throughout these notes I'll focus on the counts and rates of  positive tests. I'll defer death counts until the chapter on process models. 
 
-As stated in a few places in these notes, we need to be careful in how we interpret the counts of people who test positive.  There are many issues such as countries or states that test more frequently may see higher counts because they do  more testing, counts can vary across countries or states because decisions about who is tested may vary, the quality of the tests used may vary across units, and countless other differences that make it extremely difficult to generate clear explanations for patterns we may see.   Moving to other variables such as the number of deaths doesn't completely solve the problem either because, among other things, countries and states may vary in how they count deaths (e.g., death in a hospital, death among people who tested positive vs. deaths that are ["presumed to be covid-19 related"](https://www.washingtonpost.com/investigations/which-deaths-count-toward-the-covid-19-death-toll-it-depends-on-the-state/2020/04/16/bca84ae0-7991-11ea-a130-df573469f094_story.html)).
+As stated in a few places in these notes, we need to be careful about how we interpret  raw counts.  Some countries and US states test more frequently and thus may see higher counts because they do  more testing. Countries and states vary in population size so even if two units have the same testing rate but differ in population size they may have different counts  that could give rise to differences in observed counts all other things being equal. Counts can vary across countries or states because decisions about who is tested may vary, the quality of the tests  may vary across units, and countless other differences that make it  difficult to generate clear explanations for patterns we may see in the raw counts.   Moving to other variables such as the number of deaths doesn't completely solve the problem either because, among other things, countries and states may vary in how they count deaths (e.g., death in a hospital, death among people who tested positive vs. deaths that are ["presumed to be covid-19 related"](https://www.washingtonpost.com/investigations/which-deaths-count-toward-the-covid-19-death-toll-it-depends-on-the-state/2020/04/16/bca84ae0-7991-11ea-a130-df573469f094_story.html)).
 
 ## World Map
 
-
-Some code I copied from [here](https://datascienceplus.com/map-visualization-of-covid19-across-world/).
-
-I make use of the datacov.World file I read in from the Johns Hopkins git repository.
-
-FIX: need to edit mybreaks and mylabels in remaining world plots; similar edits to US versions
+Here is world map representing covid counts across countries.  I used code
+copied from [here](https://datascienceplus.com/map-visualization-of-covid19-across-world/) and make use of the datacov.World file I created in the previous chapter from the Johns Hopkins git repository.
 
 ```{r world}
-# for these code chunks I use the datacov.World data file
-# coding trick; by switching the definition of datacov I can keep my original code post the 3/23/20 change and just swap 
-# out which file, world or us, to drop into datacov.  Rest of code should remain the same as prior to the change.
 datacov <- datacov.World
 
 # cutoffs and labels to use in the plot based on the number of cases
-#mybreaks <- c(1, 20, 100, 1000, 50000)
-#mylabels <- c("1-19", "20-99", "100-999", "1,000-49,999", "50,000+")
 mybreaks <- c(1, 10000, 100000, 500000,1000000,2000000)
 mylabels <- c("<10,000", "10,000 - 100,000", "100,001 - 500,000", "500,001 - 1,000,000", "1M - 2M", "2M>")
 
+# initialize world map
 world <- map_data("world")
 
 ggplot() +
@@ -46,11 +38,12 @@ ggplot() +
 
 ```
 
-You'll notice that some countries like Canada, UK, Australia have multiple points but most countries are represented by only 1 point. This is because the data set we are using has some inconsistencies in reporting either country totals or  state/province totals. This would require further cleaning (e.g., computing country totals for those countries) but I left this in here as a teaching moment of how one needs to be careful working with data sets and consistently double check your assumptions about the structure of the data set you are using. The structure may also change over time so one needs to monitor carefully.
+You'll notice that some countries like Canada, UK, Australia have multiple points but most countries are represented by only 1 point. This is because the data set we are using has some inconsistencies in reporting either country totals or  state/province totals. This would require further cleaning (e.g., computing country totals for those countries) but I left this in here as a teaching moment of how one needs to be careful working with data sets and consistently double check your assumptions about the structure of the data you are using. The data structure may be updated so one needs to monitor it carefully.
 
 Even more sophisticated is the  [interactive map](https://www.arcgis.com/apps/opsdashboard/index.html#/bda7594740fd40299423467b48e9ecf6) developed at Johns Hopkins (same group that provides the key data we downloaded in Chapter \@ref(readintro)), where you can zoom the map in and out, click on different countries (left panel) and see data for that country on the right panel. A small interactive display of that website is displayed below.
 
 ```{r echo=F}
+# code for inserting live websites into documents
 knitr::include_url("https://www.arcgis.com/apps/opsdashboard/index.html#/bda7594740fd40299423467b48e9ecf6", height="600px")
 ```
 
@@ -73,10 +66,9 @@ datacov.long$day.numeric <- as.numeric(datacov.long$day)-18283
 I rewrote the original parts of the plotting program to make it more efficient for the animation (e.g., I use the ggthemes in the maps package). This animation uses the package gganimate to reproduce the plot for each day and then overlays the daily plots one on top of the other to produce the animation.
 ```
 
-<!-- trying two different versions for html and latex -->
+<!-- two different versions for html and latex output-->
 
 ```{r world.animhtml, cache=cache, fig.cap="World Count of Positive Cases", eval=knitr::is_html_output(), echo=longform&knitr::is_html_output()}
-
 ggplot(datacov.long) +  borders("world", colour = "gray90", fill = "gray85") +
   theme_map() + 
   geom_point(aes(x=Long, y=Lat, size=count, color=count),stroke=F, alpha=0.7) +
@@ -113,43 +105,39 @@ ggplot(datacov.long) +  borders("world", colour = "gray90", fill = "gray85") +
   transition_time(day) + ease_aes('linear')
 ```
 
-While counts are useful (see the [Introduction](#intro) for a discussion of London's cholera epidemic) they have their limitations. The help address issues with different countries having different populations, it is common to normalize counts by the population and report numbers per capita (e.g., 62 cases out of 100,000).  One would have to track down the populations of each country, download the relevant population data using methods described in Chapter \@ref(readintro) and merge that information into this animation.  Later in this chapter, I develop the analogous animation for the US and I already downloaded the state populations so will illustrate the difference in this animation in counts versus per capita   However, raw counts still have a role in helping to inform the impact of covid-19.  If a city has 1500 available hospital beds (and presumably the staff and supplies to provide care for  those  beds), but there are 2000 people in need of hospitalization, then there is a public health issue and the 'per capita" concern becomes moot.
+While counts are useful (see the [Introduction](#intro) for a discussion of London's cholera epidemic) they have their limitations. The help address issues with different countries having different populations, it is common to normalize counts by the population and report numbers per capita (e.g., 62 cases out of 100,000).  One would have to track down the populations of each country, download the relevant population data using methods described in Chapter \@ref(readintro) and merge that population information into this animation.  Later in this chapter, I develop the analogous animation for the US and I because already downloaded the state populations so will illustrate the difference in this animation in counts versus per capita   However, raw counts still have a role in helping to inform the impact of covid-19.  If a city has 1500 available hospital beds (and presumably the staff and supplies to provide care for  those  beds), but there are 2000 people in need of hospitalization, then there is a public health issue and the 'per capita" concern becomes moot.
 
-For more information on working with maps see [Gimond](https://mgimond.github.io/Spatial/index.html).
+Personally, I do not like this type of representation where points are overlayed on a map and the color of the point is used to  represent a variable such as case counts. I'll show some alternatives later in this chapter when we switch to the US data sets.  For more information on working with maps see [Gimond](https://mgimond.github.io/Spatial/index.html). 
 
 ## Compare World Counts to US
 
-It would be helpful to see the pattern over time of the world counts of confirmed covid-19 cases relative to the US counts.  Here I create a subset of the datacov data.frame that includes just the 50 states (I dropped DC and the US territories for this analysis).
+It would be helpful to see the cumulative pattern of the world confirmed covid-19 cases since the beginning of the pandemic relative to the cumulative US counts.  I'll create a subset of the datacov data.frame that includes just the 50 states. I dropped Washington DC and the US territories for this analysis.
 
 ```{r}
-datacov.temp <- datacov.US
-allstates.temp <- subset(datacov.temp, `Province/State`%in% states)
+# double check and fix this chunck
+datacov <- datacov.US
+allstates.temp <- subset(datacov, `Province/State`%in% states)
 allstates.temp2 <- allstates.temp %>% group_by(`Province/State`) %>%  summarize_at(vars(`1/22/20`:(names(allstates.temp)[ncol(allstates.temp)])), sum,na.rm=T)
-# need state level long and lat (these are county) so just replace these sums with the ones in the old allstates
 
-# create subset of 50 states from original datacov in order to have the correct long and lat by state (rather than county)
-# this is a check that new code from 3/31/20 works with the older format
+# need long and lat for state; better got downlaod from web but for now
+# use older file from when JHU reported state rather than county level
 datacov.ori <- 
  read_csv("time_series_19-covid-Confirmed.csv")
 allstates <- subset(datacov.ori, `Province/State`%in% states)
-allstates.ori <- allstates
 
+#reorder allstates.temp2 to line up with allstates
 allstates.temp2 <- allstates.temp2[order(match(allstates.temp2$`Province/State`,allstates$`Province/State`)),]
-# double check ordering of rows
-#head(cbind(allstates$`Province/State`, allstates.temp2$`Province/State`))
+
 
 # use state level long and lat from datacov.ori
 allstates.temp2$Lat <- allstates$Lat
 allstates.temp2$Long <- allstates$Long
-allstates.temp2$`Country/Region` <- allstates.ori$`Country/Region`
+allstates.temp2$`Country/Region` <- allstates$`Country/Region`
 
 # reorder columns to be like allstates.ori so subsequent code works
 allstates <- allstates.temp2[,c(1,ncol(allstates.temp2), ncol(allstates.temp2)-2, ncol(allstates.temp2)-1, 2:(ncol(allstates.temp2)-3))]
 
-# now everything is set so new data structure looks like the old data structure
-
-# prettyval is an extra column appended at the end; it has population size and state abbreviation like "19.5 NY"
-# need to be sure the row orders of state.population that we downloaded from the census website
+  
 # match the order of states in the allstates subset of the datacov data.frame
 allstates$prettyval <- state.population$prettyval[order(match(state.population$NAME,allstates$`Province/State`))]
 
@@ -168,23 +156,16 @@ allstates.long <- gather(allstates, day, count,
 
 # reformat the day column to be Dates that R can understand
 allstates.long$day <- as.Date(allstates.long$day, "%m/%d/%y")
-
-# in some analyses it may be helpful to look at first order differences in counts (day (t+1) - day (t))
-# so far I don't need this but I leave it here
-#allstates.long$count.diff <- c(0,diff(allstates.long$count))
 ```
 
 ```{asis echo=longform}
-More data manipulation needed.  Turns out that the Johns Hopkins data did not report state-level data prior to 3/08/2020 (just US totals apparently).  So, for state-level analyses it may be helpful I only use dates after 03/08/2020.  Also, in the comments I explain how R handles dates with a reference date of 01/01/1970. 
+It turns out that the Johns Hopkins data did not report state-level data prior to 3/08/2020 (just US totals were reported).  So, for state-level analyses I'll use  03/08/2020 as the US ``start date.''  Also, in the comments I explain how R handles dates with a reference date of 01/01/1970. 
 ```
 
 ```{r}
 allstates.long <- subset(allstates.long, day > "2020-03-08")
 
-# in case we need the last dates for each state
-# data_set_ends <- allstates.long %>% group_by(`Province/State`) %>% top_n(1,day) %>% pull(prettyval)
-
-# create day.numeric starting with 3/09/20 as day 1.  in R, Dates have
+# create day.numeric starting with 3/09/20 as day 1. in R, dates start at
 # 01/01/1970 and 03/08/20 is 18330 days from the origin so need to subtract
 # 18330 from all the days. Essentially, I'm centering at 03/08/20
 allstates.long$day.numeric <- as.numeric(allstates.long$day)-18330
@@ -205,16 +186,10 @@ sum.world <- data.frame(count=apply(datacov.World[,5:ncol(datacov.World)],2,sum,
 sum.world$day <- as.Date(rownames(sum.world), "%m/%d/%y")
 p1 <- ggplot(sum.world, aes(x=day,y=count))  + geom_bar(stat="identity",fill="steel blue") + ggtitle("World Wide Counts") + theme_minimal() + scale_y_continuous(labels=comma)
 # above line: labels=comma prints y axis labels as numbers rather than scientific notation
-# can print plot p1 by itself by uncommenting next line
-#p1
 
-# using weight option rather than y so that bar stat_count can do the sum (saves having to compute sum and then do what I did for sum.world)
+# using weight option rather than y so that bar stat_count can do the sum (saves having to compute sum and then do what I did for sum.world above)
 comparesums <- allstates.long %>% group_by(day) %>% summarize_at("count", sum,na.rm=T)
-#comparesums
-# seems coding was by US then by state at about 3/08 here is a command to
-# produce total US counts for all days in the data set starting with 1/22/20 but
-# it has lots of 0s
-#data.frame(count=apply(allstates[,5:(ncol(allstates)-cadded)],2,sum,na.rm=T))
+
 ```
 
 
@@ -222,23 +197,20 @@ comparesums <- allstates.long %>% group_by(day) %>% summarize_at("count", sum,na
 It is helpful to place a horizontal line in the cumulative US plot that corresponds to the 
 US fraction of the world population. If covid-19 cases were randomly distributed throughout the world, we would expect a country to have a fraction of cases consistent with the fraction of that country's population relative to the world population.  The US is not doing well as our total number of cases are far above the red line that corresponds to the proportion of cases we would expect given our fraction of the global population. Of course, we don't know how well other countries are reporting their positive cases, how many tests they have administered, and other relevant information, but this descriptive plot suggests the rate of positive cases may be greater than expected so more investigation is needed.
 
+To put this another way, as of mid November 2020 there are about 60M world-wide cases in a world population of 7.8 billion, the world-wide percentage of positive cases is less than 1%.  But in the US with about 12M cases in a population of 330 million, the US percentage of positive cases is over 3.5%.
+
 
 ```{r}
-# assume 7.8 billion people in the world, the US has about 330 million
+# assume 7.8 billion people in the world, the US pop about 330 million
 uspopfrac <- 330/7800
 cv10frac <- uspopfrac*sum.world[nrow(sum.world),1]
 
 # had to add +1 to max date in scale_x_date
 p2 <- ggplot(allstates.long, aes(x=day,weight=count))  + geom_bar(na.rm=T,fill="steel blue") + ggtitle("US Counts") + scale_x_date(limits=c(sum.world$day[1], sum.world$day[nrow(sum.world)]+1))  + theme_minimal() + geom_hline(yintercept=cv10frac,col="red") + scale_y_continuous(labels=comma,limits=c(0,max(sum.world$count)))
-# can print plot p2 by itself by uncommenting next line
-#p2
 
-#produce a single plot that has the world cumulative count at top and the US
-#cumulative count at the botton, along with a red line indicating the count that
-#corresponds to the fraction of the world population that represents the US if
-#US counts are above the red line it means the counts of covid=19 are greater
-#than what would be expected by a random process of covid-19 just appearing
-#randomly based merely on population size alone
+# single plot with world cumulative count in top panel and the US
+# cumulative count in the botton, along with a red line indicating the count that
+# corresponds to the fraction of the world population that represents the US 
 
 # the plot multiplot is defined in chapter preliminaries
 multiplot(p1,p2,cols=1)
@@ -247,7 +219,7 @@ multiplot(p1,p2,cols=1)
 
 ## US State-Level Plots
 
-I decided to plot the percentage relative to population (i.e., counts/population * 100).  The numbers are small. I've seen people report this as cases per 100,000, but I decided to stick with cases per 100 to maintain the percentage interpretation.  This is just a scale issue and doesn't affect the plots or the analyses.   The labels in the plots, like "7.5 WA," mean Washington state with a population of 7.5 million. 
+I decided to plot the percentage of cases (i.e., counts/population * 100). I've seen people report this as cases per 100,000, but I decided to stick with cases per 100 to maintain the percentage interpretation.  This is just a scale issue and doesn't affect the plots or the analyses. It is a scaling issue analogous to measuring in feet vs meters.   The labels in the plots, like "7.5 WA," mean Washington state with a population of 7.5 million. 
 
 ```{r usstates, fig.cap="Per Cap Positive Cases by State"}
 # most recent date in file
@@ -263,9 +235,10 @@ ggplot( aes(x=day, y=count/population*100,group=prettyval, color=prettyval)) + g
 coord_cartesian(clip = 'off') + scale_x_date(limits=as.Date(c("2020-03-09", as.character(max.day+extend.days)))) +  theme(legend.position="none", plot.margin = margin(0.1, 1, 0.1, 0.1, "cm"))
 ```
 
-Let's take the same plot but rescale the vertical axis on the log (base 10) scale.  An exponential process becomes linear when taking logs so we would expect to see a pattern that closely resembles straight lines if the count of confirmed cases follows an exponential form.  Each state can have a different growth rate, which will show up as different slopes, and different starting points, which will show up as different intercepts. 
+The graph shows a few features documenting what has happened in the US.  There are three sets of curves representing three different regions in the US.  Initially, the cases where high in the northeast and the west coast (e.g., New York, New Jersey, Washington, California).  This shows up as a set of curves that shot up in April.  Then, in the summer we started to see cases in the south (e.g., Florida and Texas) and this shows up as a second set of curves that shot up in July.  Then, there is a third set of states, primarily in the midwest, that had increases in the fall (e.g., Wisconsin, Iowa, North Dakota, South Dakota), and this shows up as a set of curves that spike in Oct and November.
 
-A straight line seems to approximate the pattern but there  is a suggestion that some curvature remains, which implies these may not follow an exponential pattern. West Virginia (WV) didn't show its first case until 3/17/20 so that is why the green curve (lowest) looks different than the rest.
+
+Let's take the same plot but rescale the vertical axis on the log (base 10) scale.  An exponential process becomes linear when taking logs so we would expect to see a pattern that closely resembles straight lines if the count of confirmed cases follows an exponential form.  Each state can have a different growth rate, which will show up as different slopes, and different starting points, which will show up as different intercepts. 
 
 ```{r usstates-log, fig.cap="Per Cap Positive Cases by State (log10 scale)"}
 subset(allstates.long, day.numeric!=0) %>%mutate(label = if_else(day == max(day), as.character(prettyval), NA_character_)) %>%
@@ -276,7 +249,12 @@ coord_cartesian(clip = 'off') + scale_x_date(limits=as.Date(c("2020-03-09", as.c
 
 ```
 
-To help see the state by state structure in these curves (e.g., whether or not they are linear in the log scale), I partitioned the 50 states by population (sample sizes in each panel, yielding 12 or 13 states per panel). The states with larger populations (two lower panels) show relatively linear patterns.  The states with smaller population sizes (the two upper panels) show patterns suggesting the per capita rate may still be increasing, whereas states with larger populations may be leveling off.   We would need statistical analyses to verify the observations in these descriptive plots.
+West Virginia (WV) did not show its first case until 3/17/20 so that is why there is a green curve that has 0 until mid March before shooting up. 
+
+A straight line does not appear to approximate the pattern, which implies that these data do not follow an exponential form   It may be that exponential growth characterizes the early days of a pandemic and not many months of data, which may include multiple waves. One can even see violations of a straight line just a couple of weeks into the pandemic so it doesn't seem that Covid-19 follows an exponential form. I will return to this issue in the next chapter where I fit the exponential function directly to the data, examine some diagnostics, and consider some alternative functional forms.
+
+But let's continue with this descriptive plot to illustrate some additional features.  one may wonder whether the curves vary by states with different populations. 
+I partitioned the 50 states by population (sample sizes in each panel, yielding 12 or 13 states per panel). The states with larger populations (two lower panels) show roughly the same pattern as states with smaller population sizes (the two upper panels), except for the three clusters that we identified in the earlier version of this plot.
 
 ```{r usstates-log-grid, eval=T, fig.cap="Per Cap Positive Cases by State (log10 scale); Panels are based on Population"}
 subset(allstates.long, day.numeric!=0) %>%mutate(label = if_else(day == max(day), as.character(prettyval), NA_character_)) %>%
@@ -287,7 +265,7 @@ coord_cartesian(clip = 'off') + scale_x_date(limits=as.Date(c("2020-03-09", as.c
 
 ```
 
-I want to make a further improvement in this plot where I set 0 to missing value (NA) so that the curves begin where there are nonzero points. This modification to the plot makes it easier to detect linearity as we don't have the artificial jump in the curve from 0. But, while it makes the plots a little easier to understand, it drops the important information about _liftoff_, the point at which the count moves from zero to nonzero.  This is something that could be modeled with a parameter in the structural model that I will develop in later chapters and so, in principle, one could examine which factors affect the liftoff.  Another issue is that log(0) is undefined so to avoid 0s you'll see some websites and research papers showing such graphs requiring a minimum number of cases (e.g., the day at which the state reached 10 cases) before they start plotting the curve for that state. In the spirit of transparency one should report all these graphing decisions and ideally provide the code that produced the figures provided in a paper. Actually, complete reporting would include not only the code that produced the figure but also all code from the code that downloaded the data to the code that put the data in the format needed to produce the figure or table.
+I want to make a further improvement in this plot where I set 0 to missing value (NA) so that the curves begin where there are nonzero points. This modification to the plot makes it easier to detect linearity as we don't have the artificial jump in the curve from 0. But, while it makes the plots a little easier to understand, it drops the important information about _liftoff_, the point at which the count moves from zero to nonzero.  This is something that could be modeled with a parameter in the structural model that I will develop in later chapters and so, in principle, one could examine which variables affect the liftoff (in other words, which states started showing cases earlier and which started showing cases later).  Another issue is that log(0) is undefined so to avoid 0s you'll see some websites and research papers showing such graphs requiring a minimum number of cases (e.g., the day at which the state reached 10 cases) before they start plotting the curve for that state. In the spirit of transparency one should report all these graphing decisions and ideally provide the code that produced the figures provided in a paper. Actually, complete reporting would include not only the code that produced the figure but also all relevant code---the code that downloaded the data, the code that put the data in the format needed to produce the figure or table, the code to produce the figure.
 
 ```{r  fig.cap="Per Cap Positive Cases by State (log10 scale); Panels are based on Population; Os dropped"}
 subset(allstates.long, day.numeric!=0) %>%mutate(label = if_else(day == max(day), as.character(prettyval), NA_character_)) %>%
@@ -299,7 +277,7 @@ coord_cartesian(clip = 'off') + scale_x_date(limits=as.Date(c("2020-03-09", as.c
 
 ```
 
-This pattern is  remarkable. The states appear to have similar slopes on this log plot. They vary in intercept, but that reflects when the state started reporting positive cases.  It seems states are on a similar growth trajectory, but some states are further along (higher intercepts) than other states.  That the log transformation of the Y axis converted these curves into approximate lines is consistent with the underlying pattern of these data following an exponential model. But we could argue that the slight curvature away from a straight line goes against an exponential growth process.  I'll say more about this in the next chapter where I'll cover the exponential more directly, both in its log linear form as in these graphs as well as through nonlinear regression models.
+This pattern is  remarkable. The states appear to have similar slopes on this log plot. They vary in intercept, but that reflects when the state started reporting positive cases.  It seems states are on a similar growth trajectory, but some states are further along (higher intercepts) than other states.  
 
 ### Animated Map of US
 \index{animation}
@@ -348,7 +326,7 @@ ggplot(allstates.long) +  borders("usa", colour = "gray90", fill = "gray85") +
   transition_time(day) + ease_aes('linear')
 ```
 
-Because I have the state-level population sizes I can redo the animation using a per capita normalization out of 100.  I modified the breaks and labels manually but there may be a way to do that automatically with ggplot2 features.
+Because I have the state-level population sizes I can redo the animation using a per capita normalization out of 100.  
 
 ```{r cache=cache, fig.cap="US Per Cap (100)", eval=knitr::is_html_output(), echo=longform&knitr::is_html_output()}
 temp <- cut2(allstates.long$percap100, g=5, m=5)
@@ -435,7 +413,7 @@ Repeat the same map but with the per capita positive tests instead of the total 
 ```
 
 ```{exercise echo=T}
-Animate the map of the per capita positive count using the same additional commands to ggplot2 as you did for the previous animations.  The entire state will move from yellow to red as the number increases.
+Animate the map of the per capita positive count. You can adapt my code for animating the world ma[ earlier in this chapter. The entire state will change from yellow to red as the number increases.
 ```
 
 
@@ -445,7 +423,7 @@ We can move to a different level of resolution with county-level data.
 I used the log10 scale on the number of positive tests for each US county to achieve a  smoother transition across the color range. White represents both counts of 0 and counts of 1.  This plot uses count and not the per capita count.
 
 ```{asis echo=longform}
-For this plot I switched to the urbnmapr package.  This package needs to be downloaded from github. The first line in the chunk below (commented out) shows the call to download.   This package uses [FIPS](https://en.wikipedia.org/wiki/FIPS_county_code) rather than longitude and latitude, which makes it slightly easier to work with maps, including shading the entire region and putting Alaska and Hawaii as insets.
+For this plot I switched to the urbnmapr package.  This package needs to be downloaded from github (see Chapter \@ref(prelim)).  This package uses [FIPS](https://en.wikipedia.org/wiki/FIPS_county_code) rather than longitude and latitude, which makes it slightly easier to work with maps, including shading the entire region and putting Alaska and Hawaii as insets.
 ```
 
 ```{r}
@@ -480,6 +458,7 @@ counties %>% ggplot() +
     "); white represents counts of 0 and 1"))
 ```  
 
+The plot suggests that `state' may not be a good unit of aggregation for capturing tendencies of counties because of the amount of county-level variability.  
 
 ```{exercise echo=T}
 Download the county-level population data from the US census following the example in Chapter \@ref(readintro) (see help in the ?fips_codes function in the tidycensus package). Merge these data with the counties data.frame used above. Compute the percentage of the county population that tests positive. Redraw the US map using the population percentages. You may find it helpful to replace the scale_fill_gradient command with something like scale_fill_gradientn(labels = scales::percent) to handle percentages more naturally. [Note: the death time series data file downloaded from the Johns Hopkins git repository has county-level population sizes as a column, which could be merged with the confirmed cases time series file we are using in this chapter.]
@@ -489,13 +468,13 @@ Download the county-level population data from the US census following the examp
 Animate the county-level plot using the previous US animations as a template.
 ```
  
-The county-level plot suggests some hypotheses to test. For example, in May there has been an increase in the number of protests over state social distancing restrictions and business closures.  One could examine associations between the number of protests and properties of the states such as the political party affiliation of the governor.  But with respect to county-level data, it appears in skimming the map of the US that some states have quite a bit of variability across counties in the positive test counts, whereas other states have relatively little variability with most counties having relatively high or relatively low positive test counts.  One hypothesis to check is whether protests are more common in states with greater variability across counties (that is, some counties not experiencing as many cases as other counties in the state).
+The county-level plot suggests some hypotheses to test. For example, in May there was an increase in the number of protests over state social distancing restrictions and business closures.  One could examine associations between the number of protests and properties of the states such as the political party affiliation of the governor.  But with respect to county-level data, it appears in skimming the map of the US that some states have quite a bit of variability across counties in the positive test counts, whereas other states have relatively little variability with most counties having relatively high or relatively low positive test counts.  One hypothesis to check is whether protests are more common in states with greater variability across counties (that is, some counties not experiencing as many cases as other counties in the state).
  
 ## Incidence Plots {#incidenceplots}
 
 With time series data it is common to work with what are called first order differences. Rather than examine cumulative counts you look at day to day differences in the cumulative counts, or equivalently, the number of new cases each day.  This is what give rise to the "curves" when people talk about "flattening the curve". Think of this as daily counts and we merely compute histograms.  This section was adapted from [Tim Chruches Blog](https://timchurches.github.io/blog/posts/2020-02-18-analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1/).
 
-Here is the daily incidence rate using the same US data starting on 3/10/20. This plot does not include DC and the territories.   I also include a 7 day moving average (blue curve). This is the curve traced by computing the mean of the 7 previous days and using that value for the day's count, then tracing those points with a curve. In the month of May many news outlets began including such moving average summaries rather than the raw data. They make the data look less variable than they actually are, which is not a good thing when modeling data.  We want our models to take into account the variability in the data rather than mask the variability.
+Here is the daily incidence rate using the same US data. This plot does not include DC and the territories.   I also include a 7 day moving average (blue curve). This is the curve traced by computing the mean of the 7 previous days and using that value for the day's count, then tracing those points with a curve. In the month of May  news outlets began including such moving average summaries rather than the raw data. They make the data look less variable than they actually are, which is not a good thing when modeling data but fine for communicating general trend.  We want our models to take into account the variability in the data rather than mask the variability.
 \index{moving average}
 
 
@@ -531,7 +510,7 @@ We can add  interactive capabilities to the ggplot by using the ggigraph package
 The package needs to be downloaded through github; the path is commented out in the R code chunk.
 ```
 
-The html version of this book allows popups when the mouse hovers over the bars. You will notice that the number of positive deaths has a weekly pattern emerging on Monday April 13, 2020. There is a trough that occurs weekly on Mondays through at least May 11.  This is an important part of the variability these data exhibit, which is lost if we "smooth" the data by computing moving averages as shown in the blue curve of the previous graph.
+The html version of this book allows popups when the mouse hovers over the bars. You will notice that the number of positive deaths has a weekly pattern emerging on Monday April 13, 2020. There is a trough that occurs weekly on Sundays or Monday throughout.  This is an important part of the variability these data exhibit, which is lost if we "smooth" the data by computing moving averages as shown in the blue curve of the previous graph. 
 
 ```{r eval=knitr::is_html_output(), echo=longform&knitr::is_html_output()}
 # code to format a table to display on mouse hover
@@ -561,7 +540,7 @@ girafe(ggobj=p)
 
 The weekly pattern is interesting and could be explained, for example, by fewer tests conducted on weekends with a delay in the reporting of tests results.  We can check this by examining another data set that reports the total number of tests conducted on a day, which is the sum of the number of positive tests, the number of negative tests and the number of pending tests. Of course, the number of positive tests will be correlated with this total measure, and this definition of total introduces some additional daily correlations due to some double counting (i.e., a pending today may show up as a negative tomorrow once the results are known). Further, this highlights the difficult of interpreting such data, for many reasons, including the issue that  tests vary in the length of time needed to achieve a result, so if states vary in which tests they use or there are changes over time in which tests are used, we would see such patterns reflected in these counts.  Such changes may say more about the decisions made on which tests to use than on the changing properties of the distribution of positive and negative test results.
 
-The bar plot of the total test results is presented in the next figure.  While the number of tests administered is increasing over the weeks, there is a slight pattern that fewer tests are reported on  Mondays relative to surrounding days (e.g., April 27, May 4, May 10). The dip at the end of May can be attributable to the Memorial Day Weekend and delay in reporting.
+The bar plot of the total test results is presented in the next figure.  While the number of tests administered is increasing over the weeks, there is a slight pattern that fewer tests are reported on  Mondays relative to surrounding days (e.g., April 27, May 4, May 10). The dips at the end of May, early July and early Septembrer can be attributable to holidays (Memorial Day, Independence Day, Labor Day) and delay in reporting.
 
 ```{r}
 covid.tracking.date <- covid.tracking %>% subset(date>as.Date("2020-03-9", "%Y-%m-%d"))
@@ -600,13 +579,13 @@ girafe(ggobj=p2)
 } #end mouse hover for html
 ```
 
-Overall, we see that the number of daily tests has been increasing over recent weeks. This adds an important caveat moving forward as we interpret positive tests results in the remainder of this book.  We may see an increase in positive tests not because virus contamination is increasing but because there are more tests being conducted.  Of course, if the number of positive cases decreases in spite of the number of tests increasing, this suggests the virus rate is decreasing. Such a conclusion assumes the characteristics of the tests remain the same. If over time, the quality of the tests  changes in terms of false positives and false negatives, that would add an additional layer of complexity in interpreting such testing data.
+Overall, we see that the number of daily tests has been increasing over recent weeks. This adds an important caveat moving forward as we interpret positive test results in the remainder of this book.  We may see an increase in positive tests not because virus contamination is increasing but because there are more tests being conducted.  Of course, if the number of positive cases decreases in spite of the number of tests increasing, this suggests the virus rate is decreasing. Such a conclusion assumes the characteristics of the tests remain the same. If over time, the quality of the tests  changes in terms of false positives and false negatives, that would add an additional layer of complexity in interpreting such testing data.
 
 ## Using PCA to check for outliers
 \index{PCA}
 \index{outliers}
 
-Principal components analysis (PCA) has many uses.  In interesting use of PCA in time series data is that it can be used to detect outliers in a complicated data set. Let's take the 50 states and the time series from 3/09/20 to present, to create a 50 by day data matrix of positive counts.  Then compute a PCA of the correlation matrix between states. This correlation matrix is 50 x 50 and represents how similar each state's cumulative trajectory is to another state's cumulative trajectory for all possible pairs of states.  Plot the factor scores of the 50 states on the first two PCs.  The majority of the states will cluster together. The outlier states, those with very different trajectories, appear far away from the primary cluster suggesting they have a very different trajectory. Four candidate outliers are the 4 states with early covid-19 cases:  NY, WA, NJ and CA. Recall that the numbers in front of the state abbreviation correspond to the state population in millions.  This type of PCA is commonly done in biological modeling to check for outliers, sometimes not on the raw data like I did here, but on the set of parameters that are estimated for each unit. For example, if you run regressions for each state, gather the betas from those regressions as data (such as 8 betas per state if you had 8 state-level predictors),  compute a correlation matrix across states, then run a PCA on that correlation matrix to detect states with an outlier pattern across their betas relative to other states. 
+Principal components analysis (PCA) has many uses.  An interesting use of PCA in time series data is that it can be used to detect outliers. Let's take the 50 states and the time series from 3/09/20 to present, to create a 50 by day data matrix of positive counts.  Then compute a PCA of the correlation matrix between states. This correlation matrix is 50 x 50 and represents how similar each state's cumulative trajectory is to another state's cumulative trajectory for all possible pairs of states.  Plot the factor scores of the 50 states on the first two PCs.  The majority of the states will cluster together. The outlier states, those with  different trajectories from the majority of states, appear far away from the primary cluster suggesting they have a  different trajectory. Four candidate outliers are NY, TX, FL and CA. Recall that the numbers in front of the state abbreviation correspond to the state population in millions.  This type of PCA is commonly used in biological modeling to check for outliers, sometimes not on the raw data like I did here, but on the set of parameters that are estimated for each unit. For example, if you run regressions for each state, gather the betas from those regressions as data (such as 8 betas per state if you had 8 state-level predictors),  compute a correlation matrix across states, then run a PCA on that correlation matrix to detect states with an outlier pattern across their betas relative to other states. 
 
 ```{r fig.cap="PCA to identify states with candidate outliers"}
 temporal.data <- allstates[,53:(ncol(allstates)-cadded)]

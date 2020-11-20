@@ -1,6 +1,6 @@
 
 
-# Preliminaries
+# Preliminaries {#prelim}
 
 I want these notes to serve as an example of how to keep your analyses organized and reproducible.  Analysis projects have many common high-level elements, which include gathering data, cleaning and organizing data, preparing descriptive summaries, testing hypotheses, writing reports, and dissemination.  The end product should be a complete pipeline that takes you from soup to nuts with clear documentation.   These notes provide one example of how to prepare a workflow.  Such workflows typically make use of many software tools, and I would like to highlight some of the tools I used.  All the tools used to produce this book were open-source.
 
