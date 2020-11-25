@@ -48,7 +48,7 @@ knit_hooks$set(output = function(x, options) {
 
 # cache=F to redo the lengthy analyses for new data, 
 # otherwise set to T for daily runs
-cache <- F
+cache <- T
 ```
 
 

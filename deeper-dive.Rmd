@@ -108,7 +108,7 @@ covid.tracking.new$day.numeric <- as.numeric(covid.tracking.new$date)-18330
 covid.tracking.new$deathIncrease <- ifelse(is.na(covid.tracking.new$deathIncrease),0,covid.tracking.new$deathIncrease)
 
 # create separate dataframe for US totals
-day.death.totals.US <- covid.tracking.new %>% group_by(date) %>% summarise(daytotal=sum(deathIncrease,na.rm=T))
+day.death.totals.US <- covid.tracking.new %>% group_by(date) %>% summarise(daytotal=sum(deathIncrease,na.rm=T), .groups = 'drop')
 
 # add population info
 temp1 <- str_sub(allstates.long.new$prettyval[1:50],start=-2,end=-1)
@@ -127,11 +127,11 @@ covid.tracking.new$deathIncrease.pc[covid.tracking.new$deathIncrease.pc<0] <- 0
 covid.tracking.new$deathIncrease.pc.nooutlier <- covid.tracking.new$deathIncrease.pc
 covid.tracking.new$deathIncrease.pc.nooutlier[covid.tracking.new$deathIncrease.pc.nooutlier>100] <- NA
 
-day.hospitalizedCurrently <- covid.tracking.new %>% group_by(date) %>% summarise(daytotal=sum(hospitalizedCurrently,na.rm=T))
+day.hospitalizedCurrently <- covid.tracking.new %>% group_by(date) %>% summarise(daytotal=sum(hospitalizedCurrently,na.rm=T), .groups = 'drop')
 
-day.inIcuCurrently <- covid.tracking.new %>% group_by(date) %>% summarise(daytotal=sum(inIcuCurrently,na.rm=T))
+day.inIcuCurrently <- covid.tracking.new %>% group_by(date) %>% summarise(daytotal=sum(inIcuCurrently,na.rm=T), .groups = 'drop')
 
-day.onVentilatorCurrently <- covid.tracking.new %>% group_by(date) %>% summarise(daytotal=sum(onVentilatorCurrently,na.rm=T))
+day.onVentilatorCurrently <- covid.tracking.new %>% group_by(date) %>% summarise(daytotal=sum(onVentilatorCurrently,na.rm=T), .groups = 'drop')
 
 ```
 

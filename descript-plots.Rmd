@@ -544,7 +544,7 @@ The bar plot of the total test results is presented in the next figure.  While t
 
 ```{r}
 covid.tracking.date <- covid.tracking %>% subset(date>as.Date("2020-03-9", "%Y-%m-%d"))
-covid.tracking.date <- covid.tracking.date %>% group_by(date) %>% dplyr::summarize(date.sum = sum(total, na.rm=T)) 
+covid.tracking.date <- covid.tracking.date %>% group_by(date) %>% dplyr::summarize(date.sum = sum(total, na.rm=T), .groups = 'drop') 
 covid.tracking.date <- covid.tracking.date %>% mutate(sumdaily = c(date.sum[1], diff(date.sum)))
 
 ggplot( covid.tracking.date, aes(x=date,y=sumdaily)) +  geom_bar(stat="identity",width=1) +
