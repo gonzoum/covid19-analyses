@@ -225,7 +225,7 @@ print(paste0("File name associated with this run is ", currentversion, "-datawor
 
 #temporarily drop random b0 on 11/12 until convergence can be fixed
 out <- nlme(deathIncrease.pc ~ richfu.sir(day.numeric, a, b0,b1), fixed = a+b0+b1~1,
-            random =  a+b1~1, data=covid.tracking.new,start=c(a=7, b0=1.75,b1=-.01), verbose=T, groups=~state, control=nlmeControl(msMaxIter=400,opt="nlminb",pnlsTol=.01,msVerbose=T,minScale=.01, maxIter=400, tolerance=.5, msTol=.01) )
+            random =  a+b1~1, data=covid.tracking.new,start=c(a=10, b0=1.75,b1=-.01), verbose=T, groups=~state, control=nlmeControl(msMaxIter=400,opt="nlminb",pnlsTol=.01,msVerbose=T,minScale=.01, maxIter=400, tolerance=.5, msTol=.01) )
 #check public for recent run 8, .9, -.01, 
 #c(a=35, b0=1.23,b1=-.023)
 
@@ -242,13 +242,13 @@ dropped.data <- which(covid.tracking.new$deathIncrease>=800)
 
 starts <- nls(deathIncrease.pc ~ richfu.sir(day.numeric, a, b0,b1), data=subset(covid.tracking.new, day.numeric<43),start=c(a=.5, b0=-2.7,b1=.05), algorithm="port")
 out.first42days <- nlme(deathIncrease.pc ~ richfu.sir(day.numeric, a, b0,b1), fixed = a+b0+b1~1,
-            random =  a+b0+b1~1, data=subset(covid.tracking.new, day.numeric<43),start=c(a=5, b0=-2.7,b1=.072), verbose=T, groups=~state, control=nlmeControl(msMaxIter=1000,opt="nlminb",pnlsTol=.01,msVerbose=T,minScale=.01, maxIter=1000, niterEM=1000, msMaxEval=1000, tolerance=1, msTol=.1) )
+            random =  a+b0+b1~1, data=subset(covid.tracking.new, day.numeric<43),start=c(a=12, b0=-2.7,b1=.072), verbose=T, groups=~state, control=nlmeControl(msMaxIter=1000,opt="nlminb",pnlsTol=.01,msVerbose=T,minScale=.01, maxIter=1000, niterEM=1000, msMaxEval=1000, tolerance=1, msTol=.1) )
 
 
 
 ```
 
-Play using Newton's cooling equation
+Play using Newton's cooling equation; dropped one random effect due to convergence issues (come back to this later)
 
 ```{r}
 richfu.heat <- function(d,b0,b1,b2){
@@ -257,7 +257,9 @@ b0+b1*exp(b2*d)
 starts <- nls(deathIncrease.pc ~ richfu.heat(day.numeric, b0,b1,b2), data=subset(covid.tracking.new, day.numeric>=34),start=c(b0=0.1, b1=30, b2=-.05), algorithm="port")
 
 out.43days <- nlme(deathIncrease.pc ~ richfu.heat(day.numeric,b0,b1,b2), fixed = b0+b1+b2~1,
-            random =  b0+b1+b2~1, data=subset(covid.tracking.new, day.numeric>=34),start=c(b0=2,b1=11,b2=-.03), verbose=T, groups=~state, control=nlmeControl(msMaxIter=1000,opt="nlminb",pnlsTol=.01,msVerbose=T,minScale=.01, maxIter=1000, tolerance=1, msTol=.1) )
+            random =  b0+b1~1, data=subset(covid.tracking.new, day.numeric>=34),start=c(b0=2.5,b1=4,b2=-.055), verbose=T, groups=~state, control=nlmeControl(msMaxIter=1000,opt="nlminb",pnlsTol=.0001,msVerbose=T,minScale=.0001, maxIter=1000, tolerance=.01, msTol=.001) )
+
+summary(out.43days)
 
 ```
 
@@ -451,14 +453,14 @@ It is helpful to estimate the logistic function directly on the cumulative death
 
 7/10/20 dropped xmid random effect to get code to run; debug later, likely something weird with today's data pull
 
-```{r results="hide"}
+```{r results="hide", eval=F}
 # logistic on death; use same function as used for logistic growth on positive count data
 covid.tracking.new$death.pc <- covid.tracking.new$death/covid.tracking.new$population
 starts <- getInitial(death.pc~ SSlogis(day.numeric, Asym=1, xmid=1, scal=1), data=covid.tracking.new)
 
 tempdata <- covid.tracking.new[,c("day.numeric","death.pc","state","deathIncrease")]
 out.logistic.death <- nlme(death.pc ~ SSlogis(day.numeric, asym,xmid,scal), fixed = asym+xmid+scal~1,
-            random =  asym+scal~1, data=na.omit(tempdata),start=c( asym=starts[1], xmid=starts[2],scal=starts[3]), verbose=T, groups=~state, control=nlmeControl(msMaxIter=1000,opt="nlminb",pnlsTol=.01,msVerbose=T,minScale=.01, maxIter=1000, eval.mas=1000, tolerance=.1) )
+            random =  xmid+scal~1, data=na.omit(tempdata),start=c( asym=starts[1], xmid=starts[2],scal=starts[3]), verbose=T, groups=~state, control=nlmeControl(msMaxIter=1000,opt="nlminb",pnlsTol=.001,msVerbose=T,minScale=1, maxIter=1000, eval.mas=1000, tolerance=1) )
 ```
 
 ```{r eval=F}
@@ -477,7 +479,8 @@ ggplot(subset(covid.tracking.new, state=="NY"), aes(x=day.numeric,y=death)) +
 
 Compare AIC
 
-```{r}
+(suppressed due to convergence issue)
+```{r eval=F}
 AIC(out.logistic.death,out.nlme.deaths )
 ```
 

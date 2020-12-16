@@ -109,6 +109,10 @@ library(nnet)
 ```
 
 ```{r}
+if(!("devtools" %in% installed.packages()[,"Package"])) {
+  install.packages("devtools")
+}
+
 install.github.libs <- F
 if (install.github.libs) devtools::install_github("wmurphyrd/fiftystater")
 library(fiftystater)

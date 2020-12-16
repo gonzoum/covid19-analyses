@@ -1,30 +1,34 @@
 # Descriptive Modeling {#descmodel}
 
-The previous chapter presented several descriptive plots of raw data.  What I'd like to do in this chapter is show some simple modeling methods. 
-By no means is any of the modeling presented here considered breakthrough modeling. I call this descriptive modeling because all I do is describe the patterns using statistical methods. In the next chapter I'll give some examples of models that attempt to capture mechanism and underlying process. 
+The previous chapter presented several descriptive plots of raw data.  In the next two chapters I would like to show some simple modeling methods of the same data. 
+By no means is any of the modeling presented here considered breakthrough modeling. I call this descriptive modeling because all I do is describe the patterns using statistical methods. In a later chapter (Chapter \@ref(process)) I'll give  examples of explanatory models that attempt to capture mechanism and underlying process. 
 
-The difference between descriptive models and explanatory models is that the former are summaries of the data and can be used to forecast, but they do not provide  understanding of the underling mechanisms. Descriptive models do not give insight into what will happen if a change is imposed on the system.  Descriptive models don't tell us the effect social distancing may have, for example, on the future rate of covid-19. They are fine for describing what has happened in the past but can be limited in helping us understand how the future will play out under various scenarios including interventions. I sometimes refer to descriptive modeling as "models of data."  Process models  are about modeling underlying mechanism. They also use data to estimate parameters and test predictions, but the focus of process models is the underlying mechanism. 
+The difference between descriptive models and explanatory models is that the former are summaries of the data and, whie they can be used to forecast, but they do not provide  understanding of the underling mechanisms. Descriptive models do not give insight into what will happen if a change is imposed on the system.  Descriptive models don't tell us the effect social distancing may have, for example, on the future rate of covid-19. Descriptive models are fine for describing what has happened in the past but can be limited in helping us understand how the future will play out under various scenarios including interventions. I sometimes refer to descriptive modeling as "models of data."  Explanatory, or process, models  focus on  modeling underlying mechanism. Explanatory models also use data to estimate parameters and make predictions, but the focus of process models is the underlying mechanism. 
 
+```{asis echo=longform}
 I'll try to use the minimum R features necessary to make the points I want to highlight. There are more complicated approaches using time series packages that format the data differently (e.g., they use special time series objects in R). There are benefits of doing this because there are automatic plotting and estimation routines that can take time series objects and do relevant computations. But I believe that as you are learning this material it makes more sense to learn how to do some of the programming. This will put you in a better position to learn more advanced approaches like those for time series data, which use even more complex programming capabilities.  It is best to learn how to program with simpler problems and then gradually add complexity rather than jump immediately to complex cases. So I'll start with standard R objects and slowly introduce some elements unique to time series data.
+```
 
 For more general treatments on working with time series data see [Hyndman & Athanasopoulos](https://otexts.com/fpp2/); [Holmes, Scheuerell & Ward](https://nwfsc-timeseries.github.io/atsa-labs/) and the classic [Box & Jenkins](https://www.amazon.com/Time-Analysis-Forecasting-George-Box/dp/0470272848), with additional authors in newer editions of the book.
 
 ##  Regression on US State Percentages: Linear Mixed Models on Logs
 
-In the chapter [Descriptive Plots](#descplots) I showed that on the log scale the curves look  like they can be approximated by straight lines by state for the count/population variable.
+In the previous chapter [Descriptive Plots](#descplots) I showed that on the log scale the curves do not follow a straight line by state for the count/population variable, at least through the entire time series and likely not even in the early days of the pandemic. There is a belief that pandemics tend to follow an exponential process early on but not necessarily deeper into the pandemic. It isn't clear that belief is consistent with the Covid-19 data.
 
-These data are a natural candidate for a random effects linear regression.  Each state should have its own intercept and slope on the log scale.  We could use standard regression (ordinary least squares) to create a complicated interaction between day and state, so that we have a state factor with 50 levels (so 49 effect or contrast codes), giving us 49 intercepts and slopes but that is overkill. The random effects approach to regression makes more sense.  Each state is modeled as a random draw from a multivariate normal distribution such that we draw 50 pairs of slopes and intercepts from that multivariate distribution of intercept and slope. Once we have those 50 slope and intercept pairs, then we compute the predicted scores for each state. The algorithm finds the mean and covariance matrix of that multivariate distribution to minimize the discrepancy (i.e., squared residuals) between the observed  and the predicted data.  As shown in the previous chapter, the log of the percentage of the state population follows an approximate line, though there was some evidence of curvature in the descriptive plots suggesting a deviation from a simple exponential curve.
+I'll illustrate one type of exponential growth with this simple example.  Image each infected person infects 2 people and transmission occurs in the first day.  The first person who contracts covid in the US infects 2 people for a total of 3 infected people. The next day those two newly infected individuals each transmit to 2 people, so on that day there are 4 newly infected people plus the 3 infected people from the previous day.  This process continues each day, so that each newly infected person transmits to 2 new individuals. What is surprising is that if this process continues unchecked, it will take merely 28 days for the entire US population, approximately 330 million, to be infected with covid.  Clearly, this simple exponential process did not play out because 10 months into the pandemic, the US is at 14 million known positive cases.  I think 28 days would qualify as falling into the "early days of the pandemic," so other processes, constraints and factors must be contributing to the spread of the disease.  As we will see later in this chapter, exponential growth characterizes a family of growth rates, not just the specific one used in this example.
 
-In the following analyses, the variable day is entered into the model as a linear time variable (1, 2, 3, etc). Our previous plots suggest that on the log scale we may be fine with linear time as a predictor. In subsequent analyses we will consider more complicated treatments of the day variable to allow for additional nonlinearity.
+Still, for the time being let's continue applying the belief that pandemics follow  exponential growth. An exponential growth curve can be transformed into a straight line (i.e., linear growth) by taking logs of the data (this will be described later in this chapter).  It is much easier to fit linear functions than nonlinear functions such as exponential curves, so many researchers follow the heuristic of applying a log transformation when dealing with these types of nonlinear curves.
 
+Our example will focus on state-level effects so they are a natural candidate for a random effects linear regression.  That is, each state should have its own intercept and slope on the log scale.  We could use standard regression (ordinary least squares) to create a complicated interaction between day and state, so that we have a state factor with 50 levels (so 49 effect or contrast codes), giving us 49 intercepts and slopes but that is overkill. The random effects approach is more efficient.  Each state is modeled as a random draw from a multivariate normal distribution such that we draw 50 pairs of slopes and intercepts from that multivariate distribution of intercept and slope. Once we have those 50 slope and intercept pairs, then we compute the predicted scores for each state. The algorithm finds the mean and covariance matrix of that multivariate distribution to minimize the discrepancy (i.e., squared residuals) between the observed  and the predicted data.  The multivariate normal distribution also allows a covariance between the intercept and slope to account for possible associations such as ``states that start early have more rapid growth rates.'' As shown in the previous chapter, the log of the percentage of the state population follows an approximate line, though there was some evidence of curvature in the descriptive plots suggesting a deviation from a simple exponential curve.
 
+In the following analyses, the variable day is entered into the model as a linear time variable (1, 2, 3, etc). In subsequent analyses we will consider more complicated treatments of the day variable to allow for additional nonlinearity.
 
+```{asis echo=longform}
+I decided to drop rows from the data set that have counts of 0, in part because the log of 0 is undefined.   Other strategies such as re-centering the time variable so for each state day 1 corresponds to the first day the state showed a case as opposed to calendar day.  In this strategy, day 1 would be assigned to March 18 for a state that showed its first case on that calendar day, whereas day 1 would be assigned to March 23 for the state that showed its first case.   A drawback of this strategy is that it makes it a little trickier to model the date at which each state begins to show cases. I call this the ``liftoff'' of the curve because it is when cases move away from 0. One may want to include predictors of liftoff, or attempt to explain liftoff differences, and it is easier to model these effects if the day variable follows calendar time.  There are more complex modeling approaches, such as a structural equations modeling approach, that allow such flexibility.
+```
 
 ```{r}
-# drop all 0 counts from the allstates.long data base. be careful, 
-# this data.frame no longer has 0s
-# can't study liftoff (see on descriptive plots) now that 0s are removed
-# reason is that log10(0) = -Inf
+# drop all 0 counts from the allstates.long data base. 
 allstates.long <- allstates.long %>% mutate(count = na_if(count, "0"))
 
 # save percent variable and log10 version
@@ -34,7 +38,7 @@ allstates.long$percent.log10 <- log10(allstates.long$percent)
 
 ### Examine distributional assumptions
 
-It is good to check the distribution of the log percent variable to make sure there aren't major issues with symmetry.  The log of the percent of the state population that tests positive will be the dependent variable in the regressions we will conduct.
+It is good practice to check the distribution of the log percent variable to make sure there aren't major issues with symmetry.  The log of the percent of the state population that tests positive will be the dependent variable in the regressions we will conduct.
 
 ```{r}
 # histogram of percent.log10; not a bad looking distribution
@@ -376,7 +380,7 @@ print(paste0("File name associated with this run is ", currentversion, "-datawor
 
 ```{r results="hide"}
 out <- nlme(percent ~ richfu(day.numeric, l=0, rate,y,b1=1), fixed = rate+y~1,
-            random =  rate+y ~1, data=na.omit(allstates.long.new),start=c( rate=1.015,y=.24), verbose=T, control=nlmeControl(msMaxIter=500,opt="nlminb",pnlsTol=.01,msVerbose=T,minScale=.01) )
+            random =  rate+y ~1, data=na.omit(allstates.long.new),start=c( rate=1.01,y=.32), verbose=T, control=nlmeControl(msMaxIter=500,opt="nlminb",pnlsTol=.01,msVerbose=T,minScale=.01) )
 ```
 
 ```{r results="asis"}
@@ -564,20 +568,13 @@ print(paste0("File name associated with this run is ", currentversion, "-datawor
 ```
 
 ```{r est.logistic.growth, results="hide"}
-# counts per state
-starts <- getInitial(count~ SSlogis(day.numeric, Asym=1, xmid=1, scal=1), data=allstates.long.new)
-# out <- nlme(count ~ SSlogis(day.numeric, Asym, xmid,scal), fixed =  Asym + xmid + scal  ~1,
-#           random =  Asym + scal + xmid~ 1, data=na.omit(allstates.long.new),start=c(Asym=starts[1], xmid=starts[2], scal=starts[3]), verbose=T, control=nlmeControl(msMaxIter=500))
-
  # per capita out of 10,000 
  allstates.long.new$percap10000 <- allstates.long.new$percap100 * 100
- starts <- getInitial(percap10000~ SSlogis(day.numeric, Asym=1, xmid=1, scal=1), data=allstates.long.new)
+# starts <- getInitial(percap10000~ SSlogis(day.numeric, Asym=600, xmid=200, scal=50), data=allstates.long.new)
 
- # out.perc <- nlme(percap10000 ~ SSlogis(day.numeric, Asym, xmid,scal), fixed =  Asym + xmid + scal  ~1,
- #             random = Asym  + xmid+ scal~ 1, data=na.omit(allstates.long.new),start=c(Asym=starts[1], xmid=starts[2], scal=starts[3]), verbose=T, control=nlmeControl(msMaxIter=500,opt="nlminb",pnlsTol=.0001,msVerbose=T,minScale=.0001, maxIter=400, eval.max=400, tolerance=.1))
 
    out.perc <- nlme(percap10000 ~ SSlogis(day.numeric, Asym, xmid,scal), fixed =  Asym + xmid + scal  ~1,
-              random = Asym + xmid+ scal ~ 1, data=na.omit(allstates.long.new),start=c(Asym=800, xmid=125, scal=35), verbose=T, control=nlmeControl(msMaxIter=500,opt="nlminb",pnlsTol=.0001,msVerbose=T,minScale=.0001, maxIter=400, eval.max=400, tolerance=.1, msTol=.1))
+              random = Asym + xmid+ scal ~ 1, data=na.omit(allstates.long.new),start=c(Asym=850, xmid=275, scal=70), verbose=T, control=nlmeControl(msMaxIter=500,opt="nlminb",pnlsTol=.0001,msVerbose=T,minScale=.0001, maxIter=400, eval.max=400, tolerance=1, msTol=.0001))
 ```
 
 ```{r}
@@ -735,8 +732,8 @@ ggplot(nydf2, aes(day.numeric,prediction,group=state.abb, color=state.abb )) + g
 For illustration purposes, here is another way of fitting this model using a different package lme4.  While lme4 is in some ways easier to use, it is not as flexible as nlme, which allows, for example, correlated error structure on the residuals and the ability to impose structure on the covariance matrix between random effects.  This model includes random effects from the asym and xmid parameters but there are convergence issues when all three parameters are allowed to be random effects. [now got it working with 3 RE parameters]
 
 ```{r results="hide"}
-starts <- getInitial(percap10000 ~ SSlogis(day.numeric, asym,xmid,scal), data=na.omit(allstates.long.new))
-starts
+#starts <- getInitial(percap10000 ~ SSlogis(day.numeric, asym,xmid,scal), data=na.omit(allstates.long.new))
+#starts
 
 # second way to get starting values, just run a regular nonlinear regression
 # without random effects to plug into nlmer or nlme
@@ -1072,7 +1069,7 @@ Pending: show a Bayesian approach to the generalized nonlinear mixed model
 
 ## State-space modeling 
 
-The simple idea of a time series introduced earlier in Section \@ref{splines} can be extend to a context involving a latent variable, or as it is called in this context, a state.  The basic idea is that there are two equations governing different levels of analysis. One equation governs our observations and another equation govern a latent state. 
+The simple idea of a time series introduced earlier in Section \@ref(splines) can be extend to a context involving a latent variable, or as it is called in this context, a state.  The basic idea is that there are two equations governing different levels of analysis. One equation governs our observations and another equation govern a latent state. 
 
 One form of this approach has these equations.  For the state-space portion,
 $$
